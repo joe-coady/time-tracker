@@ -221,6 +221,40 @@ body {
   color: #888;
 }
 
+.filter-bar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.filter-search {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: 14px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  outline: none;
+}
+
+.filter-search:focus {
+  border-color: #007aff;
+}
+
+.filter-select {
+  padding: 8px 12px;
+  font-size: 14px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+  outline: none;
+}
+
+.filter-select:focus {
+  border-color: #007aff;
+}
+
 .entries-list {
   flex: 1;
   overflow-y: auto;

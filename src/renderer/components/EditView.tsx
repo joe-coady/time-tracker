@@ -10,6 +10,8 @@ function EditView() {
   const { tasks, loading, updateEntry, deleteEntry } = useTaskData();
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [editingNotesId, setEditingNotesId] = useState<string | null>(null);
+  const [searchFilter, setSearchFilter] = useState('');
+  const [completedFilter, setCompletedFilter] = useState<'all' | 'completed' | 'not-completed'>('all');
   const [expandedDates, setExpandedDates] = useState<Set<string>>(() => {
     // Start with today expanded
     const today = new Date().toLocaleDateString('en-US', {
@@ -21,9 +23,32 @@ function EditView() {
     return new Set([today]);
   });
 
+  // Filter tasks
+  const filteredTasks = useMemo(() => {
+    return tasks.filter(task => {
+      // Filter by completed status
+      if (completedFilter === 'completed' && !task.completed) {
+        return false;
+      }
+      if (completedFilter === 'not-completed' && task.completed) {
+        return false;
+      }
+      // Filter by search string
+      if (searchFilter) {
+        const search = searchFilter.toLowerCase();
+        const matchesTask = task.task.toLowerCase().includes(search);
+        const matchesNotes = task.notes?.toLowerCase().includes(search);
+        if (!matchesTask && !matchesNotes) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }, [tasks, searchFilter, completedFilter]);
+
   // Group tasks by date
   const { groupedTasks, sortedDates, totalsByDate } = useMemo(() => {
-    const grouped = tasks.reduce<GroupedTasks>((acc, task) => {
+    const grouped = filteredTasks.reduce<GroupedTasks>((acc, task) => {
       const date = new Date(task.startTime).toLocaleDateString('en-US', {
         weekday: 'long',
         year: 'numeric',
@@ -51,7 +76,7 @@ function EditView() {
     }
 
     return { groupedTasks: grouped, sortedDates: sorted, totalsByDate: totals };
-  }, [tasks]);
+  }, [filteredTasks]);
 
   const toggleDate = (date: string) => {
     setExpandedDates(prev => {
@@ -134,7 +159,30 @@ function EditView() {
     <div className="edit-container">
       <div className="edit-header">
         <h1 className="edit-title">Time Entries</h1>
-        <span className="entry-count">{tasks.length} entries across {sortedDates.length} days</span>
+        <span className="entry-count">
+          {filteredTasks.length === tasks.length
+            ? `${tasks.length} entries`
+            : `${filteredTasks.length} of ${tasks.length} entries`}
+        </span>
+      </div>
+
+      <div className="filter-bar">
+        <input
+          type="text"
+          className="filter-search"
+          placeholder="Search tasks and notes..."
+          value={searchFilter}
+          onChange={e => setSearchFilter(e.target.value)}
+        />
+        <select
+          className="filter-select"
+          value={completedFilter}
+          onChange={e => setCompletedFilter(e.target.value as 'all' | 'completed' | 'not-completed')}
+        >
+          <option value="all">All</option>
+          <option value="completed">Completed</option>
+          <option value="not-completed">Not completed</option>
+        </select>
       </div>
 
       <div className="entries-list">
