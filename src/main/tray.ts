@@ -1,11 +1,9 @@
 import { Tray, Menu, nativeImage, app } from 'electron';
 import * as path from 'path';
 import { showDialogWindow, showEditWindow } from './windows';
-import { readAppState } from './storage';
-import { getRemainingMinutes } from './timer';
+import { getLastEntry } from './storage';
 
 let tray: Tray | null = null;
-let menuUpdateInterval: NodeJS.Timeout | null = null;
 
 function createTrayIcon(): Electron.NativeImage {
   // Create a simple clock icon using native image
@@ -20,22 +18,15 @@ function createTrayIcon(): Electron.NativeImage {
 }
 
 function getContextMenu(): Menu {
-  const state = readAppState();
-  const remaining = getRemainingMinutes();
+  const lastEntry = getLastEntry();
 
   const menuItems: Electron.MenuItemConstructorOptions[] = [];
 
-  if (state.currentTask) {
+  if (lastEntry) {
     menuItems.push({
-      label: `Current: ${state.currentTask}`,
+      label: `Current: ${lastEntry.task}`,
       enabled: false,
     });
-    if (remaining !== null) {
-      menuItems.push({
-        label: `${remaining} min remaining`,
-        enabled: false,
-      });
-    }
     menuItems.push({ type: 'separator' });
   }
 
@@ -63,12 +54,14 @@ export function createTray(): Tray {
 
   tray = new Tray(createTrayIcon());
   tray.setToolTip('Time Tracker');
-  tray.setContextMenu(getContextMenu());
 
-  // Update menu every minute so remaining time stays current
-  menuUpdateInterval = setInterval(() => {
-    updateTrayMenu();
-  }, 60 * 1000);
+  // Build menu fresh on each click to avoid focus-stealing from setContextMenu intervals
+  tray.on('click', () => {
+    tray?.popUpContextMenu(getContextMenu());
+  });
+  tray.on('right-click', () => {
+    tray?.popUpContextMenu(getContextMenu());
+  });
 
   return tray;
 }
@@ -80,10 +73,6 @@ export function updateTrayMenu(): void {
 }
 
 export function destroyTray(): void {
-  if (menuUpdateInterval) {
-    clearInterval(menuUpdateInterval);
-    menuUpdateInterval = null;
-  }
   if (tray) {
     tray.destroy();
     tray = null;

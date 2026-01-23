@@ -6,10 +6,9 @@ import {
   addTaskEntry,
   updateTaskEntry,
   deleteTaskEntry,
-  readAppState,
-  writeAppState,
+  getLastEntry,
 } from './storage';
-import { startTimer, getRemainingMinutes, getElapsedMinutes } from './timer';
+import { startTimer, getElapsedMinutes } from './timer';
 import { closeDialogWindow } from './windows';
 import { updateTrayMenu } from './tray';
 import { TaskEntry, CalculatedTaskEntry, CurrentState } from '../shared/types';
@@ -26,26 +25,25 @@ export function setupIpcHandlers(): void {
   });
 
   ipcMain.handle('start-task', async (_event, taskName: string, durationMinutes: number): Promise<void> => {
-    const now = new Date();
+    const lastEntry = getLastEntry();
 
-    // Create new entry for the task (no explicit duration - will be calculated)
+    // If same task as current, just restart timer (continue working)
+    if (lastEntry && lastEntry.task === taskName) {
+      startTimer(durationMinutes);
+      closeDialogWindow();
+      return;
+    }
+
+    // Different task - create new entry
+    const now = new Date();
     const newEntry: TaskEntry = {
       id: uuidv4(),
       task: taskName,
       startTime: now.toISOString(),
-      // No durationMinutes - will be calculated dynamically
     };
     addTaskEntry(newEntry);
 
-    // Update app state
-    writeAppState({
-      currentTask: taskName,
-      currentTaskStartTime: now.toISOString(),
-      plannedDurationMinutes: durationMinutes,
-      timerEndTime: new Date(now.getTime() + durationMinutes * 60 * 1000).toISOString(),
-    });
-
-    // Start the timer
+    // Start the in-memory timer
     startTimer(durationMinutes);
 
     // Update tray menu to show current task
@@ -67,10 +65,9 @@ export function setupIpcHandlers(): void {
   });
 
   ipcMain.handle('get-current-state', async (): Promise<CurrentState> => {
-    const state = readAppState();
+    const lastEntry = getLastEntry();
     return {
-      currentTask: state.currentTask,
-      remainingMinutes: getRemainingMinutes(),
+      currentTask: lastEntry?.task ?? null,
       elapsedMinutes: getElapsedMinutes(),
     };
   });

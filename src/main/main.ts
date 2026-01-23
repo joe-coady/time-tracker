@@ -2,9 +2,8 @@ import { app, BrowserWindow } from 'electron';
 import { createTray, destroyTray } from './tray';
 import { showDialogWindow, sendToDialog } from './windows';
 import { registerGlobalShortcut, unregisterAllShortcuts } from './globalShortcut';
-import { setTimerExpiryCallback, restoreTimerFromState } from './timer';
+import { setTimerExpiryCallback } from './timer';
 import { setupIpcHandlers } from './ipc';
-import { readAppState } from './storage';
 import { startHourlyChecker, stopHourlyChecker } from './hourlyChecker';
 
 // Ensure single instance
@@ -39,17 +38,11 @@ app.whenReady().then(() => {
     sendToDialog('timer-expired');
   });
 
-  // Restore timer if app was restarted
-  restoreTimerFromState();
-
   // Start hourly checker for ongoing tasks
   startHourlyChecker();
 
-  // Show dialog on first launch or if no current task
-  const state = readAppState();
-  if (!state.currentTask) {
-    showDialogWindow();
-  }
+  // Always show dialog on app start - user confirms/updates what they're working on
+  showDialogWindow();
 });
 
 app.on('window-all-closed', () => {

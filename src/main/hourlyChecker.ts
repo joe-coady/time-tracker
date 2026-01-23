@@ -1,4 +1,4 @@
-import { readAppState } from './storage';
+import { getLastEntry } from './storage';
 import { showDialogWindow, sendToDialog } from './windows';
 
 const ONE_HOUR_MS = 60 * 60 * 1000;
@@ -9,13 +9,18 @@ let intervalId: ReturnType<typeof setInterval> | null = null;
  * without an explicit duration set. If so, show the task dialog.
  */
 function checkOngoingTask(): void {
-  const state = readAppState();
+  const lastEntry = getLastEntry();
 
-  if (!state.currentTask || !state.currentTaskStartTime) {
-    return; // No task running
+  if (!lastEntry) {
+    return; // No tasks
   }
 
-  const startTime = new Date(state.currentTaskStartTime).getTime();
+  // Only check if the task has no explicit duration (ongoing)
+  if (lastEntry.durationMinutes !== undefined) {
+    return; // Task has explicit duration, not ongoing
+  }
+
+  const startTime = new Date(lastEntry.startTime).getTime();
   const now = Date.now();
   const elapsedMs = now - startTime;
 

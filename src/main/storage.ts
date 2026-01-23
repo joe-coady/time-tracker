@@ -1,10 +1,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import { TaskEntry, AppState } from '../shared/types';
+import { TaskEntry } from '../shared/types';
 
 const TASKS_FILE_PATH = path.join(os.homedir(), 'notes', 'general', 'tasks.json');
-const STATE_FILE_PATH = path.join(os.homedir(), 'notes', 'general', '.time-tracker-state.json');
 
 function ensureDirectoryExists(filePath: string): void {
   const dir = path.dirname(filePath);
@@ -92,36 +91,4 @@ export function getPreviousTaskNames(): { name: string; lastDuration: number }[]
     }
   }
   return Array.from(taskMap.entries()).map(([name, lastDuration]) => ({ name, lastDuration }));
-}
-
-export function readAppState(): AppState {
-  try {
-    if (!fs.existsSync(STATE_FILE_PATH)) {
-      return {
-        currentTask: null,
-        currentTaskStartTime: null,
-        plannedDurationMinutes: null,
-        timerEndTime: null,
-      };
-    }
-    const content = fs.readFileSync(STATE_FILE_PATH, 'utf-8');
-    return JSON.parse(content);
-  } catch (error) {
-    console.error('Error reading app state:', error);
-    return {
-      currentTask: null,
-      currentTaskStartTime: null,
-      plannedDurationMinutes: null,
-      timerEndTime: null,
-    };
-  }
-}
-
-export function writeAppState(state: AppState): void {
-  try {
-    ensureDirectoryExists(STATE_FILE_PATH);
-    fs.writeFileSync(STATE_FILE_PATH, JSON.stringify(state, null, 2), 'utf-8');
-  } catch (error) {
-    console.error('Error writing app state:', error);
-  }
 }

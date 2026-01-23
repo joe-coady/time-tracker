@@ -119,11 +119,10 @@ function TaskDialog() {
           ×
         </button>
       </div>
-      {currentState.currentTask && currentState.remainingMinutes !== null && (
+      {currentState.currentTask && (
         <div className="current-status">
-          {currentState.remainingMinutes > 0
-            ? `${currentState.remainingMinutes}m left on: ${currentState.currentTask}`
-            : `Timer ended: ${currentState.currentTask}`}
+          Currently: {currentState.currentTask}
+          {currentState.elapsedMinutes !== null && ` (${currentState.elapsedMinutes}m elapsed)`}
         </div>
       )}
 

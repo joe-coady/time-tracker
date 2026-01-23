@@ -6,7 +6,6 @@ export function useTaskData() {
   const [previousTasks, setPreviousTasks] = useState<PreviousTask[]>([]);
   const [currentState, setCurrentState] = useState<CurrentState>({
     currentTask: null,
-    remainingMinutes: null,
     elapsedMinutes: null,
   });
   const [loading, setLoading] = useState(true);

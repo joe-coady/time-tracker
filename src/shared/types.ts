@@ -12,16 +12,8 @@ export interface CalculatedTaskEntry extends TaskEntry {
   isExplicitDuration: boolean;
 }
 
-export interface AppState {
-  currentTask: string | null;
-  currentTaskStartTime: string | null;
-  plannedDurationMinutes: number | null;
-  timerEndTime: string | null;
-}
-
 export interface CurrentState {
   currentTask: string | null;
-  remainingMinutes: number | null;
   elapsedMinutes: number | null;
 }
 
