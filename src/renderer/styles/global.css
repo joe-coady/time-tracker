@@ -371,14 +371,26 @@ body {
   opacity: 0.8;
 }
 
-.entry-duration.ongoing {
-  cursor: text;
+span.entry-duration.ongoing {
+  cursor: pointer;
   color: #007aff;
+  width: 85px;
+  font-variant-numeric: tabular-nums;
+  display: inline-block;
+  padding: 4px 8px;
+  text-align: right;
+  border: 1px solid transparent;
+  border-radius: 4px;
 }
 
-.entry-duration.ongoing:hover {
+span.entry-duration.ongoing:hover {
   background-color: #f0f7ff;
   border-color: #007aff;
+}
+
+input.entry-duration.ongoing {
+  color: #007aff;
+  width: 85px;
 }
 
 .clear-duration-btn {

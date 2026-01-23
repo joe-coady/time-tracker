@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useTaskData } from '../hooks/useTaskData';
+import { useElapsedTime, formatElapsedTime } from '../hooks/useElapsedTime';
 import { CalculatedTaskEntry } from '../../shared/types';
 import { formatDuration, calculateTotalMinutes } from '../../shared/durationUtils';
 
@@ -11,6 +12,7 @@ function EditView() {
   const { tasks, loading, updateEntry, deleteEntry, setExplicitDuration, clearExplicitDuration } = useTaskData();
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [editingNotesId, setEditingNotesId] = useState<string | null>(null);
+  const [editingDurationId, setEditingDurationId] = useState<string | null>(null);
   const [searchFilter, setSearchFilter] = useState('');
   const [completedFilter, setCompletedFilter] = useState<'all' | 'completed' | 'not-completed'>('all');
   const [expandedDates, setExpandedDates] = useState<Set<string>>(() => {
@@ -23,6 +25,14 @@ function EditView() {
     });
     return new Set([today]);
   });
+
+  // Find the ongoing task (last task with no explicit duration)
+  const ongoingTask = useMemo(() => {
+    return tasks.find(t => t.calculatedDurationMinutes === null);
+  }, [tasks]);
+
+  // Track elapsed time for ongoing task (updates every second)
+  const ongoingElapsedSeconds = useElapsedTime(ongoingTask?.startTime ?? null);
 
   // Filter tasks
   const filteredTasks = useMemo(() => {
@@ -70,7 +80,7 @@ function EditView() {
       return dateB.getTime() - dateA.getTime();
     });
 
-    // Calculate totals per date using calculateTotalMinutes (excludes ongoing tasks)
+    // Calculate totals per date (completed tasks only, ongoing added separately)
     const totals: { [date: string]: number } = {};
     for (const date of sorted) {
       totals[date] = calculateTotalMinutes(grouped[date]);
@@ -78,6 +88,24 @@ function EditView() {
 
     return { groupedTasks: grouped, sortedDates: sorted, totalsByDate: totals };
   }, [filteredTasks]);
+
+  // Calculate total including ongoing task's live elapsed time
+  const getTotalWithOngoing = (date: string): number => {
+    const baseTotal = totalsByDate[date] || 0;
+    // Add ongoing task's time if it's in this date group
+    if (ongoingTask && ongoingElapsedSeconds !== null) {
+      const ongoingDate = new Date(ongoingTask.startTime).toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
+      if (ongoingDate === date) {
+        return baseTotal + Math.floor(ongoingElapsedSeconds / 60);
+      }
+    }
+    return baseTotal;
+  };
 
   const toggleDate = (date: string) => {
     setExpandedDates(prev => {
@@ -186,7 +214,7 @@ function EditView() {
         {sortedDates.map(date => {
           const isExpanded = expandedDates.has(date);
           const entries = groupedTasks[date];
-          const totalMinutes = totalsByDate[date];
+          const totalMinutes = getTotalWithOngoing(date);
 
           return (
             <div key={date} className="date-group">
@@ -227,38 +255,57 @@ function EditView() {
                             }}
                           />
                           <div className="duration-wrapper">
-                            <input
-                              type="text"
-                              className={`entry-duration ${entry.isExplicitDuration ? 'explicit' : 'calculated'} ${entry.calculatedDurationMinutes === null ? 'ongoing' : ''}`}
-                              defaultValue={entry.calculatedDurationMinutes !== null ? `${entry.calculatedDurationMinutes}m` : '∞'}
-                              key={`${entry.id}-${entry.calculatedDurationMinutes}-${entry.isExplicitDuration}`}
-                              placeholder="∞"
-                              onFocus={e => {
-                                // Clear the ∞ symbol when focusing so user can type
-                                if (e.target.value === '∞') {
-                                  e.target.value = '';
-                                }
-                              }}
-                              onBlur={e => {
-                                const value = e.target.value.replace(/[^0-9]/g, '');
-                                if (value) {
-                                  handleDurationChange(entry.id, value);
-                                } else if (entry.calculatedDurationMinutes === null && !entry.isExplicitDuration) {
-                                  // Restore ∞ if they didn't enter anything
-                                  e.target.value = '∞';
-                                }
-                              }}
-                              onKeyDown={e => {
-                                if (e.key === 'Enter') {
-                                  e.currentTarget.blur();
-                                }
-                                if (e.key === 'Escape') {
-                                  // Restore original value on escape
-                                  e.currentTarget.value = entry.calculatedDurationMinutes !== null ? `${entry.calculatedDurationMinutes}m` : '∞';
-                                  e.currentTarget.blur();
-                                }
-                              }}
-                            />
+                            {/* Show live elapsed time for ongoing task */}
+                            {entry.calculatedDurationMinutes === null && ongoingElapsedSeconds !== null ? (
+                              editingDurationId === entry.id ? (
+                                <input
+                                  type="text"
+                                  className="entry-duration ongoing"
+                                  autoFocus
+                                  onBlur={e => {
+                                    const value = e.target.value.replace(/[^0-9]/g, '');
+                                    if (value) {
+                                      handleDurationChange(entry.id, value);
+                                    }
+                                    setEditingDurationId(null);
+                                  }}
+                                  onKeyDown={e => {
+                                    if (e.key === 'Enter') {
+                                      e.currentTarget.blur();
+                                    }
+                                    if (e.key === 'Escape') {
+                                      setEditingDurationId(null);
+                                    }
+                                  }}
+                                />
+                              ) : (
+                                <span
+                                  className="entry-duration ongoing"
+                                  onClick={() => setEditingDurationId(entry.id)}
+                                  title="Click to set explicit duration"
+                                >
+                                  {formatElapsedTime(ongoingElapsedSeconds)}
+                                </span>
+                              )
+                            ) : (
+                              <input
+                                type="text"
+                                className={`entry-duration ${entry.isExplicitDuration ? 'explicit' : 'calculated'}`}
+                                defaultValue={`${entry.calculatedDurationMinutes}m`}
+                                key={`${entry.id}-${entry.calculatedDurationMinutes}-${entry.isExplicitDuration}`}
+                                onBlur={e => {
+                                  const value = e.target.value.replace(/[^0-9]/g, '');
+                                  if (value) {
+                                    handleDurationChange(entry.id, value);
+                                  }
+                                }}
+                                onKeyDown={e => {
+                                  if (e.key === 'Enter') {
+                                    e.currentTarget.blur();
+                                  }
+                                }}
+                              />
+                            )}
                             {entry.isExplicitDuration && (
                               <button
                                 className="clear-duration-btn"
