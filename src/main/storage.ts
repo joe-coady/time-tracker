@@ -53,7 +53,16 @@ export function updateTaskEntry(id: string, updates: Partial<Pick<TaskEntry, 'ta
   if (index === -1) {
     throw new Error(`Task with id ${id} not found`);
   }
-  tasks[index] = { ...tasks[index], ...updates };
+  // Apply updates, handling explicit undefined to delete the key
+  const updated = { ...tasks[index] };
+  for (const [key, value] of Object.entries(updates)) {
+    if (value === undefined) {
+      delete (updated as Record<string, unknown>)[key];
+    } else {
+      (updated as Record<string, unknown>)[key] = value;
+    }
+  }
+  tasks[index] = updated;
   writeTasks(tasks);
 }
 
@@ -78,7 +87,8 @@ export function getPreviousTaskNames(): { name: string; lastDuration: number }[]
   // Get unique task names from non-completed tasks with their last duration, most recent first
   for (let i = tasks.length - 1; i >= 0; i--) {
     if (!tasks[i].completed && !taskMap.has(tasks[i].task)) {
-      taskMap.set(tasks[i].task, tasks[i].durationMinutes);
+      // Default to 60 minutes if no explicit duration
+      taskMap.set(tasks[i].task, tasks[i].durationMinutes ?? 60);
     }
   }
   return Array.from(taskMap.entries()).map(([name, lastDuration]) => ({ name, lastDuration }));

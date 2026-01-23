@@ -5,6 +5,7 @@ import { registerGlobalShortcut, unregisterAllShortcuts } from './globalShortcut
 import { setTimerExpiryCallback, restoreTimerFromState } from './timer';
 import { setupIpcHandlers } from './ipc';
 import { readAppState } from './storage';
+import { startHourlyChecker, stopHourlyChecker } from './hourlyChecker';
 
 // Ensure single instance
 const gotTheLock = app.requestSingleInstanceLock();
@@ -41,6 +42,9 @@ app.whenReady().then(() => {
   // Restore timer if app was restarted
   restoreTimerFromState();
 
+  // Start hourly checker for ongoing tasks
+  startHourlyChecker();
+
   // Show dialog on first launch or if no current task
   const state = readAppState();
   if (!state.currentTask) {
@@ -55,6 +59,7 @@ app.on('window-all-closed', () => {
 app.on('will-quit', () => {
   unregisterAllShortcuts();
   destroyTray();
+  stopHourlyChecker();
 });
 
 app.on('activate', () => {

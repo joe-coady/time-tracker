@@ -1,13 +1,14 @@
 import React, { useState, useMemo } from 'react';
 import { useTaskData } from '../hooks/useTaskData';
-import { TaskEntry } from '../../shared/types';
+import { CalculatedTaskEntry } from '../../shared/types';
+import { formatDuration, calculateTotalMinutes } from '../../shared/durationUtils';
 
 interface GroupedTasks {
-  [date: string]: TaskEntry[];
+  [date: string]: CalculatedTaskEntry[];
 }
 
 function EditView() {
-  const { tasks, loading, updateEntry, deleteEntry } = useTaskData();
+  const { tasks, loading, updateEntry, deleteEntry, setExplicitDuration, clearExplicitDuration } = useTaskData();
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [editingNotesId, setEditingNotesId] = useState<string | null>(null);
   const [searchFilter, setSearchFilter] = useState('');
@@ -69,10 +70,10 @@ function EditView() {
       return dateB.getTime() - dateA.getTime();
     });
 
-    // Calculate totals per date
+    // Calculate totals per date using calculateTotalMinutes (excludes ongoing tasks)
     const totals: { [date: string]: number } = {};
     for (const date of sorted) {
-      totals[date] = grouped[date].reduce((sum, entry) => sum + entry.durationMinutes, 0);
+      totals[date] = calculateTotalMinutes(grouped[date]);
     }
 
     return { groupedTasks: grouped, sortedDates: sorted, totalsByDate: totals };
@@ -99,8 +100,12 @@ function EditView() {
   const handleDurationChange = async (id: string, newDuration: string) => {
     const minutes = parseInt(newDuration, 10);
     if (!isNaN(minutes) && minutes > 0) {
-      await updateEntry(id, { durationMinutes: minutes });
+      await setExplicitDuration(id, minutes);
     }
+  };
+
+  const handleClearExplicitDuration = async (id: string) => {
+    await clearExplicitDuration(id);
   };
 
   const handleNotesChange = async (id: string, notes: string) => {
@@ -126,14 +131,6 @@ function EditView() {
       hour: 'numeric',
       minute: '2-digit',
     });
-  };
-
-  const formatDuration = (minutes: number) => {
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    if (hours === 0) return `${mins}m`;
-    if (mins === 0) return `${hours}h`;
-    return `${hours}h ${mins}m`;
   };
 
   if (loading) {
@@ -229,20 +226,49 @@ function EditView() {
                               }
                             }}
                           />
-                          <input
-                            type="text"
-                            className="entry-duration"
-                            defaultValue={`${entry.durationMinutes}m`}
-                            onBlur={e => {
-                              const value = e.target.value.replace(/[^0-9]/g, '');
-                              handleDurationChange(entry.id, value);
-                            }}
-                            onKeyDown={e => {
-                              if (e.key === 'Enter') {
-                                e.currentTarget.blur();
-                              }
-                            }}
-                          />
+                          <div className="duration-wrapper">
+                            <input
+                              type="text"
+                              className={`entry-duration ${entry.isExplicitDuration ? 'explicit' : 'calculated'} ${entry.calculatedDurationMinutes === null ? 'ongoing' : ''}`}
+                              defaultValue={entry.calculatedDurationMinutes !== null ? `${entry.calculatedDurationMinutes}m` : '∞'}
+                              key={`${entry.id}-${entry.calculatedDurationMinutes}-${entry.isExplicitDuration}`}
+                              placeholder="∞"
+                              onFocus={e => {
+                                // Clear the ∞ symbol when focusing so user can type
+                                if (e.target.value === '∞') {
+                                  e.target.value = '';
+                                }
+                              }}
+                              onBlur={e => {
+                                const value = e.target.value.replace(/[^0-9]/g, '');
+                                if (value) {
+                                  handleDurationChange(entry.id, value);
+                                } else if (entry.calculatedDurationMinutes === null && !entry.isExplicitDuration) {
+                                  // Restore ∞ if they didn't enter anything
+                                  e.target.value = '∞';
+                                }
+                              }}
+                              onKeyDown={e => {
+                                if (e.key === 'Enter') {
+                                  e.currentTarget.blur();
+                                }
+                                if (e.key === 'Escape') {
+                                  // Restore original value on escape
+                                  e.currentTarget.value = entry.calculatedDurationMinutes !== null ? `${entry.calculatedDurationMinutes}m` : '∞';
+                                  e.currentTarget.blur();
+                                }
+                              }}
+                            />
+                            {entry.isExplicitDuration && (
+                              <button
+                                className="clear-duration-btn"
+                                onClick={() => handleClearExplicitDuration(entry.id)}
+                                title="Clear explicit duration (revert to calculated)"
+                              >
+                                ×
+                              </button>
+                            )}
+                          </div>
                           <button
                             className={`notes-toggle ${entry.notes ? 'has-notes' : ''}`}
                             onClick={() => setEditingNotesId(editingNotesId === entry.id ? null : entry.id)}

@@ -2,9 +2,14 @@ export interface TaskEntry {
   id: string;
   task: string;
   startTime: string;
-  durationMinutes: number;
+  durationMinutes?: number; // Explicit duration override (optional)
   notes?: string;
   completed?: boolean;
+}
+
+export interface CalculatedTaskEntry extends TaskEntry {
+  calculatedDurationMinutes: number | null; // null = ongoing task
+  isExplicitDuration: boolean;
 }
 
 export interface AppState {
@@ -37,13 +42,15 @@ export interface PreviousTask {
 }
 
 export interface ElectronAPI {
-  getTasks: () => Promise<TaskEntry[]>;
+  getTasks: () => Promise<CalculatedTaskEntry[]>;
   getPreviousTaskNames: () => Promise<PreviousTask[]>;
   startTask: (taskName: string, durationMinutes: number) => Promise<void>;
   updateEntry: (id: string, updates: Partial<Pick<TaskEntry, 'task' | 'durationMinutes' | 'notes' | 'completed'>>) => Promise<void>;
   deleteEntry: (id: string) => Promise<void>;
   getCurrentState: () => Promise<CurrentState>;
   closeDialog: () => Promise<void>;
+  setExplicitDuration: (id: string, durationMinutes: number) => Promise<void>;
+  clearExplicitDuration: (id: string) => Promise<void>;
   onTimerExpired: (callback: () => void) => void;
   removeTimerExpiredListener: () => void;
 }

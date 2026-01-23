@@ -6,18 +6,19 @@ import {
   addTaskEntry,
   updateTaskEntry,
   deleteTaskEntry,
-  getLastEntry,
   readAppState,
   writeAppState,
 } from './storage';
 import { startTimer, getRemainingMinutes, getElapsedMinutes } from './timer';
 import { closeDialogWindow } from './windows';
 import { updateTrayMenu } from './tray';
-import { TaskEntry, CurrentState } from '../shared/types';
+import { TaskEntry, CalculatedTaskEntry, CurrentState } from '../shared/types';
+import { calculateDurations } from '../shared/durationUtils';
 
 export function setupIpcHandlers(): void {
-  ipcMain.handle('get-tasks', async (): Promise<TaskEntry[]> => {
-    return readTasks();
+  ipcMain.handle('get-tasks', async (): Promise<CalculatedTaskEntry[]> => {
+    const tasks = readTasks();
+    return calculateDurations(tasks);
   });
 
   ipcMain.handle('get-previous-task-names', async () => {
@@ -25,47 +26,16 @@ export function setupIpcHandlers(): void {
   });
 
   ipcMain.handle('start-task', async (_event, taskName: string, durationMinutes: number): Promise<void> => {
-    const state = readAppState();
-    const lastEntry = getLastEntry();
     const now = new Date();
-    const MIN_DURATION = 5; // Minimum 5 minutes per entry for rapid task creation
 
-    // Calculate elapsed time for the previous task
-    if (state.currentTask && state.currentTaskStartTime && lastEntry) {
-      const startTime = new Date(state.currentTaskStartTime);
-      const elapsedMinutes = Math.round((now.getTime() - startTime.getTime()) / (60 * 1000));
-      const recordedMinutes = Math.max(MIN_DURATION, elapsedMinutes);
-
-      if (taskName === state.currentTask) {
-        // Same task - merge: add elapsed time to last entry
-        updateTaskEntry(lastEntry.id, {
-          durationMinutes: lastEntry.durationMinutes + recordedMinutes,
-        });
-      } else {
-        // Different task - update last entry's duration (min 5 minutes)
-        updateTaskEntry(lastEntry.id, {
-          durationMinutes: recordedMinutes,
-        });
-
-        // Create new entry for the new task
-        const newEntry: TaskEntry = {
-          id: uuidv4(),
-          task: taskName,
-          startTime: now.toISOString(),
-          durationMinutes: durationMinutes, // Planned duration (will be updated when task ends)
-        };
-        addTaskEntry(newEntry);
-      }
-    } else {
-      // No current task - create new entry
-      const newEntry: TaskEntry = {
-        id: uuidv4(),
-        task: taskName,
-        startTime: now.toISOString(),
-        durationMinutes: durationMinutes,
-      };
-      addTaskEntry(newEntry);
-    }
+    // Create new entry for the task (no explicit duration - will be calculated)
+    const newEntry: TaskEntry = {
+      id: uuidv4(),
+      task: taskName,
+      startTime: now.toISOString(),
+      // No durationMinutes - will be calculated dynamically
+    };
+    addTaskEntry(newEntry);
 
     // Update app state
     writeAppState({
@@ -107,5 +77,14 @@ export function setupIpcHandlers(): void {
 
   ipcMain.handle('close-dialog', async (): Promise<void> => {
     closeDialogWindow();
+  });
+
+  ipcMain.handle('set-explicit-duration', async (_event, id: string, durationMinutes: number): Promise<void> => {
+    updateTaskEntry(id, { durationMinutes });
+  });
+
+  ipcMain.handle('clear-explicit-duration', async (_event, id: string): Promise<void> => {
+    // Remove the explicit duration by setting it to undefined
+    updateTaskEntry(id, { durationMinutes: undefined });
   });
 }

@@ -1,15 +1,15 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import { TaskEntry, CurrentState, ElectronAPI, PreviousTask } from './shared/types';
+import { CalculatedTaskEntry, CurrentState, ElectronAPI, PreviousTask, TaskEntry } from './shared/types';
 
 const electronAPI: ElectronAPI = {
-  getTasks: (): Promise<TaskEntry[]> => ipcRenderer.invoke('get-tasks'),
+  getTasks: (): Promise<CalculatedTaskEntry[]> => ipcRenderer.invoke('get-tasks'),
 
   getPreviousTaskNames: (): Promise<PreviousTask[]> => ipcRenderer.invoke('get-previous-task-names'),
 
   startTask: (taskName: string, durationMinutes: number): Promise<void> =>
     ipcRenderer.invoke('start-task', taskName, durationMinutes),
 
-  updateEntry: (id: string, updates: Partial<Pick<TaskEntry, 'task' | 'durationMinutes'>>): Promise<void> =>
+  updateEntry: (id: string, updates: Partial<Pick<TaskEntry, 'task' | 'durationMinutes' | 'notes' | 'completed'>>): Promise<void> =>
     ipcRenderer.invoke('update-entry', id, updates),
 
   deleteEntry: (id: string): Promise<void> => ipcRenderer.invoke('delete-entry', id),
@@ -17,6 +17,12 @@ const electronAPI: ElectronAPI = {
   getCurrentState: (): Promise<CurrentState> => ipcRenderer.invoke('get-current-state'),
 
   closeDialog: (): Promise<void> => ipcRenderer.invoke('close-dialog'),
+
+  setExplicitDuration: (id: string, durationMinutes: number): Promise<void> =>
+    ipcRenderer.invoke('set-explicit-duration', id, durationMinutes),
+
+  clearExplicitDuration: (id: string): Promise<void> =>
+    ipcRenderer.invoke('clear-explicit-duration', id),
 
   onTimerExpired: (callback: () => void): void => {
     ipcRenderer.on('timer-expired', callback);
