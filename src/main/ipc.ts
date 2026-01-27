@@ -30,7 +30,7 @@ export function setupIpcHandlers(): void {
     return getPreviousTaskNames();
   });
 
-  ipcMain.handle('start-task', async (_event, taskName: string, durationMinutes: number): Promise<void> => {
+  ipcMain.handle('start-task', async (_event, taskName: string, durationMinutes: number, taskTypeIds?: string[]): Promise<void> => {
     const lastEntry = getLastEntry();
 
     // If same task as current, just restart timer (continue working)
@@ -46,6 +46,7 @@ export function setupIpcHandlers(): void {
       id: uuidv4(),
       task: taskName,
       startTime: now.toISOString(),
+      taskTypeIds: taskTypeIds?.length ? taskTypeIds : undefined,
     };
     addTaskEntry(newEntry);
 

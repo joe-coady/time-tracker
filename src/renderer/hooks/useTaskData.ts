@@ -31,8 +31,8 @@ export function useTaskData() {
     loadData();
   }, [loadData]);
 
-  const startTask = useCallback(async (taskName: string, durationMinutes: number) => {
-    await window.electronAPI.startTask(taskName, durationMinutes);
+  const startTask = useCallback(async (taskName: string, durationMinutes: number, taskTypeIds?: string[]) => {
+    await window.electronAPI.startTask(taskName, durationMinutes, taskTypeIds);
     await loadData();
   }, [loadData]);
 

@@ -108,17 +108,23 @@ export function getLastEntry(): TaskEntry | null {
   return tasks[tasks.length - 1];
 }
 
-export function getPreviousTaskNames(): { name: string; lastDuration: number }[] {
+export function getPreviousTaskNames(): { name: string; lastDuration: number; lastTaskTypeIds: string[] }[] {
   const tasks = readTasks();
-  const taskMap = new Map<string, number>();
-  // Get unique task names from non-completed tasks with their last duration, most recent first
+  const taskMap = new Map<string, { lastDuration: number; lastTaskTypeIds: string[] }>();
+  // Get unique task names from non-completed tasks with their last duration and tags, most recent first
   for (let i = tasks.length - 1; i >= 0; i--) {
     if (!tasks[i].completed && !taskMap.has(tasks[i].task)) {
-      // Default to 60 minutes if no explicit duration
-      taskMap.set(tasks[i].task, tasks[i].durationMinutes ?? 60);
+      taskMap.set(tasks[i].task, {
+        lastDuration: tasks[i].durationMinutes ?? 60,
+        lastTaskTypeIds: tasks[i].taskTypeIds ?? [],
+      });
     }
   }
-  return Array.from(taskMap.entries()).map(([name, lastDuration]) => ({ name, lastDuration }));
+  return Array.from(taskMap.entries()).map(([name, data]) => ({
+    name,
+    lastDuration: data.lastDuration,
+    lastTaskTypeIds: data.lastTaskTypeIds,
+  }));
 }
 
 // Task Types functions

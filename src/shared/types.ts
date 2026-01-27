@@ -44,12 +44,13 @@ export const DURATION_OPTIONS: { value: DurationOption; label: string }[] = [
 export interface PreviousTask {
   name: string;
   lastDuration: number;
+  lastTaskTypeIds: string[];
 }
 
 export interface ElectronAPI {
   getTasks: () => Promise<CalculatedTaskEntry[]>;
   getPreviousTaskNames: () => Promise<PreviousTask[]>;
-  startTask: (taskName: string, durationMinutes: number) => Promise<void>;
+  startTask: (taskName: string, durationMinutes: number, taskTypeIds?: string[]) => Promise<void>;
   updateEntry: (id: string, updates: Partial<Pick<TaskEntry, 'task' | 'durationMinutes' | 'notes' | 'completed' | 'taskTypeIds'>>) => Promise<void>;
   deleteEntry: (id: string) => Promise<void>;
   getCurrentState: () => Promise<CurrentState>;

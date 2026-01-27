@@ -4,7 +4,7 @@ import { PreviousTask } from '../../shared/types';
 interface PreviousTasksProps {
   tasks: PreviousTask[];
   selectedIndex: number;
-  onSelect: (task: string, duration: number) => void;
+  onSelect: (task: string, duration: number, taskTypeIds: string[]) => void;
 }
 
 function formatDuration(minutes: number): string {
@@ -37,7 +37,7 @@ function PreviousTasks({ tasks, selectedIndex, onSelect }: PreviousTasksProps) {
           <div
             key={task.name}
             className={`previous-task-item ${index === selectedIndex ? 'selected' : ''}`}
-            onClick={() => onSelect(task.name, task.lastDuration)}
+            onClick={() => onSelect(task.name, task.lastDuration, task.lastTaskTypeIds)}
           >
             <span className="previous-task-name">{task.name}</span>
             <span className="previous-task-duration">{formatDuration(task.lastDuration)}</span>

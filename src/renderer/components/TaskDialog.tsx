@@ -1,13 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTaskData } from '../hooks/useTaskData';
+import { useTaskTypes } from '../hooks/useTaskTypes';
 import TaskInput from './TaskInput';
 import DurationPicker from './DurationPicker';
 import PreviousTasks from './PreviousTasks';
+import TaskTypeSelector from './TaskTypeSelector';
 
 function TaskDialog() {
   const { previousTasks, currentState, loading, startTask, refresh } = useTaskData();
+  const { taskTypes, addTaskType, deleteTaskType } = useTaskTypes();
   const [taskName, setTaskName] = useState('');
   const [duration, setDuration] = useState<number>(60);
+  const [selectedTaskTypeIds, setSelectedTaskTypeIds] = useState<string[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -21,10 +25,11 @@ function TaskDialog() {
   useEffect(() => {
     if (currentState.currentTask) {
       setTaskName(currentState.currentTask);
-      // Also set the duration from the matching task if found
+      // Also set the duration and tags from the matching task if found
       const match = previousTasks.find(t => t.name === currentState.currentTask);
       if (match) {
         setDuration(match.lastDuration);
+        setSelectedTaskTypeIds(match.lastTaskTypeIds);
       }
     }
   }, [currentState.currentTask, previousTasks]);
@@ -51,7 +56,7 @@ function TaskDialog() {
 
     setIsSubmitting(true);
     try {
-      await startTask(taskName.trim(), duration);
+      await startTask(taskName.trim(), duration, selectedTaskTypeIds);
     } catch (error) {
       console.error('Failed to start task:', error);
     } finally {
@@ -71,6 +76,7 @@ function TaskDialog() {
         const task = filteredTasks[selectedIndex];
         setTaskName(task.name);
         setDuration(task.lastDuration);
+        setSelectedTaskTypeIds(task.lastTaskTypeIds);
         setSelectedIndex(-1);
       } else {
         handleSubmit();
@@ -83,20 +89,33 @@ function TaskDialog() {
         const task = filteredTasks[selectedIndex];
         setTaskName(task.name);
         setDuration(task.lastDuration);
+        setSelectedTaskTypeIds(task.lastTaskTypeIds);
         setSelectedIndex(-1);
       } else if (filteredTasks.length === 1) {
         const task = filteredTasks[0];
         setTaskName(task.name);
         setDuration(task.lastDuration);
+        setSelectedTaskTypeIds(task.lastTaskTypeIds);
       }
     }
   };
 
-  const handleTaskSelect = (name: string, taskDuration: number) => {
+  const handleTaskSelect = (name: string, taskDuration: number, taskTypeIds: string[]) => {
     setTaskName(name);
     setDuration(taskDuration);
+    setSelectedTaskTypeIds(taskTypeIds);
     setSelectedIndex(-1);
     inputRef.current?.focus();
+  };
+
+  // Reset tags when typing a new task name that doesn't match a previous task
+  const handleTaskNameChange = (name: string) => {
+    setTaskName(name);
+    // If the new name doesn't exactly match any previous task, reset tags
+    const exactMatch = previousTasks.find(t => t.name === name);
+    if (!exactMatch) {
+      setSelectedTaskTypeIds([]);
+    }
   };
 
   if (loading) {
@@ -129,7 +148,7 @@ function TaskDialog() {
       <TaskInput
         ref={inputRef}
         value={taskName}
-        onChange={setTaskName}
+        onChange={handleTaskNameChange}
         placeholder="Enter task name..."
       />
 
@@ -137,6 +156,14 @@ function TaskDialog() {
         tasks={filteredTasks}
         selectedIndex={selectedIndex}
         onSelect={handleTaskSelect}
+      />
+
+      <TaskTypeSelector
+        taskTypes={taskTypes}
+        selectedTypeIds={selectedTaskTypeIds}
+        onSelectionChange={setSelectedTaskTypeIds}
+        onCreateType={addTaskType}
+        onDeleteType={deleteTaskType}
       />
 
       <DurationPicker value={duration} onChange={setDuration} />

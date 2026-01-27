@@ -35,17 +35,19 @@ function getContextMenu(): Menu {
       label: 'What are you working on?',
       click: () => showDialogWindow(),
     },
+    { type: 'separator' },
     {
       label: 'Edit entries',
       click: () => showEditWindow(),
     },
     {
-      label: 'Export view',
-      click: () => showExportWindow(),
-    },
-    {
       label: 'Manage task types',
       click: () => showTaskTypesWindow(),
+    },
+    { type: 'separator' },
+    {
+      label: 'Export view',
+      click: () => showExportWindow(),
     },
     { type: 'separator' },
     {
