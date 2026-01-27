@@ -5,6 +5,7 @@ import * as fs from 'fs';
 let dialogWindow: BrowserWindow | null = null;
 let editWindow: BrowserWindow | null = null;
 let taskTypesWindow: BrowserWindow | null = null;
+let exportWindow: BrowserWindow | null = null;
 
 // Check if we're in dev mode by seeing if the built renderer exists
 const rendererPath = path.join(__dirname, '../../renderer/index.html');
@@ -166,4 +167,46 @@ export function createTaskTypesWindow(): BrowserWindow {
 
 export function showTaskTypesWindow(): void {
   createTaskTypesWindow();
+}
+
+export function createExportWindow(): BrowserWindow {
+  if (exportWindow && !exportWindow.isDestroyed()) {
+    exportWindow.show();
+    exportWindow.focus();
+    return exportWindow;
+  }
+
+  const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
+  const windowWidth = Math.round(screenWidth * 0.8);
+  const windowHeight = Math.round(screenHeight * 0.8);
+
+  exportWindow = new BrowserWindow({
+    width: windowWidth,
+    height: windowHeight,
+    x: Math.round((screenWidth - windowWidth) / 2),
+    y: Math.round((screenHeight - windowHeight) / 2),
+    title: 'Export View',
+    show: false,
+    webPreferences: {
+      preload: getPreloadPath(),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+
+  exportWindow.loadURL(getRendererUrl('/export'));
+
+  exportWindow.once('ready-to-show', () => {
+    exportWindow?.show();
+  });
+
+  exportWindow.on('closed', () => {
+    exportWindow = null;
+  });
+
+  return exportWindow;
+}
+
+export function showExportWindow(): void {
+  createExportWindow();
 }

@@ -17,6 +17,7 @@ export interface TasksData {
   version: 1;
   taskTypes: TaskType[];
   entries: TaskEntry[];
+  exportFilterTagIds?: string[];
 }
 
 export interface CalculatedTaskEntry extends TaskEntry {
@@ -61,6 +62,8 @@ export interface ElectronAPI {
   addTaskType: (name: string) => Promise<TaskType>;
   updateTaskType: (id: string, name: string) => Promise<void>;
   deleteTaskType: (id: string) => Promise<void>;
+  getExportFilterTagIds: () => Promise<string[]>;
+  setExportFilterTagIds: (tagIds: string[]) => Promise<void>;
 }
 
 declare global {

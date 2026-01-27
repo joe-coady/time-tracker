@@ -164,5 +164,20 @@ export function deleteTaskType(id: string): void {
       }
     }
   }
+  // Also remove from export filter if present
+  if (data.exportFilterTagIds) {
+    data.exportFilterTagIds = data.exportFilterTagIds.filter(typeId => typeId !== id);
+  }
+  writeTasksData(data);
+}
+
+// Export filter functions
+export function getExportFilterTagIds(): string[] {
+  return readTasksData().exportFilterTagIds || [];
+}
+
+export function setExportFilterTagIds(tagIds: string[]): void {
+  const data = readTasksData();
+  data.exportFilterTagIds = tagIds;
   writeTasksData(data);
 }

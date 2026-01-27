@@ -40,6 +40,11 @@ const electronAPI: ElectronAPI = {
     ipcRenderer.invoke('update-task-type', id, name),
 
   deleteTaskType: (id: string): Promise<void> => ipcRenderer.invoke('delete-task-type', id),
+
+  getExportFilterTagIds: (): Promise<string[]> => ipcRenderer.invoke('get-export-filter-tag-ids'),
+
+  setExportFilterTagIds: (tagIds: string[]): Promise<void> =>
+    ipcRenderer.invoke('set-export-filter-tag-ids', tagIds),
 };
 
 contextBridge.exposeInMainWorld('electronAPI', electronAPI);

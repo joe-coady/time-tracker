@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import TaskDialog from './components/TaskDialog';
 import EditView from './components/EditView';
 import TaskTypesView from './components/TaskTypesView';
+import ExportView from './components/ExportView';
 
-type View = 'dialog' | 'edit' | 'task-types';
+type View = 'dialog' | 'edit' | 'task-types' | 'export';
 
 function App() {
   const [view, setView] = useState<View>('dialog');
@@ -16,6 +17,8 @@ function App() {
         setView('edit');
       } else if (hash === '#/task-types') {
         setView('task-types');
+      } else if (hash === '#/export') {
+        setView('export');
       } else {
         setView('dialog');
       }
@@ -28,6 +31,7 @@ function App() {
 
   if (view === 'edit') return <EditView />;
   if (view === 'task-types') return <TaskTypesView />;
+  if (view === 'export') return <ExportView />;
   return <TaskDialog />;
 }
 

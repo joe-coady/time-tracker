@@ -759,3 +759,193 @@ input.entry-duration.ongoing {
   width: auto;
   padding: 10px 20px;
 }
+
+/* Export View styles */
+.export-container {
+  padding: 20px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.export-filter-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 12px;
+  background-color: #f5f5f5;
+  border-radius: 6px;
+}
+
+.export-filter-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #666;
+  white-space: nowrap;
+}
+
+.export-tag-selector {
+  flex: 1;
+  margin-left: 0;
+}
+
+.export-tag-selector .selected-types {
+  min-width: 200px;
+}
+
+.export-list {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.export-groups {
+  padding: 8px 0 8px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Primary group container */
+.export-primary-group {
+  background-color: #fafafa;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.export-primary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 10px;
+  margin-bottom: 12px;
+  border-bottom: 2px solid #ddd;
+}
+
+.export-primary-tags {
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
+}
+
+.export-primary-total {
+  font-size: 12px;
+  font-weight: 500;
+  color: #666;
+}
+
+/* Subgroups container */
+.export-subgroups {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Individual subgroup card */
+.export-subgroup {
+  background-color: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 12px;
+}
+
+.export-subgroup-header {
+  font-size: 13px;
+  font-weight: 600;
+  color: #555;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.export-group-count {
+  font-size: 12px;
+  font-weight: 400;
+  color: #888;
+}
+
+/* Legacy styles kept for compatibility */
+.export-group {
+  background-color: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.export-group-header {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.export-field {
+  margin-bottom: 12px;
+}
+
+.export-field:last-child {
+  margin-bottom: 0;
+}
+
+.export-field-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.export-field-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.export-field-value {
+  padding: 8px 10px;
+  background-color: #f9f9f9;
+  border: 1px solid #e8e8e8;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #333;
+  min-height: 32px;
+}
+
+.export-field-value.export-description {
+  white-space: pre-wrap;
+  font-family: inherit;
+  max-height: 200px;
+  overflow-y: auto;
+  margin: 0;
+}
+
+.copy-button {
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #007aff;
+  background: transparent;
+  border: 1px solid #007aff;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.copy-button:hover {
+  background-color: #007aff;
+  color: #fff;
+}
+
+.copy-button:active {
+  transform: scale(0.95);
+}

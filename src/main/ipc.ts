@@ -11,6 +11,8 @@ import {
   addTaskType,
   updateTaskType,
   deleteTaskType,
+  getExportFilterTagIds,
+  setExportFilterTagIds,
 } from './storage';
 import { startTimer, getElapsedMinutes } from './timer';
 import { closeDialogWindow } from './windows';
@@ -104,5 +106,14 @@ export function setupIpcHandlers(): void {
 
   ipcMain.handle('delete-task-type', async (_event, id: string): Promise<void> => {
     deleteTaskType(id);
+  });
+
+  // Export filter handlers
+  ipcMain.handle('get-export-filter-tag-ids', async (): Promise<string[]> => {
+    return getExportFilterTagIds();
+  });
+
+  ipcMain.handle('set-export-filter-tag-ids', async (_event, tagIds: string[]): Promise<void> => {
+    setExportFilterTagIds(tagIds);
   });
 }
