@@ -1,7 +1,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import { TaskEntry } from '../shared/types';
+import { v4 as uuidv4 } from 'uuid';
+import { TaskEntry, TaskType, TasksData } from '../shared/types';
 
 const TASKS_FILE_PATH = path.join(os.homedir(), 'notes', 'general', 'tasks.json');
 
@@ -12,32 +13,59 @@ function ensureDirectoryExists(filePath: string): void {
   }
 }
 
-export function readTasks(): TaskEntry[] {
+function migrateData(parsed: unknown): TasksData {
+  // If it's an array (old format), migrate to new format
+  if (Array.isArray(parsed)) {
+    return {
+      version: 1,
+      taskTypes: [],
+      entries: parsed as TaskEntry[],
+    };
+  }
+  // If it's already the new format, return as-is
+  if (parsed && typeof parsed === 'object' && 'version' in parsed) {
+    return parsed as TasksData;
+  }
+  // Fallback to empty data
+  return {
+    version: 1,
+    taskTypes: [],
+    entries: [],
+  };
+}
+
+function readTasksData(): TasksData {
   try {
     if (!fs.existsSync(TASKS_FILE_PATH)) {
-      return [];
+      return { version: 1, taskTypes: [], entries: [] };
     }
     const content = fs.readFileSync(TASKS_FILE_PATH, 'utf-8');
     const parsed = JSON.parse(content);
-    if (!Array.isArray(parsed)) {
-      console.error('tasks.json is not an array, returning empty array');
-      return [];
-    }
-    return parsed;
+    return migrateData(parsed);
   } catch (error) {
     console.error('Error reading tasks.json:', error);
-    return [];
+    return { version: 1, taskTypes: [], entries: [] };
   }
 }
 
-export function writeTasks(tasks: TaskEntry[]): void {
+function writeTasksData(data: TasksData): void {
   try {
     ensureDirectoryExists(TASKS_FILE_PATH);
-    fs.writeFileSync(TASKS_FILE_PATH, JSON.stringify(tasks, null, 2), 'utf-8');
+    fs.writeFileSync(TASKS_FILE_PATH, JSON.stringify(data, null, 2), 'utf-8');
   } catch (error) {
     console.error('Error writing tasks.json:', error);
     throw error;
   }
+}
+
+export function readTasks(): TaskEntry[] {
+  return readTasksData().entries;
+}
+
+export function writeTasks(tasks: TaskEntry[]): void {
+  const data = readTasksData();
+  data.entries = tasks;
+  writeTasksData(data);
 }
 
 export function addTaskEntry(entry: TaskEntry): void {
@@ -46,7 +74,7 @@ export function addTaskEntry(entry: TaskEntry): void {
   writeTasks(tasks);
 }
 
-export function updateTaskEntry(id: string, updates: Partial<Pick<TaskEntry, 'task' | 'durationMinutes' | 'notes' | 'completed'>>): void {
+export function updateTaskEntry(id: string, updates: Partial<Pick<TaskEntry, 'task' | 'durationMinutes' | 'notes' | 'completed' | 'taskTypeIds'>>): void {
   const tasks = readTasks();
   const index = tasks.findIndex(t => t.id === id);
   if (index === -1) {
@@ -91,4 +119,50 @@ export function getPreviousTaskNames(): { name: string; lastDuration: number }[]
     }
   }
   return Array.from(taskMap.entries()).map(([name, lastDuration]) => ({ name, lastDuration }));
+}
+
+// Task Types functions
+export function readTaskTypes(): TaskType[] {
+  return readTasksData().taskTypes;
+}
+
+export function addTaskType(name: string): TaskType {
+  const data = readTasksData();
+  const newType: TaskType = {
+    id: uuidv4(),
+    name,
+  };
+  data.taskTypes.push(newType);
+  writeTasksData(data);
+  return newType;
+}
+
+export function updateTaskType(id: string, name: string): void {
+  const data = readTasksData();
+  const index = data.taskTypes.findIndex(t => t.id === id);
+  if (index === -1) {
+    throw new Error(`TaskType with id ${id} not found`);
+  }
+  data.taskTypes[index].name = name;
+  writeTasksData(data);
+}
+
+export function deleteTaskType(id: string): void {
+  const data = readTasksData();
+  const index = data.taskTypes.findIndex(t => t.id === id);
+  if (index === -1) {
+    throw new Error(`TaskType with id ${id} not found`);
+  }
+  // Remove the task type
+  data.taskTypes.splice(index, 1);
+  // Remove this type ID from all entries that reference it
+  for (const entry of data.entries) {
+    if (entry.taskTypeIds) {
+      entry.taskTypeIds = entry.taskTypeIds.filter(typeId => typeId !== id);
+      if (entry.taskTypeIds.length === 0) {
+        delete entry.taskTypeIds;
+      }
+    }
+  }
+  writeTasksData(data);
 }

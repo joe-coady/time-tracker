@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import TaskDialog from './components/TaskDialog';
 import EditView from './components/EditView';
+import TaskTypesView from './components/TaskTypesView';
 
-type View = 'dialog' | 'edit';
+type View = 'dialog' | 'edit' | 'task-types';
 
 function App() {
   const [view, setView] = useState<View>('dialog');
@@ -13,6 +14,8 @@ function App() {
       const hash = window.location.hash;
       if (hash === '#/edit') {
         setView('edit');
+      } else if (hash === '#/task-types') {
+        setView('task-types');
       } else {
         setView('dialog');
       }
@@ -23,7 +26,9 @@ function App() {
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
-  return view === 'edit' ? <EditView /> : <TaskDialog />;
+  if (view === 'edit') return <EditView />;
+  if (view === 'task-types') return <TaskTypesView />;
+  return <TaskDialog />;
 }
 
 export default App;

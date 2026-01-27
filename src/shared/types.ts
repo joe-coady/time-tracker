@@ -1,3 +1,8 @@
+export interface TaskType {
+  id: string;
+  name: string;
+}
+
 export interface TaskEntry {
   id: string;
   task: string;
@@ -5,6 +10,13 @@ export interface TaskEntry {
   durationMinutes?: number; // Explicit duration override (optional)
   notes?: string;
   completed?: boolean;
+  taskTypeIds?: string[]; // Optional array of TaskType IDs
+}
+
+export interface TasksData {
+  version: 1;
+  taskTypes: TaskType[];
+  entries: TaskEntry[];
 }
 
 export interface CalculatedTaskEntry extends TaskEntry {
@@ -37,7 +49,7 @@ export interface ElectronAPI {
   getTasks: () => Promise<CalculatedTaskEntry[]>;
   getPreviousTaskNames: () => Promise<PreviousTask[]>;
   startTask: (taskName: string, durationMinutes: number) => Promise<void>;
-  updateEntry: (id: string, updates: Partial<Pick<TaskEntry, 'task' | 'durationMinutes' | 'notes' | 'completed'>>) => Promise<void>;
+  updateEntry: (id: string, updates: Partial<Pick<TaskEntry, 'task' | 'durationMinutes' | 'notes' | 'completed' | 'taskTypeIds'>>) => Promise<void>;
   deleteEntry: (id: string) => Promise<void>;
   getCurrentState: () => Promise<CurrentState>;
   closeDialog: () => Promise<void>;
@@ -45,6 +57,10 @@ export interface ElectronAPI {
   clearExplicitDuration: (id: string) => Promise<void>;
   onTimerExpired: (callback: () => void) => void;
   removeTimerExpiredListener: () => void;
+  getTaskTypes: () => Promise<TaskType[]>;
+  addTaskType: (name: string) => Promise<TaskType>;
+  updateTaskType: (id: string, name: string) => Promise<void>;
+  deleteTaskType: (id: string) => Promise<void>;
 }
 
 declare global {

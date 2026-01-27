@@ -1,8 +1,10 @@
 import React, { useState, useMemo } from 'react';
 import { useTaskData } from '../hooks/useTaskData';
+import { useTaskTypes } from '../hooks/useTaskTypes';
 import { useElapsedTime, formatElapsedTime } from '../hooks/useElapsedTime';
 import { CalculatedTaskEntry } from '../../shared/types';
 import { formatDuration, calculateTotalMinutes } from '../../shared/durationUtils';
+import TaskTypeSelector from './TaskTypeSelector';
 
 interface GroupedTasks {
   [date: string]: CalculatedTaskEntry[];
@@ -10,6 +12,7 @@ interface GroupedTasks {
 
 function EditView() {
   const { tasks, loading, updateEntry, deleteEntry, setExplicitDuration, clearExplicitDuration } = useTaskData();
+  const { taskTypes, addTaskType, deleteTaskType } = useTaskTypes();
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [editingNotesId, setEditingNotesId] = useState<string | null>(null);
   const [editingDurationId, setEditingDurationId] = useState<string | null>(null);
@@ -142,6 +145,10 @@ function EditView() {
 
   const handleToggleCompleted = async (id: string, completed: boolean) => {
     await updateEntry(id, { completed });
+  };
+
+  const handleTaskTypesChange = async (id: string, taskTypeIds: string[]) => {
+    await updateEntry(id, { taskTypeIds: taskTypeIds.length > 0 ? taskTypeIds : undefined });
   };
 
   const handleDelete = async (id: string) => {
@@ -316,6 +323,13 @@ function EditView() {
                               </button>
                             )}
                           </div>
+                          <TaskTypeSelector
+                            taskTypes={taskTypes}
+                            selectedTypeIds={entry.taskTypeIds || []}
+                            onSelectionChange={typeIds => handleTaskTypesChange(entry.id, typeIds)}
+                            onCreateType={addTaskType}
+                            onDeleteType={deleteTaskType}
+                          />
                           <button
                             className={`notes-toggle ${entry.notes ? 'has-notes' : ''}`}
                             onClick={() => setEditingNotesId(editingNotesId === entry.id ? null : entry.id)}

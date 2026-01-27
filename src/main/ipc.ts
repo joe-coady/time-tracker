@@ -7,11 +7,15 @@ import {
   updateTaskEntry,
   deleteTaskEntry,
   getLastEntry,
+  readTaskTypes,
+  addTaskType,
+  updateTaskType,
+  deleteTaskType,
 } from './storage';
 import { startTimer, getElapsedMinutes } from './timer';
 import { closeDialogWindow } from './windows';
 import { updateTrayMenu } from './tray';
-import { TaskEntry, CalculatedTaskEntry, CurrentState } from '../shared/types';
+import { TaskEntry, CalculatedTaskEntry, CurrentState, TaskType } from '../shared/types';
 import { calculateDurations } from '../shared/durationUtils';
 
 export function setupIpcHandlers(): void {
@@ -55,7 +59,7 @@ export function setupIpcHandlers(): void {
 
   ipcMain.handle(
     'update-entry',
-    async (_event, id: string, updates: Partial<Pick<TaskEntry, 'task' | 'durationMinutes' | 'notes' | 'completed'>>): Promise<void> => {
+    async (_event, id: string, updates: Partial<Pick<TaskEntry, 'task' | 'durationMinutes' | 'notes' | 'completed' | 'taskTypeIds'>>): Promise<void> => {
       updateTaskEntry(id, updates);
     }
   );
@@ -83,5 +87,22 @@ export function setupIpcHandlers(): void {
   ipcMain.handle('clear-explicit-duration', async (_event, id: string): Promise<void> => {
     // Remove the explicit duration by setting it to undefined
     updateTaskEntry(id, { durationMinutes: undefined });
+  });
+
+  // Task Types handlers
+  ipcMain.handle('get-task-types', async (): Promise<TaskType[]> => {
+    return readTaskTypes();
+  });
+
+  ipcMain.handle('add-task-type', async (_event, name: string): Promise<TaskType> => {
+    return addTaskType(name);
+  });
+
+  ipcMain.handle('update-task-type', async (_event, id: string, name: string): Promise<void> => {
+    updateTaskType(id, name);
+  });
+
+  ipcMain.handle('delete-task-type', async (_event, id: string): Promise<void> => {
+    deleteTaskType(id);
   });
 }
