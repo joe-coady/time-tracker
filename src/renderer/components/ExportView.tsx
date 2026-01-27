@@ -375,6 +375,12 @@ function ExportView() {
                     <div key={group.tagKey} className="export-primary-group">
                       <div className="export-primary-header">
                         <span className="export-primary-tags">{group.tagNames.join(', ')}</span>
+                        <button
+                          className="copy-button"
+                          onClick={() => copyToClipboard(group.tagNames.join(', '), `${date}-${group.tagKey}-primary`)}
+                        >
+                          {copiedField === `${date}-${group.tagKey}-primary` ? 'Copied!' : 'Copy'}
+                        </button>
                         <span className="export-primary-total">
                           {group.subgroups.reduce((sum, sg) => sum + sg.entries.length, 0)} entries · {formatDuration(group.totalMinutes)}
                         </span>
@@ -390,9 +396,13 @@ function ExportView() {
                           return (
                             <div key={subgroup.remainderKey} className="export-subgroup">
                               <div className="export-subgroup-header">
-                                {subgroup.remainderTagNames.length > 0
-                                  ? subgroup.remainderTagNames.join(', ')
-                                  : '(none)'}
+                                <span className="export-subgroup-tags">{group.tagNames.join(', ')}</span>
+                                <button
+                                  className="copy-button"
+                                  onClick={() => copyToClipboard(group.tagNames.join(', '), `${subgroupId}-group`)}
+                                >
+                                  {copiedField === `${subgroupId}-group` ? 'Copied!' : 'Copy'}
+                                </button>
                                 <span className="export-group-count">
                                   ({subgroup.entries.length} entries)
                                 </span>

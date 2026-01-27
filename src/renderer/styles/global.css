@@ -816,8 +816,8 @@ input.entry-duration.ongoing {
 
 .export-primary-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 10px;
   padding-bottom: 10px;
   margin-bottom: 12px;
   border-bottom: 2px solid #ddd;
@@ -833,6 +833,7 @@ input.entry-duration.ongoing {
   font-size: 12px;
   font-weight: 500;
   color: #666;
+  margin-left: auto;
 }
 
 /* Subgroups container */
@@ -860,6 +861,14 @@ input.entry-duration.ongoing {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.export-subgroup-tags {
+  color: #333;
+}
+
+.export-subgroup-header .export-group-count {
+  margin-left: auto;
 }
 
 .export-group-count {
