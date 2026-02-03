@@ -523,6 +523,11 @@ input.entry-duration.ongoing {
   margin-left: 8px;
 }
 
+.dialog-container > .task-type-selector {
+  margin-left: 0;
+  margin-bottom: 12px;
+}
+
 .selected-types {
   display: flex;
   flex-wrap: wrap;
@@ -957,4 +962,26 @@ input.entry-duration.ongoing {
 
 .copy-button:active {
   transform: scale(0.95);
+}
+
+/* Dialog notes input */
+.dialog-notes-input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  resize: none;
+  outline: none;
+  margin-bottom: 12px;
+  transition: border-color 0.2s;
+}
+
+.dialog-notes-input:focus {
+  border-color: #007aff;
+}
+
+.dialog-notes-input::placeholder {
+  color: #999;
 }

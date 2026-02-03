@@ -14,6 +14,7 @@ function TaskDialog() {
   const [selectedTaskTypeIds, setSelectedTaskTypeIds] = useState<string[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [notes, setNotes] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Filter previous tasks based on input
@@ -56,7 +57,7 @@ function TaskDialog() {
 
     setIsSubmitting(true);
     try {
-      await startTask(taskName.trim(), duration, selectedTaskTypeIds);
+      await startTask(taskName.trim(), duration, selectedTaskTypeIds, notes);
     } catch (error) {
       console.error('Failed to start task:', error);
     } finally {
@@ -78,6 +79,7 @@ function TaskDialog() {
         setDuration(task.lastDuration);
         setSelectedTaskTypeIds(task.lastTaskTypeIds);
         setSelectedIndex(-1);
+        setNotes('');
       } else {
         handleSubmit();
       }
@@ -91,11 +93,13 @@ function TaskDialog() {
         setDuration(task.lastDuration);
         setSelectedTaskTypeIds(task.lastTaskTypeIds);
         setSelectedIndex(-1);
+        setNotes('');
       } else if (filteredTasks.length === 1) {
         const task = filteredTasks[0];
         setTaskName(task.name);
         setDuration(task.lastDuration);
         setSelectedTaskTypeIds(task.lastTaskTypeIds);
+        setNotes('');
       }
     }
   };
@@ -105,6 +109,7 @@ function TaskDialog() {
     setDuration(taskDuration);
     setSelectedTaskTypeIds(taskTypeIds);
     setSelectedIndex(-1);
+    setNotes('');
     inputRef.current?.focus();
   };
 
@@ -164,6 +169,14 @@ function TaskDialog() {
         onSelectionChange={setSelectedTaskTypeIds}
         onCreateType={addTaskType}
         onDeleteType={deleteTaskType}
+      />
+
+      <textarea
+        className="dialog-notes-input"
+        value={notes}
+        onChange={(e) => setNotes(e.target.value)}
+        placeholder="Why are you switching to this task? (optional)"
+        rows={2}
       />
 
       <DurationPicker value={duration} onChange={setDuration} />

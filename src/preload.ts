@@ -6,8 +6,8 @@ const electronAPI: ElectronAPI = {
 
   getPreviousTaskNames: (): Promise<PreviousTask[]> => ipcRenderer.invoke('get-previous-task-names'),
 
-  startTask: (taskName: string, durationMinutes: number, taskTypeIds?: string[]): Promise<void> =>
-    ipcRenderer.invoke('start-task', taskName, durationMinutes, taskTypeIds),
+  startTask: (taskName: string, durationMinutes: number, taskTypeIds?: string[], notes?: string): Promise<void> =>
+    ipcRenderer.invoke('start-task', taskName, durationMinutes, taskTypeIds, notes),
 
   updateEntry: (id: string, updates: Partial<Pick<TaskEntry, 'task' | 'durationMinutes' | 'notes' | 'completed' | 'taskTypeIds'>>): Promise<void> =>
     ipcRenderer.invoke('update-entry', id, updates),
