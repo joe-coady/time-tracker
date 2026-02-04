@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { v4 as uuidv4 } from 'uuid';
-import { TaskEntry, TaskType, TasksData } from '../shared/types';
+import { TaskEntry, TaskType, TasksData, DailyNote } from '../shared/types';
 
 const TASKS_FILE_PATH = path.join(os.homedir(), 'notes', 'general', 'tasks.json');
 
@@ -186,4 +186,73 @@ export function setExportFilterTagIds(tagIds: string[]): void {
   const data = readTasksData();
   data.exportFilterTagIds = tagIds;
   writeTasksData(data);
+}
+
+// Daily Notes functions
+function getTodayDateString(): string {
+  const now = new Date();
+  return now.toISOString().split('T')[0];
+}
+
+export function readDailyNotes(): DailyNote[] {
+  return readTasksData().dailyNotes || [];
+}
+
+export function getDailyNoteForDate(date: string): DailyNote | null {
+  const notes = readDailyNotes();
+  const existingNote = notes.find(n => n.date === date);
+
+  if (existingNote) {
+    return existingNote;
+  }
+
+  // If requesting today's note and it doesn't exist, create it by copying from previous day
+  const today = getTodayDateString();
+  if (date === today) {
+    // Find the most recent previous note
+    const sortedNotes = [...notes].sort((a, b) => b.date.localeCompare(a.date));
+    const previousNote = sortedNotes.find(n => n.date < today);
+    const content = previousNote?.content || '';
+
+    // Create today's note
+    const newNote = upsertDailyNote(today, content);
+    return newNote;
+  }
+
+  return null;
+}
+
+export function upsertDailyNote(date: string, content: string): DailyNote {
+  const data = readTasksData();
+  if (!data.dailyNotes) {
+    data.dailyNotes = [];
+  }
+
+  const existingIndex = data.dailyNotes.findIndex(n => n.date === date);
+  const now = new Date().toISOString();
+
+  if (existingIndex >= 0) {
+    // Update existing note
+    data.dailyNotes[existingIndex].content = content;
+    data.dailyNotes[existingIndex].updatedAt = now;
+    writeTasksData(data);
+    return data.dailyNotes[existingIndex];
+  } else {
+    // Create new note
+    const newNote: DailyNote = {
+      id: uuidv4(),
+      date,
+      content,
+      createdAt: now,
+      updatedAt: now,
+    };
+    data.dailyNotes.push(newNote);
+    writeTasksData(data);
+    return newNote;
+  }
+}
+
+export function getAllNoteDates(): string[] {
+  const notes = readDailyNotes();
+  return notes.map(n => n.date).sort((a, b) => b.localeCompare(a)); // Most recent first
 }

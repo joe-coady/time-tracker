@@ -6,6 +6,7 @@ let dialogWindow: BrowserWindow | null = null;
 let editWindow: BrowserWindow | null = null;
 let taskTypesWindow: BrowserWindow | null = null;
 let exportWindow: BrowserWindow | null = null;
+let notesWindow: BrowserWindow | null = null;
 
 // Check if we're in dev mode by seeing if the built renderer exists
 const rendererPath = path.join(__dirname, '../../renderer/index.html');
@@ -209,4 +210,46 @@ export function createExportWindow(): BrowserWindow {
 
 export function showExportWindow(): void {
   createExportWindow();
+}
+
+export function createNotesWindow(): BrowserWindow {
+  if (notesWindow && !notesWindow.isDestroyed()) {
+    notesWindow.show();
+    notesWindow.focus();
+    return notesWindow;
+  }
+
+  const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
+  const windowWidth = Math.round(screenWidth * 0.8);
+  const windowHeight = Math.round(screenHeight * 0.8);
+
+  notesWindow = new BrowserWindow({
+    width: windowWidth,
+    height: windowHeight,
+    x: Math.round((screenWidth - windowWidth) / 2),
+    y: Math.round((screenHeight - windowHeight) / 2),
+    title: 'Daily Notes',
+    show: false,
+    webPreferences: {
+      preload: getPreloadPath(),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+
+  notesWindow.loadURL(getRendererUrl('/notes'));
+
+  notesWindow.once('ready-to-show', () => {
+    notesWindow?.show();
+  });
+
+  notesWindow.on('closed', () => {
+    notesWindow = null;
+  });
+
+  return notesWindow;
+}
+
+export function showNotesWindow(): void {
+  createNotesWindow();
 }

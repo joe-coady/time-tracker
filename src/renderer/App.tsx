@@ -3,8 +3,9 @@ import TaskDialog from './components/TaskDialog';
 import EditView from './components/EditView';
 import TaskTypesView from './components/TaskTypesView';
 import ExportView from './components/ExportView';
+import NotesView from './components/NotesView';
 
-type View = 'dialog' | 'edit' | 'task-types' | 'export';
+type View = 'dialog' | 'edit' | 'task-types' | 'export' | 'notes';
 
 function App() {
   const [view, setView] = useState<View>('dialog');
@@ -19,6 +20,8 @@ function App() {
         setView('task-types');
       } else if (hash === '#/export') {
         setView('export');
+      } else if (hash === '#/notes') {
+        setView('notes');
       } else {
         setView('dialog');
       }
@@ -32,6 +35,7 @@ function App() {
   if (view === 'edit') return <EditView />;
   if (view === 'task-types') return <TaskTypesView />;
   if (view === 'export') return <ExportView />;
+  if (view === 'notes') return <NotesView />;
   return <TaskDialog />;
 }
 

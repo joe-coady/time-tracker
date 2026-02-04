@@ -13,11 +13,14 @@ import {
   deleteTaskType,
   getExportFilterTagIds,
   setExportFilterTagIds,
+  getDailyNoteForDate,
+  upsertDailyNote,
+  getAllNoteDates,
 } from './storage';
 import { startTimer, getElapsedMinutes } from './timer';
 import { closeDialogWindow } from './windows';
 import { updateTrayMenu } from './tray';
-import { TaskEntry, CalculatedTaskEntry, CurrentState, TaskType } from '../shared/types';
+import { TaskEntry, CalculatedTaskEntry, CurrentState, TaskType, DailyNote } from '../shared/types';
 import { calculateDurations } from '../shared/durationUtils';
 
 export function setupIpcHandlers(): void {
@@ -117,5 +120,20 @@ export function setupIpcHandlers(): void {
 
   ipcMain.handle('set-export-filter-tag-ids', async (_event, tagIds: string[]): Promise<void> => {
     setExportFilterTagIds(tagIds);
+  });
+
+  // Daily Notes handlers
+  ipcMain.handle('get-daily-note', async (_event, date: string): Promise<DailyNote | null> => {
+    return getDailyNoteForDate(date);
+  });
+
+  ipcMain.handle('save-daily-note', async (_event, content: string): Promise<DailyNote> => {
+    // Only allow saving today's note
+    const today = new Date().toISOString().split('T')[0];
+    return upsertDailyNote(today, content);
+  });
+
+  ipcMain.handle('get-all-note-dates', async (): Promise<string[]> => {
+    return getAllNoteDates();
   });
 }

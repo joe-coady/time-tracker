@@ -3,6 +3,14 @@ export interface TaskType {
   name: string;
 }
 
+export interface DailyNote {
+  id: string;           // UUID
+  date: string;         // YYYY-MM-DD format (unique key)
+  content: string;      // The note text
+  createdAt: string;    // ISO timestamp
+  updatedAt: string;    // ISO timestamp
+}
+
 export interface TaskEntry {
   id: string;
   task: string;
@@ -17,6 +25,7 @@ export interface TasksData {
   version: 1;
   taskTypes: TaskType[];
   entries: TaskEntry[];
+  dailyNotes?: DailyNote[];
   exportFilterTagIds?: string[];
 }
 
@@ -65,6 +74,9 @@ export interface ElectronAPI {
   deleteTaskType: (id: string) => Promise<void>;
   getExportFilterTagIds: () => Promise<string[]>;
   setExportFilterTagIds: (tagIds: string[]) => Promise<void>;
+  getDailyNote: (date: string) => Promise<DailyNote | null>;
+  saveDailyNote: (content: string) => Promise<DailyNote>;
+  getAllNoteDates: () => Promise<string[]>;
 }
 
 declare global {

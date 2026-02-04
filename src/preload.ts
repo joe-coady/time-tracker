@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import { CalculatedTaskEntry, CurrentState, ElectronAPI, PreviousTask, TaskEntry, TaskType } from './shared/types';
+import { CalculatedTaskEntry, CurrentState, DailyNote, ElectronAPI, PreviousTask, TaskEntry, TaskType } from './shared/types';
 
 const electronAPI: ElectronAPI = {
   getTasks: (): Promise<CalculatedTaskEntry[]> => ipcRenderer.invoke('get-tasks'),
@@ -45,6 +45,15 @@ const electronAPI: ElectronAPI = {
 
   setExportFilterTagIds: (tagIds: string[]): Promise<void> =>
     ipcRenderer.invoke('set-export-filter-tag-ids', tagIds),
+
+  getDailyNote: (date: string): Promise<DailyNote | null> =>
+    ipcRenderer.invoke('get-daily-note', date),
+
+  saveDailyNote: (content: string): Promise<DailyNote> =>
+    ipcRenderer.invoke('save-daily-note', content),
+
+  getAllNoteDates: (): Promise<string[]> =>
+    ipcRenderer.invoke('get-all-note-dates'),
 };
 
 contextBridge.exposeInMainWorld('electronAPI', electronAPI);
