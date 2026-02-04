@@ -73,6 +73,10 @@ function TaskDialog() {
       e.preventDefault();
       setSelectedIndex(prev => Math.max(prev - 1, -1));
     } else if (e.key === 'Enter') {
+      // Allow Enter to create new lines in textarea
+      if ((e.target as HTMLElement).tagName === 'TEXTAREA') {
+        return; // Don't prevent default - let textarea handle the Enter
+      }
       if (selectedIndex >= 0 && filteredTasks[selectedIndex]) {
         const task = filteredTasks[selectedIndex];
         setTaskName(task.name);
