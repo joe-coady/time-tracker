@@ -203,7 +203,9 @@ export default function NotebookView() {
             ) : (
               <div className="notes-preview">
                 {content ? (
-                  <ReactMarkdown>{applyQuickLinks(content, quickLinkRules)}</ReactMarkdown>
+                  <ReactMarkdown components={{ a: ({ href, children }) => (
+                    <a href={href} onClick={(e) => { e.preventDefault(); if (href) window.electronAPI.openExternal(href); }}>{children}</a>
+                  ) }}>{applyQuickLinks(content, quickLinkRules)}</ReactMarkdown>
                 ) : (
                   <p className="notes-empty">No content</p>
                 )}

@@ -48,6 +48,7 @@ function getContextMenu(): Menu {
       label: 'Notebook',
       click: () => showNotebookWindow(),
     },
+    { type: 'separator' },
     {
       label: 'Manage task types',
       click: () => showTaskTypesWindow(),

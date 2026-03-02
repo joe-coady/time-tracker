@@ -99,6 +99,7 @@ export interface ElectronAPI {
   updateNotebookNote: (id: string, title: string, content: string) => Promise<Note>;
   deleteNotebookNote: (id: string) => Promise<void>;
   togglePinNotebookNote: (id: string) => Promise<Note>;
+  openExternal: (url: string) => Promise<void>;
   getQuickLinkRules: () => Promise<QuickLinkRule[]>;
   addQuickLinkRule: (linkPattern: string, linkTarget: string) => Promise<QuickLinkRule>;
   deleteQuickLinkRule: (id: string) => Promise<void>;

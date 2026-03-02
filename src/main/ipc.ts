@@ -1,4 +1,4 @@
-import { ipcMain } from 'electron';
+import { ipcMain, shell } from 'electron';
 import { v4 as uuidv4 } from 'uuid';
 import {
   readTasks,
@@ -164,6 +164,10 @@ export function setupIpcHandlers(): void {
 
   ipcMain.handle('toggle-pin-notebook-note', async (_event, id: string): Promise<Note> => {
     return togglePinNotebookNote(id);
+  });
+
+  ipcMain.handle('open-external', async (_event, url: string): Promise<void> => {
+    await shell.openExternal(url);
   });
 
   // Quick Link Rules handlers

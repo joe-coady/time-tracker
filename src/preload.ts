@@ -70,6 +70,8 @@ const electronAPI: ElectronAPI = {
   togglePinNotebookNote: (id: string): Promise<Note> =>
     ipcRenderer.invoke('toggle-pin-notebook-note', id),
 
+  openExternal: (url: string): Promise<void> => ipcRenderer.invoke('open-external', url),
+
   getQuickLinkRules: (): Promise<QuickLinkRule[]> =>
     ipcRenderer.invoke('get-quick-link-rules'),
 
