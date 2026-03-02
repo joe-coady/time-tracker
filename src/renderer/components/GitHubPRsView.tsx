@@ -243,57 +243,87 @@ function GitHubPRsView() {
               </div>
               {!collapsed && (
                 <div className="date-entries">
-                  {reposPrs.map(pr => (
-                    <div className="github-pr-item" key={`${pr.repoFullName}#${pr.number}`}>
-                      <span className="github-pr-number">#{pr.number}</span>
-                      <a
-                        className="github-pr-title"
-                        href="#"
-                        onClick={e => { e.preventDefault(); window.electronAPI.openExternal(pr.htmlUrl); }}
-                        title={pr.title}
-                      >
-                        {pr.title}
-                      </a>
-                      {getTicketKeys(pr.title).map(key => {
-                        const ts = ticketStatuses.get(key);
-                        if (ts) {
-                          return (
-                            <span
-                              key={key}
-                              className={`jira-badge clickable status-${ts.statusCategory}`}
-                              title={`${key}: ${ts.status}`}
-                              onClick={() => window.electronAPI.openExternal(`${jiraConfig!.baseUrl}/browse/${key}`)}
-                            >
-                              {ts.status}
-                            </span>
-                          );
-                        }
-                        if (ticketStatusLoading) {
-                          return (
-                            <span key={key} className="jira-badge status-loading" title={key}>
-                              {key}
-                            </span>
-                          );
-                        }
-                        return null;
-                      })}
-                      {pr.draft && <span className="github-pr-draft">Draft</span>}
-                      {pr.labels.map(label => (
-                        <span
-                          key={label.name}
-                          className="github-pr-label"
-                          style={{
-                            backgroundColor: label.color ? `#${label.color}` : '#eee',
-                            color: label.color ? contrastColor(label.color) : '#333',
-                          }}
-                        >
-                          {label.name}
-                        </span>
-                      ))}
-                      <span className="github-pr-author">{pr.author}</span>
-                      <span className="github-pr-age">{relativeTime(pr.updatedAt)}</span>
-                    </div>
-                  ))}
+                  {reposPrs.map(pr => {
+                    const otherAssignees = pr.assignees.filter(
+                      a => a.toLowerCase() !== pr.author.toLowerCase()
+                    );
+                    let assigneeLabel: string | null = null;
+                    let assigneeTooltip: string | undefined;
+                    if (otherAssignees.length === 1 || otherAssignees.length === 2) {
+                      assigneeLabel = otherAssignees.join(', ');
+                    } else if (otherAssignees.length >= 3) {
+                      assigneeLabel = `+${otherAssignees.length}`;
+                      assigneeTooltip = otherAssignees.join(', ');
+                    }
+
+                    const jiraItems = getTicketKeys(pr.title).map(key => {
+                      const ts = ticketStatuses.get(key);
+                      if (ts) return ts;
+                      if (ticketStatusLoading) return { key, summary: '', status: key, statusCategory: 'loading' };
+                      return null;
+                    }).filter(Boolean) as JiraTicketStatus[];
+
+                    const hasSecondary = jiraItems.length > 0 || pr.draft || pr.labels.length > 0;
+
+                    return (
+                      <div className="pr-card" key={`${pr.repoFullName}#${pr.number}`}>
+                        <div className="pr-card-primary">
+                          <span className="pr-card-number">#{pr.number}</span>
+                          <a
+                            className="pr-card-title"
+                            href="#"
+                            onClick={e => { e.preventDefault(); window.electronAPI.openExternal(pr.htmlUrl); }}
+                            title={pr.title}
+                          >
+                            {pr.title}
+                          </a>
+                          <span className="pr-card-meta">
+                            <span className="pr-card-author">{pr.author}</span>
+                            {assigneeLabel && (
+                              <span className="pr-card-assignees" title={assigneeTooltip}>
+                                {assigneeLabel}
+                              </span>
+                            )}
+                            <span className="pr-card-age">{relativeTime(pr.updatedAt)}</span>
+                          </span>
+                        </div>
+                        {hasSecondary && (
+                          <div className="pr-card-secondary">
+                            {pr.draft && <span className="pr-card-draft">Draft</span>}
+                            {pr.labels.map(label => (
+                              <span
+                                key={label.name}
+                                className="pr-card-label"
+                                style={{
+                                  backgroundColor: label.color ? `#${label.color}` : '#eee',
+                                  color: label.color ? contrastColor(label.color) : '#333',
+                                }}
+                                title={label.name}
+                              >
+                                {label.name}
+                              </span>
+                            ))}
+                            {jiraItems.map(ts => (
+                              <span
+                                key={ts.key}
+                                className="pr-card-jira-ticket"
+                                onClick={() => window.electronAPI.openExternal(`${jiraConfig!.baseUrl}/browse/${ts.key}`)}
+                              >
+                                <span className={`jira-badge clickable status-${ts.statusCategory}`}>
+                                  {ts.status}
+                                </span>
+                                {ts.summary && (
+                                  <span className="pr-card-jira-summary" title={ts.summary}>
+                                    {ts.summary}
+                                  </span>
+                                )}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>

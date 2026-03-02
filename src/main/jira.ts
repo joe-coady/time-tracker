@@ -76,7 +76,7 @@ export async function fetchJiraTicketStatuses(keys: string[]): Promise<JiraTicke
     const jql = `key in (${batch.join(',')})`;
     const url = new URL(`${config.baseUrl}/rest/api/3/search/jql`);
     url.searchParams.set('jql', jql);
-    url.searchParams.set('fields', 'status');
+    url.searchParams.set('fields', 'status,summary');
     url.searchParams.set('maxResults', '50');
 
     try {
@@ -85,6 +85,7 @@ export async function fetchJiraTicketStatuses(keys: string[]): Promise<JiraTicke
       for (const issue of data.issues ?? []) {
         results.push({
           key: issue.key,
+          summary: issue.fields.summary ?? '',
           status: issue.fields.status.name,
           statusCategory: issue.fields.status.statusCategory.key,
         });

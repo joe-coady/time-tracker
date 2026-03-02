@@ -1488,30 +1488,35 @@ input.entry-duration.ongoing {
   padding: 10px 20px;
 }
 
-/* GitHub PR View styles */
-.github-pr-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+/* GitHub PR View styles — two-line card */
+.pr-card {
   padding: 6px 8px;
   border-radius: 4px;
   margin-bottom: 2px;
 }
 
-.github-pr-item:hover {
+.pr-card:hover {
   background-color: #f5f5f5;
 }
 
-.github-pr-number {
+/* Line 1: number + title + author/age */
+.pr-card-primary {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.pr-card-number {
   color: #888;
   font-size: 13px;
   font-variant-numeric: tabular-nums;
-  min-width: 48px;
+  min-width: 40px;
   flex-shrink: 0;
 }
 
-.github-pr-title {
+.pr-card-title {
   flex: 1;
+  min-width: 0;
   color: #007aff;
   cursor: pointer;
   text-decoration: none;
@@ -1521,44 +1526,91 @@ input.entry-duration.ongoing {
   font-size: 13px;
 }
 
-.github-pr-title:hover {
+.pr-card-title:hover {
   text-decoration: underline;
 }
 
-.github-pr-draft {
-  display: inline-block;
-  padding: 1px 6px;
-  font-size: 10px;
-  font-weight: 500;
-  color: #666;
-  background-color: #eee;
-  border-radius: 3px;
+.pr-card-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
   flex-shrink: 0;
-}
-
-.github-pr-label {
-  display: inline-block;
-  padding: 1px 6px;
-  font-size: 10px;
-  font-weight: 500;
-  border-radius: 3px;
-  flex-shrink: 0;
-}
-
-.github-pr-author {
-  color: #888;
   font-size: 12px;
-  flex-shrink: 0;
-  text-align: right;
+  color: #888;
+  white-space: nowrap;
 }
 
-.github-pr-age {
-  color: #888;
-  font-size: 12px;
+.pr-card-author {
+  flex-shrink: 0;
+}
+
+.pr-card-assignees {
+  flex-shrink: 0;
+}
+
+.pr-card-assignees::before {
+  content: "\2192\00a0";
+}
+
+.pr-card-age {
   font-variant-numeric: tabular-nums;
   flex-shrink: 0;
-  text-align: right;
   min-width: 48px;
+  text-align: right;
+}
+
+/* Line 2: jira badges + draft + labels (only shown when content exists) */
+.pr-card-secondary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-left: 48px;
+  margin-top: 2px;
+}
+
+.pr-card-draft {
+  display: inline-block;
+  padding: 1px 6px;
+  font-size: 10px;
+  font-weight: 500;
+  color: #856404;
+  background-color: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.pr-card-label {
+  display: inline-block;
+  padding: 1px 6px;
+  font-size: 10px;
+  font-weight: 500;
+  border-radius: 3px;
+  flex-shrink: 0;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pr-card-jira-ticket {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.pr-card-jira-summary {
+  font-size: 12px;
+  color: #555;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pr-card-jira-ticket:hover .pr-card-jira-summary {
+  color: #007aff;
 }
 
 /* Repo hide button */

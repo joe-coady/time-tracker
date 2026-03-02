@@ -18,6 +18,7 @@ export interface JiraConfig {
 
 export interface JiraTicketStatus {
   key: string;          // "PROJ-123"
+  summary: string;      // "Fix the auth flow for SSO users"
   status: string;       // "In Progress"
   statusCategory: string; // "new" | "indeterminate" | "done"
 }
