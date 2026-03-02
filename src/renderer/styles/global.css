@@ -321,6 +321,55 @@ body {
   flex-shrink: 0;
 }
 
+.entry-time.editable {
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 2px 4px;
+  transition: background-color 0.1s, color 0.1s;
+}
+
+.entry-time.editable:hover {
+  background-color: #e8f4ff;
+  color: #007aff;
+}
+
+.inline-time-picker {
+  display: inline-flex;
+  align-items: center;
+  width: 60px;
+  flex-shrink: 0;
+  border: 1px solid #007aff;
+  border-radius: 4px;
+  padding: 1px 2px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  outline: none;
+  user-select: none;
+}
+
+.time-segment {
+  cursor: pointer;
+  padding: 1px 2px;
+  border-radius: 2px;
+  text-align: center;
+}
+
+.time-segment.focused {
+  background-color: #007aff;
+  color: #fff;
+}
+
+.time-separator {
+  color: #666;
+  font-size: 11px;
+}
+
+.time-ampm {
+  font-size: 9px;
+  color: #666;
+  margin-left: 1px;
+}
+
 .entry-task {
   flex: 1;
   padding: 4px 8px;

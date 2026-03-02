@@ -74,7 +74,7 @@ export function setupIpcHandlers(): void {
 
   ipcMain.handle(
     'update-entry',
-    async (_event, id: string, updates: Partial<Pick<TaskEntry, 'task' | 'durationMinutes' | 'notes' | 'completed' | 'taskTypeIds'>>): Promise<void> => {
+    async (_event, id: string, updates: Partial<Pick<TaskEntry, 'task' | 'startTime' | 'durationMinutes' | 'notes' | 'completed' | 'taskTypeIds'>>): Promise<void> => {
       updateTaskEntry(id, updates);
     }
   );

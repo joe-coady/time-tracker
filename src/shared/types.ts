@@ -77,7 +77,7 @@ export interface ElectronAPI {
   getTasks: () => Promise<CalculatedTaskEntry[]>;
   getPreviousTaskNames: () => Promise<PreviousTask[]>;
   startTask: (taskName: string, durationMinutes: number, taskTypeIds?: string[], notes?: string) => Promise<void>;
-  updateEntry: (id: string, updates: Partial<Pick<TaskEntry, 'task' | 'durationMinutes' | 'notes' | 'completed' | 'taskTypeIds'>>) => Promise<void>;
+  updateEntry: (id: string, updates: Partial<Pick<TaskEntry, 'task' | 'startTime' | 'durationMinutes' | 'notes' | 'completed' | 'taskTypeIds'>>) => Promise<void>;
   deleteEntry: (id: string) => Promise<void>;
   getCurrentState: () => Promise<CurrentState>;
   closeDialog: () => Promise<void>;

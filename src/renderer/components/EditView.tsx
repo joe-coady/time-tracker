@@ -5,6 +5,7 @@ import { useElapsedTime, formatElapsedTime } from '../hooks/useElapsedTime';
 import { CalculatedTaskEntry } from '../../shared/types';
 import { formatDuration, calculateTotalMinutes } from '../../shared/durationUtils';
 import TaskTypeSelector from './TaskTypeSelector';
+import InlineTimePicker from './InlineTimePicker';
 
 interface GroupedTasks {
   [date: string]: CalculatedTaskEntry[];
@@ -16,6 +17,7 @@ function EditView() {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [editingNotesId, setEditingNotesId] = useState<string | null>(null);
   const [editingDurationId, setEditingDurationId] = useState<string | null>(null);
+  const [editingTimeId, setEditingTimeId] = useState<string | null>(null);
   const [searchFilter, setSearchFilter] = useState('');
   const [completedFilter, setCompletedFilter] = useState<'all' | 'completed' | 'not-completed'>('all');
   const [expandedDates, setExpandedDates] = useState<Set<string>>(() => {
@@ -161,6 +163,36 @@ function EditView() {
     }
   };
 
+  const getTimeBounds = (entryId: string): { minTime: string; maxTime: string } => {
+    // tasks from useTaskData are sorted ascending by startTime (from calculateDurations)
+    const sorted = [...tasks].sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+    const idx = sorted.findIndex(t => t.id === entryId);
+
+    let minTime: Date;
+    if (idx > 0) {
+      minTime = new Date(new Date(sorted[idx - 1].startTime).getTime() + 60000);
+    } else {
+      // First task of day — clamp to start of that day
+      const d = new Date(sorted[idx].startTime);
+      minTime = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0);
+    }
+
+    let maxTime: Date;
+    if (idx < sorted.length - 1) {
+      maxTime = new Date(new Date(sorted[idx + 1].startTime).getTime() - 60000);
+    } else {
+      // Last/ongoing task — clamp to current time
+      maxTime = new Date();
+    }
+
+    return { minTime: minTime.toISOString(), maxTime: maxTime.toISOString() };
+  };
+
+  const handleStartTimeChange = async (id: string, newIsoTime: string) => {
+    await updateEntry(id, { startTime: newIsoTime });
+    setEditingTimeId(null);
+  };
+
   const formatTime = (isoString: string) => {
     return new Date(isoString).toLocaleTimeString('en-US', {
       hour: 'numeric',
@@ -249,7 +281,21 @@ function EditView() {
                             checked={entry.completed || false}
                             onChange={e => handleToggleCompleted(entry.id, e.target.checked)}
                           />
-                          <span className="entry-time">{formatTime(entry.startTime)}</span>
+                          {editingTimeId === entry.id ? (
+                            <InlineTimePicker
+                              value={entry.startTime}
+                              {...getTimeBounds(entry.id)}
+                              onSave={(newTime) => handleStartTimeChange(entry.id, newTime)}
+                              onCancel={() => setEditingTimeId(null)}
+                            />
+                          ) : (
+                            <span
+                              className="entry-time editable"
+                              onClick={() => setEditingTimeId(entry.id)}
+                            >
+                              {formatTime(entry.startTime)}
+                            </span>
+                          )}
                           <input
                             type="text"
                             className={`entry-task ${entry.completed ? 'completed' : ''}`}

@@ -36,7 +36,7 @@ export function useTaskData() {
     await loadData();
   }, [loadData]);
 
-  const updateEntry = useCallback(async (id: string, updates: Partial<Pick<TaskEntry, 'task' | 'durationMinutes' | 'notes' | 'completed' | 'taskTypeIds'>>) => {
+  const updateEntry = useCallback(async (id: string, updates: Partial<Pick<TaskEntry, 'task' | 'startTime' | 'durationMinutes' | 'notes' | 'completed' | 'taskTypeIds'>>) => {
     await window.electronAPI.updateEntry(id, updates);
     await loadData();
   }, [loadData]);

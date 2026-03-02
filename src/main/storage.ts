@@ -74,7 +74,7 @@ export function addTaskEntry(entry: TaskEntry): void {
   writeTasks(tasks);
 }
 
-export function updateTaskEntry(id: string, updates: Partial<Pick<TaskEntry, 'task' | 'durationMinutes' | 'notes' | 'completed' | 'taskTypeIds'>>): void {
+export function updateTaskEntry(id: string, updates: Partial<Pick<TaskEntry, 'task' | 'startTime' | 'durationMinutes' | 'notes' | 'completed' | 'taskTypeIds'>>): void {
   const tasks = readTasks();
   const index = tasks.findIndex(t => t.id === id);
   if (index === -1) {
