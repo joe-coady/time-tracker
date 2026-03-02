@@ -1,6 +1,6 @@
 import { Tray, Menu, nativeImage, app } from 'electron';
 import * as path from 'path';
-import { showDialogWindow, showEditWindow, showTaskTypesWindow, showExportWindow, showNotesWindow } from './windows';
+import { showDialogWindow, showEditWindow, showTaskTypesWindow, showExportWindow, showNotesWindow, showNotebookWindow } from './windows';
 import { getLastEntry } from './storage';
 
 let tray: Tray | null = null;
@@ -43,6 +43,10 @@ function getContextMenu(): Menu {
     {
       label: 'Daily Notes',
       click: () => showNotesWindow(),
+    },
+    {
+      label: 'Notebook',
+      click: () => showNotebookWindow(),
     },
     {
       label: 'Manage task types',

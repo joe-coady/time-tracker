@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import { CalculatedTaskEntry, CurrentState, DailyNote, ElectronAPI, PreviousTask, TaskEntry, TaskType } from './shared/types';
+import { CalculatedTaskEntry, CurrentState, DailyNote, ElectronAPI, Note, PreviousTask, TaskEntry, TaskType } from './shared/types';
 
 const electronAPI: ElectronAPI = {
   getTasks: (): Promise<CalculatedTaskEntry[]> => ipcRenderer.invoke('get-tasks'),
@@ -54,6 +54,21 @@ const electronAPI: ElectronAPI = {
 
   getAllNoteDates: (): Promise<string[]> =>
     ipcRenderer.invoke('get-all-note-dates'),
+
+  getNotebookNotes: (): Promise<Note[]> =>
+    ipcRenderer.invoke('get-notebook-notes'),
+
+  createNotebookNote: (title: string, content: string): Promise<Note> =>
+    ipcRenderer.invoke('create-notebook-note', title, content),
+
+  updateNotebookNote: (id: string, title: string, content: string): Promise<Note> =>
+    ipcRenderer.invoke('update-notebook-note', id, title, content),
+
+  deleteNotebookNote: (id: string): Promise<void> =>
+    ipcRenderer.invoke('delete-notebook-note', id),
+
+  togglePinNotebookNote: (id: string): Promise<Note> =>
+    ipcRenderer.invoke('toggle-pin-notebook-note', id),
 };
 
 contextBridge.exposeInMainWorld('electronAPI', electronAPI);

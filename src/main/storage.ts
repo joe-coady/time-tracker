@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { v4 as uuidv4 } from 'uuid';
-import { TaskEntry, TaskType, TasksData, DailyNote } from '../shared/types';
+import { TaskEntry, TaskType, TasksData, DailyNote, Note } from '../shared/types';
 
 const TASKS_FILE_PATH = path.join(os.homedir(), 'notes', 'general', 'tasks.json');
 
@@ -255,4 +255,70 @@ export function upsertDailyNote(date: string, content: string): DailyNote {
 export function getAllNoteDates(): string[] {
   const notes = readDailyNotes();
   return notes.map(n => n.date).sort((a, b) => b.localeCompare(a)); // Most recent first
+}
+
+// Notebook Notes functions
+export function readNotebookNotes(): Note[] {
+  return readTasksData().notes || [];
+}
+
+export function createNotebookNote(title: string, content: string): Note {
+  const data = readTasksData();
+  if (!data.notes) {
+    data.notes = [];
+  }
+  const now = new Date().toISOString();
+  const newNote: Note = {
+    id: uuidv4(),
+    title,
+    content,
+    createdAt: now,
+    updatedAt: now,
+  };
+  data.notes.push(newNote);
+  writeTasksData(data);
+  return newNote;
+}
+
+export function updateNotebookNote(id: string, title: string, content: string): Note {
+  const data = readTasksData();
+  if (!data.notes) {
+    throw new Error(`Note with id ${id} not found`);
+  }
+  const index = data.notes.findIndex(n => n.id === id);
+  if (index === -1) {
+    throw new Error(`Note with id ${id} not found`);
+  }
+  data.notes[index].title = title;
+  data.notes[index].content = content;
+  data.notes[index].updatedAt = new Date().toISOString();
+  writeTasksData(data);
+  return data.notes[index];
+}
+
+export function togglePinNotebookNote(id: string): Note {
+  const data = readTasksData();
+  if (!data.notes) {
+    throw new Error(`Note with id ${id} not found`);
+  }
+  const index = data.notes.findIndex(n => n.id === id);
+  if (index === -1) {
+    throw new Error(`Note with id ${id} not found`);
+  }
+  data.notes[index].pinned = !data.notes[index].pinned;
+  writeTasksData(data);
+  return data.notes[index];
+}
+
+export function deleteNotebookNote(id: string): void {
+  const data = readTasksData();
+  if (!data.notes) {
+    throw new Error(`Note with id ${id} not found`);
+  }
+  const index = data.notes.findIndex(n => n.id === id);
+  if (index === -1) {
+    throw new Error(`Note with id ${id} not found`);
+  }
+  data.notes.splice(index, 1);
+  writeTasksData(data);
 }

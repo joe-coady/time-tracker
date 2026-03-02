@@ -7,6 +7,7 @@ let editWindow: BrowserWindow | null = null;
 let taskTypesWindow: BrowserWindow | null = null;
 let exportWindow: BrowserWindow | null = null;
 let notesWindow: BrowserWindow | null = null;
+let notebookWindow: BrowserWindow | null = null;
 
 // Check if we're in dev mode by seeing if the built renderer exists
 const rendererPath = path.join(__dirname, '../../renderer/index.html');
@@ -252,4 +253,46 @@ export function createNotesWindow(): BrowserWindow {
 
 export function showNotesWindow(): void {
   createNotesWindow();
+}
+
+export function createNotebookWindow(): BrowserWindow {
+  if (notebookWindow && !notebookWindow.isDestroyed()) {
+    notebookWindow.show();
+    notebookWindow.focus();
+    return notebookWindow;
+  }
+
+  const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
+  const windowWidth = Math.min(Math.round(screenWidth * 0.8), 1200);
+  const windowHeight = Math.round(screenHeight * 0.8);
+
+  notebookWindow = new BrowserWindow({
+    width: windowWidth,
+    height: windowHeight,
+    x: Math.round((screenWidth - windowWidth) / 2),
+    y: Math.round((screenHeight - windowHeight) / 2),
+    title: 'Notebook',
+    show: false,
+    webPreferences: {
+      preload: getPreloadPath(),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+
+  notebookWindow.loadURL(getRendererUrl('/notebook'));
+
+  notebookWindow.once('ready-to-show', () => {
+    notebookWindow?.show();
+  });
+
+  notebookWindow.on('closed', () => {
+    notebookWindow = null;
+  });
+
+  return notebookWindow;
+}
+
+export function showNotebookWindow(): void {
+  createNotebookWindow();
 }

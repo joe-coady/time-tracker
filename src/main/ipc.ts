@@ -16,11 +16,16 @@ import {
   getDailyNoteForDate,
   upsertDailyNote,
   getAllNoteDates,
+  readNotebookNotes,
+  createNotebookNote,
+  updateNotebookNote,
+  deleteNotebookNote,
+  togglePinNotebookNote,
 } from './storage';
 import { startTimer, getElapsedMinutes } from './timer';
 import { closeDialogWindow } from './windows';
 import { updateTrayMenu } from './tray';
-import { TaskEntry, CalculatedTaskEntry, CurrentState, TaskType, DailyNote } from '../shared/types';
+import { TaskEntry, CalculatedTaskEntry, CurrentState, TaskType, DailyNote, Note } from '../shared/types';
 import { calculateDurations } from '../shared/durationUtils';
 
 export function setupIpcHandlers(): void {
@@ -135,5 +140,26 @@ export function setupIpcHandlers(): void {
 
   ipcMain.handle('get-all-note-dates', async (): Promise<string[]> => {
     return getAllNoteDates();
+  });
+
+  // Notebook Notes handlers
+  ipcMain.handle('get-notebook-notes', async (): Promise<Note[]> => {
+    return readNotebookNotes();
+  });
+
+  ipcMain.handle('create-notebook-note', async (_event, title: string, content: string): Promise<Note> => {
+    return createNotebookNote(title, content);
+  });
+
+  ipcMain.handle('update-notebook-note', async (_event, id: string, title: string, content: string): Promise<Note> => {
+    return updateNotebookNote(id, title, content);
+  });
+
+  ipcMain.handle('delete-notebook-note', async (_event, id: string): Promise<void> => {
+    deleteNotebookNote(id);
+  });
+
+  ipcMain.handle('toggle-pin-notebook-note', async (_event, id: string): Promise<Note> => {
+    return togglePinNotebookNote(id);
   });
 }

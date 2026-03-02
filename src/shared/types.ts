@@ -11,6 +11,15 @@ export interface DailyNote {
   updatedAt: string;    // ISO timestamp
 }
 
+export interface Note {
+  id: string;
+  title: string;
+  content: string;
+  pinned?: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface TaskEntry {
   id: string;
   task: string;
@@ -26,6 +35,7 @@ export interface TasksData {
   taskTypes: TaskType[];
   entries: TaskEntry[];
   dailyNotes?: DailyNote[];
+  notes?: Note[];
   exportFilterTagIds?: string[];
 }
 
@@ -77,6 +87,11 @@ export interface ElectronAPI {
   getDailyNote: (date: string) => Promise<DailyNote | null>;
   saveDailyNote: (content: string) => Promise<DailyNote>;
   getAllNoteDates: () => Promise<string[]>;
+  getNotebookNotes: () => Promise<Note[]>;
+  createNotebookNote: (title: string, content: string) => Promise<Note>;
+  updateNotebookNote: (id: string, title: string, content: string) => Promise<Note>;
+  deleteNotebookNote: (id: string) => Promise<void>;
+  togglePinNotebookNote: (id: string) => Promise<Note>;
 }
 
 declare global {
