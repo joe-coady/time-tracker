@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTaskData } from '../hooks/useTaskData';
 import { useTaskTypes } from '../hooks/useTaskTypes';
+import { PreviousTask } from '../../shared/types';
 import TaskInput from './TaskInput';
 import DurationPicker from './DurationPicker';
 import PreviousTasks from './PreviousTasks';
@@ -15,12 +16,19 @@ function TaskDialog() {
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notes, setNotes] = useState('');
+  const [jiraResults, setJiraResults] = useState<PreviousTask[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Filter previous tasks based on input
-  const filteredTasks = taskName
+  // Filter local previous tasks based on input
+  const filteredLocalTasks = taskName
     ? previousTasks.filter(task => task.name.toLowerCase().includes(taskName.toLowerCase()))
     : previousTasks;
+
+  // Merge: local tasks first, then deduplicated Jira results
+  const localNames = new Set(filteredLocalTasks.map(t => t.name));
+  const dedupedJira = jiraResults.filter(j => !localNames.has(j.name));
+  const filteredTasks = [...filteredLocalTasks, ...dedupedJira];
 
   // Pre-fill with current task on timer expiry
   useEffect(() => {
@@ -46,6 +54,39 @@ function TaskDialog() {
       window.electronAPI.removeTimerExpiredListener();
     };
   }, [refresh]);
+
+  // Debounced Jira search
+  useEffect(() => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+
+    const trimmed = taskName.trim();
+    if (trimmed.length < 2) {
+      setJiraResults([]);
+      return;
+    }
+
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const results = await window.electronAPI.searchJira(trimmed);
+        setJiraResults(
+          results.map(r => ({
+            name: `${r.key} ${r.summary}`,
+            lastDuration: 60,
+            lastTaskTypeIds: [],
+            source: 'jira' as const,
+          }))
+        );
+      } catch {
+        setJiraResults([]);
+      }
+    }, 300);
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [taskName]);
 
   // Focus input on mount
   useEffect(() => {

@@ -9,6 +9,17 @@ export interface QuickLinkRule {
   linkTarget: string;
 }
 
+export interface JiraConfig {
+  baseUrl: string;
+  email: string;
+  apiToken: string;
+}
+
+export interface JiraSearchResult {
+  key: string;
+  summary: string;
+}
+
 export interface DailyNote {
   id: string;           // UUID
   date: string;         // YYYY-MM-DD format (unique key)
@@ -44,6 +55,7 @@ export interface TasksData {
   notes?: Note[];
   exportFilterTagIds?: string[];
   quickLinkRules?: QuickLinkRule[];
+  jiraConfig?: JiraConfig;
 }
 
 export interface CalculatedTaskEntry extends TaskEntry {
@@ -71,6 +83,7 @@ export interface PreviousTask {
   name: string;
   lastDuration: number;
   lastTaskTypeIds: string[];
+  source?: 'jira';
 }
 
 export interface ElectronAPI {
@@ -103,6 +116,10 @@ export interface ElectronAPI {
   getQuickLinkRules: () => Promise<QuickLinkRule[]>;
   addQuickLinkRule: (linkPattern: string, linkTarget: string) => Promise<QuickLinkRule>;
   deleteQuickLinkRule: (id: string) => Promise<void>;
+  getJiraConfig: () => Promise<JiraConfig | null>;
+  saveJiraConfig: (config: JiraConfig) => Promise<void>;
+  searchJira: (query: string) => Promise<JiraSearchResult[]>;
+  testJiraConnection: (config: JiraConfig) => Promise<boolean>;
 }
 
 declare global {

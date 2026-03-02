@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { v4 as uuidv4 } from 'uuid';
-import { TaskEntry, TaskType, TasksData, DailyNote, Note, QuickLinkRule } from '../shared/types';
+import { TaskEntry, TaskType, TasksData, DailyNote, Note, QuickLinkRule, JiraConfig } from '../shared/types';
 
 const TASKS_FILE_PATH = path.join(os.homedir(), 'notes', 'general', 'tasks.json');
 
@@ -353,5 +353,16 @@ export function deleteQuickLinkRule(id: string): void {
     throw new Error(`QuickLinkRule with id ${id} not found`);
   }
   data.quickLinkRules.splice(index, 1);
+  writeTasksData(data);
+}
+
+// Jira Config functions
+export function readJiraConfig(): JiraConfig | null {
+  return readTasksData().jiraConfig || null;
+}
+
+export function saveJiraConfig(config: JiraConfig): void {
+  const data = readTasksData();
+  data.jiraConfig = config;
   writeTasksData(data);
 }

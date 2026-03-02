@@ -1,6 +1,6 @@
 import { Tray, Menu, nativeImage, app } from 'electron';
 import * as path from 'path';
-import { showDialogWindow, showEditWindow, showTaskTypesWindow, showExportWindow, showNotesWindow, showNotebookWindow, showQuickLinksWindow } from './windows';
+import { showDialogWindow, showEditWindow, showTaskTypesWindow, showExportWindow, showNotesWindow, showNotebookWindow, showQuickLinksWindow, showJiraSettingsWindow } from './windows';
 import { getLastEntry } from './storage';
 
 let tray: Tray | null = null;
@@ -56,6 +56,10 @@ function getContextMenu(): Menu {
     {
       label: 'Quick Links',
       click: () => showQuickLinksWindow(),
+    },
+    {
+      label: 'Jira Settings',
+      click: () => showJiraSettingsWindow(),
     },
     { type: 'separator' },
     {

@@ -6,8 +6,9 @@ import ExportView from './components/ExportView';
 import NotesView from './components/NotesView';
 import NotebookView from './components/NotebookView';
 import QuickLinksView from './components/QuickLinksView';
+import JiraSettingsView from './components/JiraSettingsView';
 
-type View = 'dialog' | 'edit' | 'task-types' | 'export' | 'notes' | 'notebook' | 'quick-links';
+type View = 'dialog' | 'edit' | 'task-types' | 'export' | 'notes' | 'notebook' | 'quick-links' | 'jira-settings';
 
 function App() {
   const [view, setView] = useState<View>('dialog');
@@ -28,6 +29,8 @@ function App() {
         setView('notebook');
       } else if (hash === '#/quick-links') {
         setView('quick-links');
+      } else if (hash === '#/jira-settings') {
+        setView('jira-settings');
       } else {
         setView('dialog');
       }
@@ -44,6 +47,7 @@ function App() {
   if (view === 'notes') return <NotesView />;
   if (view === 'notebook') return <NotebookView />;
   if (view === 'quick-links') return <QuickLinksView />;
+  if (view === 'jira-settings') return <JiraSettingsView />;
   return <TaskDialog />;
 }
 

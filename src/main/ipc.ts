@@ -24,11 +24,14 @@ import {
   readQuickLinkRules,
   addQuickLinkRule,
   deleteQuickLinkRule,
+  readJiraConfig,
+  saveJiraConfig,
 } from './storage';
 import { startTimer, getElapsedMinutes } from './timer';
+import { searchJiraIssues, testJiraConnection } from './jira';
 import { closeDialogWindow } from './windows';
 import { updateTrayMenu } from './tray';
-import { TaskEntry, CalculatedTaskEntry, CurrentState, TaskType, DailyNote, Note, QuickLinkRule } from '../shared/types';
+import { TaskEntry, CalculatedTaskEntry, CurrentState, TaskType, DailyNote, Note, QuickLinkRule, JiraConfig, JiraSearchResult } from '../shared/types';
 import { calculateDurations } from '../shared/durationUtils';
 
 export function setupIpcHandlers(): void {
@@ -181,5 +184,22 @@ export function setupIpcHandlers(): void {
 
   ipcMain.handle('delete-quick-link-rule', async (_event, id: string): Promise<void> => {
     deleteQuickLinkRule(id);
+  });
+
+  // Jira handlers
+  ipcMain.handle('get-jira-config', async (): Promise<JiraConfig | null> => {
+    return readJiraConfig();
+  });
+
+  ipcMain.handle('save-jira-config', async (_event, config: JiraConfig): Promise<void> => {
+    saveJiraConfig(config);
+  });
+
+  ipcMain.handle('search-jira', async (_event, query: string): Promise<JiraSearchResult[]> => {
+    return searchJiraIssues(query);
+  });
+
+  ipcMain.handle('test-jira-connection', async (_event, config: JiraConfig): Promise<boolean> => {
+    return testJiraConnection(config);
   });
 }

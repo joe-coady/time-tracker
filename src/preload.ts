@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import { CalculatedTaskEntry, CurrentState, DailyNote, ElectronAPI, Note, PreviousTask, QuickLinkRule, TaskEntry, TaskType } from './shared/types';
+import { CalculatedTaskEntry, CurrentState, DailyNote, ElectronAPI, JiraConfig, JiraSearchResult, Note, PreviousTask, QuickLinkRule, TaskEntry, TaskType } from './shared/types';
 
 const electronAPI: ElectronAPI = {
   getTasks: (): Promise<CalculatedTaskEntry[]> => ipcRenderer.invoke('get-tasks'),
@@ -9,7 +9,7 @@ const electronAPI: ElectronAPI = {
   startTask: (taskName: string, durationMinutes: number, taskTypeIds?: string[], notes?: string): Promise<void> =>
     ipcRenderer.invoke('start-task', taskName, durationMinutes, taskTypeIds, notes),
 
-  updateEntry: (id: string, updates: Partial<Pick<TaskEntry, 'task' | 'durationMinutes' | 'notes' | 'completed' | 'taskTypeIds'>>): Promise<void> =>
+  updateEntry: (id: string, updates: Partial<Pick<TaskEntry, 'task' | 'startTime' | 'durationMinutes' | 'notes' | 'completed' | 'taskTypeIds'>>): Promise<void> =>
     ipcRenderer.invoke('update-entry', id, updates),
 
   deleteEntry: (id: string): Promise<void> => ipcRenderer.invoke('delete-entry', id),
@@ -80,6 +80,18 @@ const electronAPI: ElectronAPI = {
 
   deleteQuickLinkRule: (id: string): Promise<void> =>
     ipcRenderer.invoke('delete-quick-link-rule', id),
+
+  getJiraConfig: (): Promise<JiraConfig | null> =>
+    ipcRenderer.invoke('get-jira-config'),
+
+  saveJiraConfig: (config: JiraConfig): Promise<void> =>
+    ipcRenderer.invoke('save-jira-config', config),
+
+  searchJira: (query: string): Promise<JiraSearchResult[]> =>
+    ipcRenderer.invoke('search-jira', query),
+
+  testJiraConnection: (config: JiraConfig): Promise<boolean> =>
+    ipcRenderer.invoke('test-jira-connection', config),
 };
 
 contextBridge.exposeInMainWorld('electronAPI', electronAPI);

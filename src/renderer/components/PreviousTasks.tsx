@@ -33,14 +33,19 @@ function PreviousTasks({ tasks, selectedIndex, onSelect }: PreviousTasksProps) {
       {tasks.length === 0 ? (
         <div className="previous-tasks-empty">No matching tasks</div>
       ) : (
-        tasks.slice(0, 10).map((task, index) => (
+        tasks.slice(0, 15).map((task, index) => (
           <div
             key={task.name}
             className={`previous-task-item ${index === selectedIndex ? 'selected' : ''}`}
             onClick={() => onSelect(task.name, task.lastDuration, task.lastTaskTypeIds)}
           >
-            <span className="previous-task-name">{task.name}</span>
-            <span className="previous-task-duration">{formatDuration(task.lastDuration)}</span>
+            <span className="previous-task-name">
+              {task.source === 'jira' && <span className="jira-badge">JIRA</span>}
+              {task.name}
+            </span>
+            <span className="previous-task-duration">
+              {task.source === 'jira' ? '' : formatDuration(task.lastDuration)}
+            </span>
           </div>
         ))
       )}

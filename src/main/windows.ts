@@ -9,6 +9,7 @@ let exportWindow: BrowserWindow | null = null;
 let notesWindow: BrowserWindow | null = null;
 let notebookWindow: BrowserWindow | null = null;
 let quickLinksWindow: BrowserWindow | null = null;
+let jiraSettingsWindow: BrowserWindow | null = null;
 
 // Check if we're in dev mode by seeing if the built renderer exists
 const rendererPath = path.join(__dirname, '../../renderer/index.html');
@@ -336,4 +337,44 @@ export function createQuickLinksWindow(): BrowserWindow {
 
 export function showQuickLinksWindow(): void {
   createQuickLinksWindow();
+}
+
+export function createJiraSettingsWindow(): BrowserWindow {
+  if (jiraSettingsWindow && !jiraSettingsWindow.isDestroyed()) {
+    jiraSettingsWindow.show();
+    jiraSettingsWindow.focus();
+    return jiraSettingsWindow;
+  }
+
+  const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
+
+  jiraSettingsWindow = new BrowserWindow({
+    width: 400,
+    height: 350,
+    x: Math.round((screenWidth - 400) / 2),
+    y: Math.round((screenHeight - 350) / 2),
+    title: 'Jira Settings',
+    show: false,
+    webPreferences: {
+      preload: getPreloadPath(),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+
+  jiraSettingsWindow.loadURL(getRendererUrl('/jira-settings'));
+
+  jiraSettingsWindow.once('ready-to-show', () => {
+    jiraSettingsWindow?.show();
+  });
+
+  jiraSettingsWindow.on('closed', () => {
+    jiraSettingsWindow = null;
+  });
+
+  return jiraSettingsWindow;
+}
+
+export function showJiraSettingsWindow(): void {
+  createJiraSettingsWindow();
 }

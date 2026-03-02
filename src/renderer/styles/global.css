@@ -1487,3 +1487,17 @@ input.entry-duration.ongoing {
   width: auto;
   padding: 10px 20px;
 }
+
+/* Jira badge in task list */
+.jira-badge {
+  display: inline-block;
+  padding: 1px 5px;
+  margin-right: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #fff;
+  background-color: #0052CC;
+  border-radius: 3px;
+  vertical-align: middle;
+  letter-spacing: 0.3px;
+}
