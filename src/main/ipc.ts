@@ -26,12 +26,15 @@ import {
   deleteQuickLinkRule,
   readJiraConfig,
   saveJiraConfig,
+  readGitHubConfig,
+  saveGitHubConfig,
 } from './storage';
 import { startTimer, getElapsedMinutes } from './timer';
 import { searchJiraIssues, testJiraConnection } from './jira';
+import { testGitHubConnection, fetchGitHubPRs } from './github';
 import { closeDialogWindow } from './windows';
 import { updateTrayMenu } from './tray';
-import { TaskEntry, CalculatedTaskEntry, CurrentState, TaskType, DailyNote, Note, QuickLinkRule, JiraConfig, JiraSearchResult } from '../shared/types';
+import { TaskEntry, CalculatedTaskEntry, CurrentState, TaskType, DailyNote, Note, QuickLinkRule, JiraConfig, JiraSearchResult, GitHubConfig, GitHubPR } from '../shared/types';
 import { calculateDurations } from '../shared/durationUtils';
 
 export function setupIpcHandlers(): void {
@@ -201,5 +204,22 @@ export function setupIpcHandlers(): void {
 
   ipcMain.handle('test-jira-connection', async (_event, config: JiraConfig): Promise<boolean> => {
     return testJiraConnection(config);
+  });
+
+  // GitHub handlers
+  ipcMain.handle('get-github-config', async (): Promise<GitHubConfig | null> => {
+    return readGitHubConfig();
+  });
+
+  ipcMain.handle('save-github-config', async (_event, config: GitHubConfig): Promise<void> => {
+    saveGitHubConfig(config);
+  });
+
+  ipcMain.handle('test-github-connection', async (_event, config: GitHubConfig): Promise<string | null> => {
+    return testGitHubConnection(config);
+  });
+
+  ipcMain.handle('fetch-github-prs', async (): Promise<GitHubPR[]> => {
+    return fetchGitHubPRs();
   });
 }

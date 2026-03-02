@@ -10,6 +10,8 @@ let notesWindow: BrowserWindow | null = null;
 let notebookWindow: BrowserWindow | null = null;
 let quickLinksWindow: BrowserWindow | null = null;
 let jiraSettingsWindow: BrowserWindow | null = null;
+let githubSettingsWindow: BrowserWindow | null = null;
+let githubPRsWindow: BrowserWindow | null = null;
 
 // Check if we're in dev mode by seeing if the built renderer exists
 const rendererPath = path.join(__dirname, '../../renderer/index.html');
@@ -377,4 +379,86 @@ export function createJiraSettingsWindow(): BrowserWindow {
 
 export function showJiraSettingsWindow(): void {
   createJiraSettingsWindow();
+}
+
+export function createGitHubSettingsWindow(): BrowserWindow {
+  if (githubSettingsWindow && !githubSettingsWindow.isDestroyed()) {
+    githubSettingsWindow.show();
+    githubSettingsWindow.focus();
+    return githubSettingsWindow;
+  }
+
+  const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
+
+  githubSettingsWindow = new BrowserWindow({
+    width: 400,
+    height: 400,
+    x: Math.round((screenWidth - 400) / 2),
+    y: Math.round((screenHeight - 400) / 2),
+    title: 'GitHub Settings',
+    show: false,
+    webPreferences: {
+      preload: getPreloadPath(),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+
+  githubSettingsWindow.loadURL(getRendererUrl('/github-settings'));
+
+  githubSettingsWindow.once('ready-to-show', () => {
+    githubSettingsWindow?.show();
+  });
+
+  githubSettingsWindow.on('closed', () => {
+    githubSettingsWindow = null;
+  });
+
+  return githubSettingsWindow;
+}
+
+export function showGitHubSettingsWindow(): void {
+  createGitHubSettingsWindow();
+}
+
+export function createGitHubPRsWindow(): BrowserWindow {
+  if (githubPRsWindow && !githubPRsWindow.isDestroyed()) {
+    githubPRsWindow.show();
+    githubPRsWindow.focus();
+    return githubPRsWindow;
+  }
+
+  const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
+  const windowWidth = Math.round(screenWidth * 0.8);
+  const windowHeight = Math.round(screenHeight * 0.8);
+
+  githubPRsWindow = new BrowserWindow({
+    width: windowWidth,
+    height: windowHeight,
+    x: Math.round((screenWidth - windowWidth) / 2),
+    y: Math.round((screenHeight - windowHeight) / 2),
+    title: 'GitHub PRs',
+    show: false,
+    webPreferences: {
+      preload: getPreloadPath(),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+
+  githubPRsWindow.loadURL(getRendererUrl('/github-prs'));
+
+  githubPRsWindow.once('ready-to-show', () => {
+    githubPRsWindow?.show();
+  });
+
+  githubPRsWindow.on('closed', () => {
+    githubPRsWindow = null;
+  });
+
+  return githubPRsWindow;
+}
+
+export function showGitHubPRsWindow(): void {
+  createGitHubPRsWindow();
 }

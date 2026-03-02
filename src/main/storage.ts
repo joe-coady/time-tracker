@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { v4 as uuidv4 } from 'uuid';
-import { TaskEntry, TaskType, TasksData, DailyNote, Note, QuickLinkRule, JiraConfig } from '../shared/types';
+import { TaskEntry, TaskType, TasksData, DailyNote, Note, QuickLinkRule, JiraConfig, GitHubConfig } from '../shared/types';
 
 const TASKS_FILE_PATH = path.join(os.homedir(), 'notes', 'general', 'tasks.json');
 
@@ -364,5 +364,16 @@ export function readJiraConfig(): JiraConfig | null {
 export function saveJiraConfig(config: JiraConfig): void {
   const data = readTasksData();
   data.jiraConfig = config;
+  writeTasksData(data);
+}
+
+// GitHub Config functions
+export function readGitHubConfig(): GitHubConfig | null {
+  return readTasksData().githubConfig || null;
+}
+
+export function saveGitHubConfig(config: GitHubConfig): void {
+  const data = readTasksData();
+  data.githubConfig = config;
   writeTasksData(data);
 }

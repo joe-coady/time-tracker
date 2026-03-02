@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import { CalculatedTaskEntry, CurrentState, DailyNote, ElectronAPI, JiraConfig, JiraSearchResult, Note, PreviousTask, QuickLinkRule, TaskEntry, TaskType } from './shared/types';
+import { CalculatedTaskEntry, CurrentState, DailyNote, ElectronAPI, GitHubConfig, GitHubPR, JiraConfig, JiraSearchResult, Note, PreviousTask, QuickLinkRule, TaskEntry, TaskType } from './shared/types';
 
 const electronAPI: ElectronAPI = {
   getTasks: (): Promise<CalculatedTaskEntry[]> => ipcRenderer.invoke('get-tasks'),
@@ -92,6 +92,18 @@ const electronAPI: ElectronAPI = {
 
   testJiraConnection: (config: JiraConfig): Promise<boolean> =>
     ipcRenderer.invoke('test-jira-connection', config),
+
+  getGitHubConfig: (): Promise<GitHubConfig | null> =>
+    ipcRenderer.invoke('get-github-config'),
+
+  saveGitHubConfig: (config: GitHubConfig): Promise<void> =>
+    ipcRenderer.invoke('save-github-config', config),
+
+  testGitHubConnection: (config: GitHubConfig): Promise<string | null> =>
+    ipcRenderer.invoke('test-github-connection', config),
+
+  fetchGitHubPRs: (): Promise<GitHubPR[]> =>
+    ipcRenderer.invoke('fetch-github-prs'),
 };
 
 contextBridge.exposeInMainWorld('electronAPI', electronAPI);

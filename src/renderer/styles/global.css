@@ -1488,6 +1488,79 @@ input.entry-duration.ongoing {
   padding: 10px 20px;
 }
 
+/* GitHub PR View styles */
+.github-pr-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  margin-bottom: 2px;
+}
+
+.github-pr-item:hover {
+  background-color: #f5f5f5;
+}
+
+.github-pr-number {
+  color: #888;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  min-width: 48px;
+  flex-shrink: 0;
+}
+
+.github-pr-title {
+  flex: 1;
+  color: #007aff;
+  cursor: pointer;
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+.github-pr-title:hover {
+  text-decoration: underline;
+}
+
+.github-pr-draft {
+  display: inline-block;
+  padding: 1px 6px;
+  font-size: 10px;
+  font-weight: 500;
+  color: #666;
+  background-color: #eee;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.github-pr-label {
+  display: inline-block;
+  padding: 1px 6px;
+  font-size: 10px;
+  font-weight: 500;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.github-pr-author {
+  color: #888;
+  font-size: 12px;
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.github-pr-age {
+  color: #888;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+  text-align: right;
+  min-width: 48px;
+}
+
 /* Jira badge in task list */
 .jira-badge {
   display: inline-block;

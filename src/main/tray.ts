@@ -1,6 +1,6 @@
 import { Tray, Menu, nativeImage, app } from 'electron';
 import * as path from 'path';
-import { showDialogWindow, showEditWindow, showTaskTypesWindow, showExportWindow, showNotesWindow, showNotebookWindow, showQuickLinksWindow, showJiraSettingsWindow } from './windows';
+import { showDialogWindow, showEditWindow, showTaskTypesWindow, showExportWindow, showNotesWindow, showNotebookWindow, showQuickLinksWindow, showJiraSettingsWindow, showGitHubSettingsWindow, showGitHubPRsWindow } from './windows';
 import { getLastEntry } from './storage';
 
 let tray: Tray | null = null;
@@ -48,6 +48,10 @@ function getContextMenu(): Menu {
       label: 'Notebook',
       click: () => showNotebookWindow(),
     },
+    {
+      label: 'GitHub PRs',
+      click: () => showGitHubPRsWindow(),
+    },
     { type: 'separator' },
     {
       label: 'Manage task types',
@@ -60,6 +64,10 @@ function getContextMenu(): Menu {
     {
       label: 'Jira Settings',
       click: () => showJiraSettingsWindow(),
+    },
+    {
+      label: 'GitHub Settings',
+      click: () => showGitHubSettingsWindow(),
     },
     { type: 'separator' },
     {

@@ -20,6 +20,26 @@ export interface JiraSearchResult {
   summary: string;
 }
 
+export interface GitHubConfig {
+  token: string;
+  orgs: string[];
+  username?: string;
+}
+
+export interface GitHubPR {
+  number: number;
+  title: string;
+  htmlUrl: string;
+  state: string;
+  author: string;
+  assignees: string[];
+  labels: { name: string; color?: string }[];
+  createdAt: string;
+  updatedAt: string;
+  draft: boolean;
+  repoFullName: string;
+}
+
 export interface DailyNote {
   id: string;           // UUID
   date: string;         // YYYY-MM-DD format (unique key)
@@ -56,6 +76,7 @@ export interface TasksData {
   exportFilterTagIds?: string[];
   quickLinkRules?: QuickLinkRule[];
   jiraConfig?: JiraConfig;
+  githubConfig?: GitHubConfig;
 }
 
 export interface CalculatedTaskEntry extends TaskEntry {
@@ -120,6 +141,10 @@ export interface ElectronAPI {
   saveJiraConfig: (config: JiraConfig) => Promise<void>;
   searchJira: (query: string) => Promise<JiraSearchResult[]>;
   testJiraConnection: (config: JiraConfig) => Promise<boolean>;
+  getGitHubConfig: () => Promise<GitHubConfig | null>;
+  saveGitHubConfig: (config: GitHubConfig) => Promise<void>;
+  testGitHubConnection: (config: GitHubConfig) => Promise<string | null>;
+  fetchGitHubPRs: () => Promise<GitHubPR[]>;
 }
 
 declare global {
