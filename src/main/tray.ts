@@ -41,7 +41,7 @@ function getContextMenu(): Menu {
       click: () => showEditWindow(),
     },
     {
-      label: 'Notes',
+      label: 'Daily Notes',
       click: () => showNotesWindow(),
     },
     {
