@@ -32,7 +32,6 @@ export default function NotebookView() {
     if (selectedNote) {
       setTitle(selectedNote.title);
       setContent(selectedNote.content);
-      setActiveTab('edit');
     }
   }, [selectedNoteId]); // eslint-disable-line react-hooks/exhaustive-deps
 
