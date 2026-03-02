@@ -76,8 +76,32 @@ function GitHubPRsView() {
 
   useEffect(() => { loadData(); }, [loadData]);
 
+  const excludedRepos = useMemo(
+    () => new Set(config?.excludedRepos ?? []),
+    [config?.excludedRepos],
+  );
+
+  const hideRepo = useCallback((repo: string) => {
+    if (!config) return;
+    const current = config.excludedRepos ?? [];
+    if (current.includes(repo)) return;
+    const updated = { ...config, excludedRepos: [...current, repo] };
+    setConfig(updated);
+    window.electronAPI.saveGitHubConfig(updated);
+    setRepoFilter(prev => (prev === repo ? '' : prev));
+  }, [config]);
+
+  const unhideRepo = useCallback((repo: string) => {
+    if (!config) return;
+    const updated = { ...config, excludedRepos: (config.excludedRepos ?? []).filter(r => r !== repo) };
+    setConfig(updated);
+    window.electronAPI.saveGitHubConfig(updated);
+  }, [config]);
+
   const filtered = useMemo(() => {
     let result = prs;
+
+    result = result.filter(pr => !excludedRepos.has(pr.repoFullName));
 
     if (search) {
       const q = search.toLowerCase();
@@ -103,7 +127,7 @@ function GitHubPRsView() {
     }
 
     return result;
-  }, [prs, search, repoFilter, involvement, config]);
+  }, [prs, search, repoFilter, involvement, config, excludedRepos]);
 
   const grouped = useMemo(() => {
     const map = new Map<string, GitHubPR[]>();
@@ -117,8 +141,8 @@ function GitHubPRsView() {
 
   const repos = useMemo(() => {
     const set = new Set(prs.map(pr => pr.repoFullName));
-    return Array.from(set).sort();
-  }, [prs]);
+    return Array.from(set).filter(r => !excludedRepos.has(r)).sort();
+  }, [prs, excludedRepos]);
 
   const getTicketKeys = useCallback((title: string): string[] => {
     if (!jiraConfig?.ticketPattern) return [];
@@ -209,6 +233,13 @@ function GitHubPRsView() {
                 <span className="date-toggle">{collapsed ? '▶' : '▼'}</span>
                 <span className="date-text">{repo}</span>
                 <span className="date-summary">{reposPrs.length} PR{reposPrs.length !== 1 ? 's' : ''}</span>
+                <button
+                  className="repo-hide-button"
+                  title={`Hide ${repo}`}
+                  onClick={e => { e.stopPropagation(); hideRepo(repo); }}
+                >
+                  ×
+                </button>
               </div>
               {!collapsed && (
                 <div className="date-entries">
@@ -268,6 +299,20 @@ function GitHubPRsView() {
             </div>
           );
         })}
+        {excludedRepos.size > 0 && (
+          <div className="hidden-repos-bar">
+            {Array.from(excludedRepos).map(repo => (
+              <button
+                key={repo}
+                className="hidden-repo-pill"
+                title={`Show ${repo}`}
+                onClick={() => unhideRepo(repo)}
+              >
+                {repo.split('/').pop()} ×
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

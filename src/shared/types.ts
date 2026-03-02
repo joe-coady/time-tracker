@@ -31,6 +31,7 @@ export interface GitHubConfig {
   token: string;
   orgs: string[];
   username?: string;
+  excludedRepos?: string[];
 }
 
 export interface GitHubPR {

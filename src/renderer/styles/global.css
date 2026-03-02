@@ -1561,6 +1561,53 @@ input.entry-duration.ongoing {
   min-width: 48px;
 }
 
+/* Repo hide button */
+.repo-hide-button {
+  background: none;
+  border: none;
+  font-size: 16px;
+  color: transparent;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.date-header:hover .repo-hide-button {
+  color: #999;
+}
+
+.repo-hide-button:hover {
+  color: #dc3545 !important;
+  background-color: rgba(220, 53, 69, 0.1);
+}
+
+/* Hidden repos pill bar */
+.hidden-repos-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.hidden-repo-pill {
+  padding: 3px 10px;
+  font-size: 12px;
+  color: #666;
+  background-color: #f0f0f0;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.hidden-repo-pill:hover {
+  color: #007aff;
+  background-color: #e8f4ff;
+  border-color: #007aff;
+}
+
 /* Jira badge in task list */
 .jira-badge {
   display: inline-block;
@@ -1580,7 +1627,7 @@ input.entry-duration.ongoing {
 }
 
 .jira-badge.status-indeterminate {
-  background-color: #F59E0B;
+  background-color: #2563EB;
 }
 
 .jira-badge.status-done {
