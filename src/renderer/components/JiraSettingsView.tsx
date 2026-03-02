@@ -5,6 +5,7 @@ function JiraSettingsView() {
   const [baseUrl, setBaseUrl] = useState('');
   const [email, setEmail] = useState('');
   const [apiToken, setApiToken] = useState('');
+  const [ticketPattern, setTicketPattern] = useState('');
   const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(false);
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'failed'>('idle');
@@ -15,6 +16,7 @@ function JiraSettingsView() {
       setBaseUrl(config.baseUrl);
       setEmail(config.email);
       setApiToken(config.apiToken);
+      setTicketPattern(config.ticketPattern ?? '');
     }
     setLoading(false);
   }, []);
@@ -29,6 +31,7 @@ function JiraSettingsView() {
       baseUrl: baseUrl.trim().replace(/\/+$/, ''),
       email: email.trim(),
       apiToken: apiToken.trim(),
+      ticketPattern: ticketPattern.trim() || undefined,
     };
     await window.electronAPI.saveJiraConfig(config);
     setSaved(true);
@@ -42,6 +45,7 @@ function JiraSettingsView() {
       baseUrl: baseUrl.trim().replace(/\/+$/, ''),
       email: email.trim(),
       apiToken: apiToken.trim(),
+      ticketPattern: ticketPattern.trim() || undefined,
     };
     const ok = await window.electronAPI.testJiraConnection(config);
     setTestStatus(ok ? 'success' : 'failed');
@@ -96,6 +100,20 @@ function JiraSettingsView() {
             value={apiToken}
             onChange={e => setApiToken(e.target.value)}
             placeholder="Your Atlassian API token"
+          />
+        </label>
+        <label>
+          <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>
+            Ticket Pattern
+            <span style={{ fontSize: '11px', color: '#999', marginLeft: '6px' }}>
+              Regex to extract ticket keys from PR titles
+            </span>
+          </div>
+          <input
+            className="task-input"
+            value={ticketPattern}
+            onChange={e => setTicketPattern(e.target.value)}
+            placeholder="[A-Z]+-\d+"
           />
         </label>
       </div>

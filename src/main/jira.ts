@@ -1,6 +1,6 @@
 import * as https from 'https';
 import { URL } from 'url';
-import { JiraConfig, JiraSearchResult } from '../shared/types';
+import { JiraConfig, JiraSearchResult, JiraTicketStatus } from '../shared/types';
 import { readJiraConfig } from './storage';
 
 function jiraRequest(url: string, auth: string): Promise<string> {
@@ -10,7 +10,7 @@ function jiraRequest(url: string, auth: string): Promise<string> {
         'Authorization': `Basic ${auth}`,
         'Accept': 'application/json',
       },
-      timeout: 5000,
+      timeout: 10000,
     }, (res) => {
       let body = '';
       res.on('data', (chunk: string) => { body += chunk; });
@@ -18,7 +18,7 @@ function jiraRequest(url: string, auth: string): Promise<string> {
         if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
           resolve(body);
         } else {
-          reject(new Error(`HTTP ${res.statusCode}`));
+          reject(new Error(`HTTP ${res.statusCode}: ${body}`));
         }
       });
     });
@@ -61,6 +61,40 @@ export async function searchJiraIssues(query: string): Promise<JiraSearchResult[
   } catch {
     return [];
   }
+}
+
+export async function fetchJiraTicketStatuses(keys: string[]): Promise<JiraTicketStatus[]> {
+  const config = readJiraConfig();
+  if (!config || keys.length === 0) return [];
+
+  const auth = Buffer.from(`${config.email}:${config.apiToken}`).toString('base64');
+  const results: JiraTicketStatus[] = [];
+
+  // Batch up to 50 keys per request (Jira limit)
+  for (let i = 0; i < keys.length; i += 50) {
+    const batch = keys.slice(i, i + 50);
+    const jql = `key in (${batch.join(',')})`;
+    const url = new URL(`${config.baseUrl}/rest/api/3/search/jql`);
+    url.searchParams.set('jql', jql);
+    url.searchParams.set('fields', 'status');
+    url.searchParams.set('maxResults', '50');
+
+    try {
+      const body = await jiraRequest(url.toString(), auth);
+      const data = JSON.parse(body);
+      for (const issue of data.issues ?? []) {
+        results.push({
+          key: issue.key,
+          status: issue.fields.status.name,
+          statusCategory: issue.fields.status.statusCategory.key,
+        });
+      }
+    } catch (err) {
+      console.error('fetchJiraTicketStatuses failed for batch:', batch, err);
+    }
+  }
+
+  return results;
 }
 
 export async function testJiraConnection(config: JiraConfig): Promise<boolean> {

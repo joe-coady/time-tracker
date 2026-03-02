@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { GitHubPR, GitHubConfig } from '../../shared/types';
+import { GitHubPR, GitHubConfig, JiraConfig, JiraTicketStatus } from '../../shared/types';
 
 function relativeTime(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -24,6 +24,9 @@ type Involvement = 'all' | 'mine' | 'assigned';
 function GitHubPRsView() {
   const [prs, setPrs] = useState<GitHubPR[]>([]);
   const [config, setConfig] = useState<GitHubConfig | null>(null);
+  const [jiraConfig, setJiraConfig] = useState<JiraConfig | null>(null);
+  const [ticketStatuses, setTicketStatuses] = useState<Map<string, JiraTicketStatus>>(new Map());
+  const [ticketStatusLoading, setTicketStatusLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [repoFilter, setRepoFilter] = useState('');
@@ -32,13 +35,43 @@ function GitHubPRsView() {
 
   const loadData = useCallback(async () => {
     setLoading(true);
-    const [cfg, results] = await Promise.all([
+    const [cfg, jiraCfg, results] = await Promise.all([
       window.electronAPI.getGitHubConfig(),
+      window.electronAPI.getJiraConfig(),
       window.electronAPI.fetchGitHubPRs(),
     ]);
     setConfig(cfg);
+    setJiraConfig(jiraCfg);
     setPrs(results);
     setLoading(false);
+
+    // After loading, extract ticket keys and fetch statuses
+    if (jiraCfg?.ticketPattern && results.length > 0) {
+      try {
+        const regex = new RegExp(jiraCfg.ticketPattern, 'g');
+        const keys = new Set<string>();
+        for (const pr of results) {
+          for (const match of pr.title.matchAll(regex)) {
+            keys.add(match[0]);
+          }
+        }
+        console.log('[jira-tickets] extracted keys:', Array.from(keys));
+        if (keys.size > 0) {
+          setTicketStatusLoading(true);
+          const statuses = await window.electronAPI.fetchJiraTicketStatuses(Array.from(keys));
+          console.log('[jira-tickets] API response:', statuses);
+          const map = new Map<string, JiraTicketStatus>();
+          for (const s of statuses) {
+            map.set(s.key, s);
+          }
+          setTicketStatuses(map);
+          setTicketStatusLoading(false);
+        }
+      } catch (err) {
+        console.error('[jira-tickets] failed to fetch ticket statuses:', err);
+        setTicketStatusLoading(false);
+      }
+    }
   }, []);
 
   useEffect(() => { loadData(); }, [loadData]);
@@ -86,6 +119,16 @@ function GitHubPRsView() {
     const set = new Set(prs.map(pr => pr.repoFullName));
     return Array.from(set).sort();
   }, [prs]);
+
+  const getTicketKeys = useCallback((title: string): string[] => {
+    if (!jiraConfig?.ticketPattern) return [];
+    try {
+      const regex = new RegExp(jiraConfig.ticketPattern, 'g');
+      return Array.from(title.matchAll(regex), m => m[0]);
+    } catch {
+      return [];
+    }
+  }, [jiraConfig]);
 
   const toggleGroup = (repo: string) => {
     setCollapsedGroups(prev => {
@@ -180,6 +223,29 @@ function GitHubPRsView() {
                       >
                         {pr.title}
                       </a>
+                      {getTicketKeys(pr.title).map(key => {
+                        const ts = ticketStatuses.get(key);
+                        if (ts) {
+                          return (
+                            <span
+                              key={key}
+                              className={`jira-badge clickable status-${ts.statusCategory}`}
+                              title={`${key}: ${ts.status}`}
+                              onClick={() => window.electronAPI.openExternal(`${jiraConfig!.baseUrl}/browse/${key}`)}
+                            >
+                              {ts.status}
+                            </span>
+                          );
+                        }
+                        if (ticketStatusLoading) {
+                          return (
+                            <span key={key} className="jira-badge status-loading" title={key}>
+                              {key}
+                            </span>
+                          );
+                        }
+                        return null;
+                      })}
                       {pr.draft && <span className="github-pr-draft">Draft</span>}
                       {pr.labels.map(label => (
                         <span

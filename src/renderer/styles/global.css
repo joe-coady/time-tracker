@@ -1574,3 +1574,29 @@ input.entry-duration.ongoing {
   vertical-align: middle;
   letter-spacing: 0.3px;
 }
+
+.jira-badge.status-new {
+  background-color: #0052CC;
+}
+
+.jira-badge.status-indeterminate {
+  background-color: #F59E0B;
+}
+
+.jira-badge.status-done {
+  background-color: #28a745;
+}
+
+.jira-badge.status-loading {
+  background-color: #555;
+  opacity: 0.6;
+}
+
+.jira-badge.clickable {
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.jira-badge.clickable:hover {
+  opacity: 0.85;
+}

@@ -30,11 +30,11 @@ import {
   saveGitHubConfig,
 } from './storage';
 import { startTimer, getElapsedMinutes } from './timer';
-import { searchJiraIssues, testJiraConnection } from './jira';
+import { searchJiraIssues, testJiraConnection, fetchJiraTicketStatuses } from './jira';
 import { testGitHubConnection, fetchGitHubPRs } from './github';
 import { closeDialogWindow } from './windows';
 import { updateTrayMenu } from './tray';
-import { TaskEntry, CalculatedTaskEntry, CurrentState, TaskType, DailyNote, Note, QuickLinkRule, JiraConfig, JiraSearchResult, GitHubConfig, GitHubPR } from '../shared/types';
+import { TaskEntry, CalculatedTaskEntry, CurrentState, TaskType, DailyNote, Note, QuickLinkRule, JiraConfig, JiraSearchResult, JiraTicketStatus, GitHubConfig, GitHubPR } from '../shared/types';
 import { calculateDurations } from '../shared/durationUtils';
 
 export function setupIpcHandlers(): void {
@@ -204,6 +204,10 @@ export function setupIpcHandlers(): void {
 
   ipcMain.handle('test-jira-connection', async (_event, config: JiraConfig): Promise<boolean> => {
     return testJiraConnection(config);
+  });
+
+  ipcMain.handle('fetch-jira-ticket-statuses', async (_event, keys: string[]): Promise<JiraTicketStatus[]> => {
+    return fetchJiraTicketStatuses(keys);
   });
 
   // GitHub handlers

@@ -13,6 +13,13 @@ export interface JiraConfig {
   baseUrl: string;
   email: string;
   apiToken: string;
+  ticketPattern?: string;  // regex string, e.g. "[A-Z]+-\\d+"
+}
+
+export interface JiraTicketStatus {
+  key: string;          // "PROJ-123"
+  status: string;       // "In Progress"
+  statusCategory: string; // "new" | "indeterminate" | "done"
 }
 
 export interface JiraSearchResult {
@@ -145,6 +152,7 @@ export interface ElectronAPI {
   saveGitHubConfig: (config: GitHubConfig) => Promise<void>;
   testGitHubConnection: (config: GitHubConfig) => Promise<string | null>;
   fetchGitHubPRs: () => Promise<GitHubPR[]>;
+  fetchJiraTicketStatuses: (keys: string[]) => Promise<JiraTicketStatus[]>;
 }
 
 declare global {
