@@ -45,9 +45,12 @@ export async function searchJiraIssues(query: string): Promise<JiraSearchResult[
   try {
     const body = await jiraRequest(url.toString(), auth);
     const data = JSON.parse(body);
+    const seen = new Set<string>();
     const results: JiraSearchResult[] = [];
     for (const section of data.sections ?? []) {
       for (const issue of section.issues ?? []) {
+        if (seen.has(issue.key)) continue;
+        seen.add(issue.key);
         results.push({
           key: issue.key,
           summary: issue.summaryText ?? issue.summary ?? '',

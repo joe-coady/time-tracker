@@ -72,7 +72,7 @@ function TaskDialog() {
         const results = await window.electronAPI.searchJira(trimmed);
         setJiraResults(
           results.map(r => ({
-            name: `${r.key} ${r.summary}`,
+            name: `${r.key} - ${r.summary}`,
             lastDuration: 60,
             lastTaskTypeIds: [],
             source: 'jira' as const,
@@ -150,9 +150,10 @@ function TaskDialog() {
   };
 
   const handleTaskSelect = (name: string, taskDuration: number, taskTypeIds: string[]) => {
+    const localMatch = previousTasks.find(t => t.name === name);
     setTaskName(name);
-    setDuration(taskDuration);
-    setSelectedTaskTypeIds(taskTypeIds);
+    setDuration(localMatch?.lastDuration ?? taskDuration);
+    setSelectedTaskTypeIds(localMatch?.lastTaskTypeIds ?? taskTypeIds);
     setSelectedIndex(-1);
     setNotes('');
     inputRef.current?.focus();
