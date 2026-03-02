@@ -994,8 +994,7 @@ input.entry-duration.ongoing {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  max-width: 900px;
-  margin: 0 auto;
+  max-width: none;
 }
 
 .notes-header {
@@ -1016,6 +1015,7 @@ input.entry-duration.ongoing {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
 .notes-date-picker {
@@ -1027,6 +1027,7 @@ input.entry-duration.ongoing {
   cursor: pointer;
   outline: none;
   min-width: 200px;
+  flex: 1;
 }
 
 .notes-date-picker:focus {

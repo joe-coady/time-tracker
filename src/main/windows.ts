@@ -90,7 +90,7 @@ export function createEditWindow(): BrowserWindow {
   }
 
   const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
-  const windowWidth = Math.round(screenWidth * 0.8);
+  const windowWidth = Math.min(Math.round(screenWidth * 0.8), 1200);
   const windowHeight = Math.round(screenHeight * 0.8);
 
   editWindow = new BrowserWindow({
@@ -220,7 +220,7 @@ export function createNotesWindow(): BrowserWindow {
   }
 
   const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
-  const windowWidth = Math.round(screenWidth * 0.8);
+  const windowWidth = Math.min(Math.round(screenWidth * 0.8), 1200);
   const windowHeight = Math.round(screenHeight * 0.8);
 
   notesWindow = new BrowserWindow({
