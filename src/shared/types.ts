@@ -3,6 +3,12 @@ export interface TaskType {
   name: string;
 }
 
+export interface QuickLinkRule {
+  id: string;
+  linkPattern: string;
+  linkTarget: string;
+}
+
 export interface DailyNote {
   id: string;           // UUID
   date: string;         // YYYY-MM-DD format (unique key)
@@ -37,6 +43,7 @@ export interface TasksData {
   dailyNotes?: DailyNote[];
   notes?: Note[];
   exportFilterTagIds?: string[];
+  quickLinkRules?: QuickLinkRule[];
 }
 
 export interface CalculatedTaskEntry extends TaskEntry {
@@ -92,6 +99,9 @@ export interface ElectronAPI {
   updateNotebookNote: (id: string, title: string, content: string) => Promise<Note>;
   deleteNotebookNote: (id: string) => Promise<void>;
   togglePinNotebookNote: (id: string) => Promise<Note>;
+  getQuickLinkRules: () => Promise<QuickLinkRule[]>;
+  addQuickLinkRule: (linkPattern: string, linkTarget: string) => Promise<QuickLinkRule>;
+  deleteQuickLinkRule: (id: string) => Promise<void>;
 }
 
 declare global {

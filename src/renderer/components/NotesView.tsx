@@ -1,8 +1,24 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { DailyNote } from '../../shared/types';
+import { DailyNote, QuickLinkRule } from '../../shared/types';
 
 type Tab = 'edit' | 'preview';
+
+function applyQuickLinks(text: string, rules: QuickLinkRule[]): string {
+  let result = text;
+  for (const rule of rules) {
+    try {
+      const regex = new RegExp(rule.linkPattern, 'g');
+      result = result.replace(regex, (match) => {
+        const url = rule.linkTarget.replace('$0', match);
+        return `[${match}](${url})`;
+      });
+    } catch {
+      // skip invalid regex
+    }
+  }
+  return result;
+}
 
 function getTodayDateString(): string {
   return new Date().toISOString().split('T')[0];
@@ -36,6 +52,7 @@ export default function NotesView() {
   const [allDates, setAllDates] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<Tab>('edit');
   const [isSaving, setIsSaving] = useState(false);
+  const [quickLinkRules, setQuickLinkRules] = useState<QuickLinkRule[]>([]);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
   const isToday = selectedDate === getTodayDateString();
@@ -60,6 +77,7 @@ export default function NotesView() {
 
   useEffect(() => {
     loadAllDates();
+    window.electronAPI.getQuickLinkRules().then(setQuickLinkRules);
   }, [loadAllDates]);
 
   useEffect(() => {
@@ -168,7 +186,7 @@ export default function NotesView() {
         ) : (
           <div className="notes-preview">
             {content ? (
-              <ReactMarkdown>{content}</ReactMarkdown>
+              <ReactMarkdown>{applyQuickLinks(content, quickLinkRules)}</ReactMarkdown>
             ) : (
               <p className="notes-empty">No notes for this date</p>
             )}

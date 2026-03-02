@@ -1389,3 +1389,52 @@ input.entry-duration.ongoing {
   color: #999;
   font-size: 15px;
 }
+
+/* Quick Links styles */
+.quick-link-rule {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.quick-link-pattern {
+  font-size: 13px;
+  padding: 2px 6px;
+  background-color: #f5f5f5;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.quick-link-arrow {
+  color: #888;
+  flex-shrink: 0;
+}
+
+.quick-link-target {
+  font-size: 13px;
+  color: #666;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.quick-link-add-row {
+  display: flex;
+  gap: 8px;
+}
+
+.quick-link-add-row .task-type-input {
+  flex: 1;
+  border: 1px solid #ddd;
+  background: #fff;
+}
+
+.quick-link-add-row .task-type-input:focus {
+  border-color: #007aff;
+}
+
+.quick-link-add-row .submit-button {
+  width: auto;
+  padding: 10px 20px;
+}

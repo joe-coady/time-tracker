@@ -1,8 +1,24 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { Note } from '../../shared/types';
+import { Note, QuickLinkRule } from '../../shared/types';
 
 type Tab = 'edit' | 'preview';
+
+function applyQuickLinks(text: string, rules: QuickLinkRule[]): string {
+  let result = text;
+  for (const rule of rules) {
+    try {
+      const regex = new RegExp(rule.linkPattern, 'g');
+      result = result.replace(regex, (match) => {
+        const url = rule.linkTarget.replace('$0', match);
+        return `[${match}](${url})`;
+      });
+    } catch {
+      // skip invalid regex
+    }
+  }
+  return result;
+}
 
 export default function NotebookView() {
   const [notes, setNotes] = useState<Note[]>([]);
@@ -11,6 +27,7 @@ export default function NotebookView() {
   const [content, setContent] = useState('');
   const [activeTab, setActiveTab] = useState<Tab>('edit');
   const [isSaving, setIsSaving] = useState(false);
+  const [quickLinkRules, setQuickLinkRules] = useState<QuickLinkRule[]>([]);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
   const selectedNote = notes.find(n => n.id === selectedNoteId) || null;
@@ -25,6 +42,7 @@ export default function NotebookView() {
 
   useEffect(() => {
     loadNotes();
+    window.electronAPI.getQuickLinkRules().then(setQuickLinkRules);
   }, [loadNotes]);
 
   // When selecting a note, populate the editor
@@ -185,7 +203,7 @@ export default function NotebookView() {
             ) : (
               <div className="notes-preview">
                 {content ? (
-                  <ReactMarkdown>{content}</ReactMarkdown>
+                  <ReactMarkdown>{applyQuickLinks(content, quickLinkRules)}</ReactMarkdown>
                 ) : (
                   <p className="notes-empty">No content</p>
                 )}

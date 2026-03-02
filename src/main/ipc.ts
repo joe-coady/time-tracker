@@ -21,11 +21,14 @@ import {
   updateNotebookNote,
   deleteNotebookNote,
   togglePinNotebookNote,
+  readQuickLinkRules,
+  addQuickLinkRule,
+  deleteQuickLinkRule,
 } from './storage';
 import { startTimer, getElapsedMinutes } from './timer';
 import { closeDialogWindow } from './windows';
 import { updateTrayMenu } from './tray';
-import { TaskEntry, CalculatedTaskEntry, CurrentState, TaskType, DailyNote, Note } from '../shared/types';
+import { TaskEntry, CalculatedTaskEntry, CurrentState, TaskType, DailyNote, Note, QuickLinkRule } from '../shared/types';
 import { calculateDurations } from '../shared/durationUtils';
 
 export function setupIpcHandlers(): void {
@@ -161,5 +164,18 @@ export function setupIpcHandlers(): void {
 
   ipcMain.handle('toggle-pin-notebook-note', async (_event, id: string): Promise<Note> => {
     return togglePinNotebookNote(id);
+  });
+
+  // Quick Link Rules handlers
+  ipcMain.handle('get-quick-link-rules', async (): Promise<QuickLinkRule[]> => {
+    return readQuickLinkRules();
+  });
+
+  ipcMain.handle('add-quick-link-rule', async (_event, linkPattern: string, linkTarget: string): Promise<QuickLinkRule> => {
+    return addQuickLinkRule(linkPattern, linkTarget);
+  });
+
+  ipcMain.handle('delete-quick-link-rule', async (_event, id: string): Promise<void> => {
+    deleteQuickLinkRule(id);
   });
 }

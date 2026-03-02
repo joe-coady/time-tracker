@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import { CalculatedTaskEntry, CurrentState, DailyNote, ElectronAPI, Note, PreviousTask, TaskEntry, TaskType } from './shared/types';
+import { CalculatedTaskEntry, CurrentState, DailyNote, ElectronAPI, Note, PreviousTask, QuickLinkRule, TaskEntry, TaskType } from './shared/types';
 
 const electronAPI: ElectronAPI = {
   getTasks: (): Promise<CalculatedTaskEntry[]> => ipcRenderer.invoke('get-tasks'),
@@ -69,6 +69,15 @@ const electronAPI: ElectronAPI = {
 
   togglePinNotebookNote: (id: string): Promise<Note> =>
     ipcRenderer.invoke('toggle-pin-notebook-note', id),
+
+  getQuickLinkRules: (): Promise<QuickLinkRule[]> =>
+    ipcRenderer.invoke('get-quick-link-rules'),
+
+  addQuickLinkRule: (linkPattern: string, linkTarget: string): Promise<QuickLinkRule> =>
+    ipcRenderer.invoke('add-quick-link-rule', linkPattern, linkTarget),
+
+  deleteQuickLinkRule: (id: string): Promise<void> =>
+    ipcRenderer.invoke('delete-quick-link-rule', id),
 };
 
 contextBridge.exposeInMainWorld('electronAPI', electronAPI);

@@ -8,6 +8,7 @@ let taskTypesWindow: BrowserWindow | null = null;
 let exportWindow: BrowserWindow | null = null;
 let notesWindow: BrowserWindow | null = null;
 let notebookWindow: BrowserWindow | null = null;
+let quickLinksWindow: BrowserWindow | null = null;
 
 // Check if we're in dev mode by seeing if the built renderer exists
 const rendererPath = path.join(__dirname, '../../renderer/index.html');
@@ -295,4 +296,44 @@ export function createNotebookWindow(): BrowserWindow {
 
 export function showNotebookWindow(): void {
   createNotebookWindow();
+}
+
+export function createQuickLinksWindow(): BrowserWindow {
+  if (quickLinksWindow && !quickLinksWindow.isDestroyed()) {
+    quickLinksWindow.show();
+    quickLinksWindow.focus();
+    return quickLinksWindow;
+  }
+
+  const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
+
+  quickLinksWindow = new BrowserWindow({
+    width: 450,
+    height: 400,
+    x: Math.round((screenWidth - 450) / 2),
+    y: Math.round((screenHeight - 400) / 2),
+    title: 'Quick Links',
+    show: false,
+    webPreferences: {
+      preload: getPreloadPath(),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+
+  quickLinksWindow.loadURL(getRendererUrl('/quick-links'));
+
+  quickLinksWindow.once('ready-to-show', () => {
+    quickLinksWindow?.show();
+  });
+
+  quickLinksWindow.on('closed', () => {
+    quickLinksWindow = null;
+  });
+
+  return quickLinksWindow;
+}
+
+export function showQuickLinksWindow(): void {
+  createQuickLinksWindow();
 }

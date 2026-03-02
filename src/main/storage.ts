@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { v4 as uuidv4 } from 'uuid';
-import { TaskEntry, TaskType, TasksData, DailyNote, Note } from '../shared/types';
+import { TaskEntry, TaskType, TasksData, DailyNote, Note, QuickLinkRule } from '../shared/types';
 
 const TASKS_FILE_PATH = path.join(os.homedir(), 'notes', 'general', 'tasks.json');
 
@@ -320,5 +320,38 @@ export function deleteNotebookNote(id: string): void {
     throw new Error(`Note with id ${id} not found`);
   }
   data.notes.splice(index, 1);
+  writeTasksData(data);
+}
+
+// Quick Link Rules functions
+export function readQuickLinkRules(): QuickLinkRule[] {
+  return readTasksData().quickLinkRules || [];
+}
+
+export function addQuickLinkRule(linkPattern: string, linkTarget: string): QuickLinkRule {
+  const data = readTasksData();
+  if (!data.quickLinkRules) {
+    data.quickLinkRules = [];
+  }
+  const newRule: QuickLinkRule = {
+    id: uuidv4(),
+    linkPattern,
+    linkTarget,
+  };
+  data.quickLinkRules.push(newRule);
+  writeTasksData(data);
+  return newRule;
+}
+
+export function deleteQuickLinkRule(id: string): void {
+  const data = readTasksData();
+  if (!data.quickLinkRules) {
+    throw new Error(`QuickLinkRule with id ${id} not found`);
+  }
+  const index = data.quickLinkRules.findIndex(r => r.id === id);
+  if (index === -1) {
+    throw new Error(`QuickLinkRule with id ${id} not found`);
+  }
+  data.quickLinkRules.splice(index, 1);
   writeTasksData(data);
 }
