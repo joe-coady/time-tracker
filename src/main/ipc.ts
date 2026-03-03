@@ -30,14 +30,20 @@ import {
   saveGitHubConfig,
   readHotkeyConfig,
   saveHotkeyConfig,
+  getKanbanBoardForDate,
+  getAllKanbanDates,
+  addKanbanTask,
+  updateKanbanTask,
+  deleteKanbanTask,
+  reorderKanbanTasks,
 } from './storage';
 import { startTimer, getElapsedMinutes } from './timer';
 import { searchJiraIssues, testJiraConnection, fetchJiraTicketStatuses } from './jira';
 import { testGitHubConnection, fetchGitHubPRs, fetchDevBranchTickets } from './github';
 import { reregisterShortcuts } from './globalShortcut';
-import { closeDialogWindow, closeQuickLaunchWindow, showDialogWindow, showEditWindow, showNotesWindow, showNotebookWindow, showGitHubPRsWindow, showExportWindow, showSettingsWindow } from './windows';
+import { closeDialogWindow, closeQuickLaunchWindow, showDialogWindow, showEditWindow, showNotesWindow, showNotebookWindow, showGitHubPRsWindow, showExportWindow, showSettingsWindow, showKanbanWindow } from './windows';
 import { updateTrayMenu } from './tray';
-import { TaskEntry, CalculatedTaskEntry, CurrentState, TaskType, DailyNote, Note, QuickLinkRule, JiraConfig, JiraSearchResult, JiraTicketStatus, GitHubConfig, GitHubPR, HotkeyConfig } from '../shared/types';
+import { TaskEntry, CalculatedTaskEntry, CurrentState, TaskType, DailyNote, Note, QuickLinkRule, JiraConfig, JiraSearchResult, JiraTicketStatus, GitHubConfig, GitHubPR, HotkeyConfig, KanbanBoard, KanbanTask } from '../shared/types';
 import { calculateDurations } from '../shared/durationUtils';
 
 export function setupIpcHandlers(): void {
@@ -250,6 +256,31 @@ export function setupIpcHandlers(): void {
     closeQuickLaunchWindow();
   });
 
+  // Kanban handlers
+  ipcMain.handle('get-kanban-board', async (_event, date: string): Promise<KanbanBoard | null> => {
+    return getKanbanBoardForDate(date);
+  });
+
+  ipcMain.handle('get-all-kanban-dates', async (): Promise<string[]> => {
+    return getAllKanbanDates();
+  });
+
+  ipcMain.handle('add-kanban-task', async (_event, date: string, title: string, description: string): Promise<KanbanTask> => {
+    return addKanbanTask(date, title, description);
+  });
+
+  ipcMain.handle('update-kanban-task', async (_event, date: string, taskId: string, updates: Partial<Pick<KanbanTask, 'Title' | 'Description' | 'Status'>>): Promise<void> => {
+    updateKanbanTask(date, taskId, updates);
+  });
+
+  ipcMain.handle('delete-kanban-task', async (_event, date: string, taskId: string): Promise<void> => {
+    deleteKanbanTask(date, taskId);
+  });
+
+  ipcMain.handle('reorder-kanban-tasks', async (_event, date: string, tasks: KanbanTask[]): Promise<void> => {
+    reorderKanbanTasks(date, tasks);
+  });
+
   ipcMain.handle('open-view', async (_event, view: string): Promise<void> => {
     const viewMap: Record<string, () => void> = {
       'dialog': showDialogWindow,
@@ -260,6 +291,7 @@ export function setupIpcHandlers(): void {
       'export': showExportWindow,
       'settings': showSettingsWindow,
       'task-types': showSettingsWindow,
+      'kanban': showKanbanWindow,
     };
     const showFn = viewMap[view];
     if (showFn) showFn();

@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { v4 as uuidv4 } from 'uuid';
-import { TaskEntry, TaskType, TasksData, DailyNote, Note, QuickLinkRule, JiraConfig, GitHubConfig, HotkeyConfig } from '../shared/types';
+import { TaskEntry, TaskType, TasksData, DailyNote, Note, QuickLinkRule, JiraConfig, GitHubConfig, HotkeyConfig, KanbanBoard, KanbanTask, KanbanStatus } from '../shared/types';
 
 const TASKS_FILE_PATH = path.join(os.homedir(), 'notes', 'general', 'tasks.json');
 
@@ -389,5 +389,176 @@ export function readHotkeyConfig(): HotkeyConfig | null {
 export function saveHotkeyConfig(config: HotkeyConfig): void {
   const data = readTasksData();
   data.hotkeyConfig = config;
+  writeTasksData(data);
+}
+
+// Kanban Board functions
+export function readKanbanBoards(): KanbanBoard[] {
+  return readTasksData().kanbanBoards || [];
+}
+
+export function getAllKanbanDates(): string[] {
+  const boards = readKanbanBoards();
+  return boards.map(b => b.date).sort((a, b) => b.localeCompare(a));
+}
+
+export function getKanbanBoardForDate(date: string): KanbanBoard | null {
+  const boards = readKanbanBoards();
+  const existing = boards.find(b => b.date === date);
+
+  if (existing) {
+    return existing;
+  }
+
+  // If requesting today's board and it doesn't exist, roll over from previous day
+  const today = getTodayDateString();
+  if (date === today) {
+    const sorted = [...boards].sort((a, b) => b.date.localeCompare(a.date));
+    const previous = sorted.find(b => b.date < today);
+
+    let tasks: KanbanTask[] = [];
+    if (previous) {
+      // Copy all tasks except Done, assign new UUIDs
+      tasks = previous.tasks
+        .filter(t => t.Status !== 'Done')
+        .map(t => ({
+          ...t,
+          Id: uuidv4(),
+        }));
+    }
+
+    const now = new Date().toISOString();
+    const newBoard: KanbanBoard = {
+      id: uuidv4(),
+      date: today,
+      tasks,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    const data = readTasksData();
+    if (!data.kanbanBoards) {
+      data.kanbanBoards = [];
+    }
+    data.kanbanBoards.push(newBoard);
+    writeTasksData(data);
+    return newBoard;
+  }
+
+  return null;
+}
+
+export function upsertKanbanBoard(date: string, tasks: KanbanTask[]): KanbanBoard {
+  const data = readTasksData();
+  if (!data.kanbanBoards) {
+    data.kanbanBoards = [];
+  }
+
+  const existingIndex = data.kanbanBoards.findIndex(b => b.date === date);
+  const now = new Date().toISOString();
+
+  if (existingIndex >= 0) {
+    data.kanbanBoards[existingIndex].tasks = tasks;
+    data.kanbanBoards[existingIndex].updatedAt = now;
+    writeTasksData(data);
+    return data.kanbanBoards[existingIndex];
+  } else {
+    const newBoard: KanbanBoard = {
+      id: uuidv4(),
+      date,
+      tasks,
+      createdAt: now,
+      updatedAt: now,
+    };
+    data.kanbanBoards.push(newBoard);
+    writeTasksData(data);
+    return newBoard;
+  }
+}
+
+export function addKanbanTask(date: string, title: string, description: string): KanbanTask {
+  // Ensure the board exists
+  getKanbanBoardForDate(date);
+
+  const data = readTasksData();
+  if (!data.kanbanBoards) {
+    data.kanbanBoards = [];
+  }
+
+  const boardIndex = data.kanbanBoards.findIndex(b => b.date === date);
+  if (boardIndex === -1) {
+    // Create a new board for this date
+    const now = new Date().toISOString();
+    const task: KanbanTask = {
+      Id: uuidv4(),
+      Title: title,
+      Description: description,
+      Status: 'Todo' as KanbanStatus,
+    };
+    const newBoard: KanbanBoard = {
+      id: uuidv4(),
+      date,
+      tasks: [task],
+      createdAt: now,
+      updatedAt: now,
+    };
+    data.kanbanBoards.push(newBoard);
+    writeTasksData(data);
+    return task;
+  }
+
+  const task: KanbanTask = {
+    Id: uuidv4(),
+    Title: title,
+    Description: description,
+    Status: 'Todo' as KanbanStatus,
+  };
+  data.kanbanBoards[boardIndex].tasks.push(task);
+  data.kanbanBoards[boardIndex].updatedAt = new Date().toISOString();
+  writeTasksData(data);
+  return task;
+}
+
+export function updateKanbanTask(date: string, taskId: string, updates: Partial<Pick<KanbanTask, 'Title' | 'Description' | 'Status'>>): void {
+  const data = readTasksData();
+  if (!data.kanbanBoards) throw new Error(`Board for ${date} not found`);
+
+  const board = data.kanbanBoards.find(b => b.date === date);
+  if (!board) throw new Error(`Board for ${date} not found`);
+
+  const task = board.tasks.find(t => t.Id === taskId);
+  if (!task) throw new Error(`Task ${taskId} not found`);
+
+  if (updates.Title !== undefined) task.Title = updates.Title;
+  if (updates.Description !== undefined) task.Description = updates.Description;
+  if (updates.Status !== undefined) task.Status = updates.Status;
+  board.updatedAt = new Date().toISOString();
+  writeTasksData(data);
+}
+
+export function deleteKanbanTask(date: string, taskId: string): void {
+  const data = readTasksData();
+  if (!data.kanbanBoards) throw new Error(`Board for ${date} not found`);
+
+  const board = data.kanbanBoards.find(b => b.date === date);
+  if (!board) throw new Error(`Board for ${date} not found`);
+
+  const index = board.tasks.findIndex(t => t.Id === taskId);
+  if (index === -1) throw new Error(`Task ${taskId} not found`);
+
+  board.tasks.splice(index, 1);
+  board.updatedAt = new Date().toISOString();
+  writeTasksData(data);
+}
+
+export function reorderKanbanTasks(date: string, tasks: KanbanTask[]): void {
+  const data = readTasksData();
+  if (!data.kanbanBoards) throw new Error(`Board for ${date} not found`);
+
+  const board = data.kanbanBoards.find(b => b.date === date);
+  if (!board) throw new Error(`Board for ${date} not found`);
+
+  board.tasks = tasks;
+  board.updatedAt = new Date().toISOString();
   writeTasksData(data);
 }

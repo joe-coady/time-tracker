@@ -33,6 +33,23 @@ export interface HotkeyConfig {
   quickLaunch?: string; // Electron accelerator string, e.g. "Command+`"
 }
 
+export type KanbanStatus = 'Todo' | 'In Progress' | 'Dev Review' | 'QA' | 'Done';
+
+export interface KanbanTask {
+  Id: string;
+  Title: string;
+  Description: string;
+  Status: KanbanStatus;
+}
+
+export interface KanbanBoard {
+  id: string;
+  date: string;         // YYYY-MM-DD
+  tasks: KanbanTask[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface GitHubConfig {
   token: string;
   orgs: string[];
@@ -93,6 +110,7 @@ export interface TasksData {
   jiraConfig?: JiraConfig;
   githubConfig?: GitHubConfig;
   hotkeyConfig?: HotkeyConfig;
+  kanbanBoards?: KanbanBoard[];
 }
 
 export interface CalculatedTaskEntry extends TaskEntry {
@@ -167,6 +185,12 @@ export interface ElectronAPI {
   saveHotkeyConfig: (config: HotkeyConfig) => Promise<void>;
   closeQuickLaunch: () => Promise<void>;
   openView: (view: string) => Promise<void>;
+  getKanbanBoard: (date: string) => Promise<KanbanBoard | null>;
+  getAllKanbanDates: () => Promise<string[]>;
+  addKanbanTask: (date: string, title: string, description: string) => Promise<KanbanTask>;
+  updateKanbanTask: (date: string, taskId: string, updates: Partial<Pick<KanbanTask, 'Title' | 'Description' | 'Status'>>) => Promise<void>;
+  deleteKanbanTask: (date: string, taskId: string) => Promise<void>;
+  reorderKanbanTasks: (date: string, tasks: KanbanTask[]) => Promise<void>;
 }
 
 declare global {

@@ -1,6 +1,6 @@
 import { Tray, Menu, nativeImage, app } from 'electron';
 import * as path from 'path';
-import { showDialogWindow, showEditWindow, showExportWindow, showNotesWindow, showNotebookWindow, showSettingsWindow, showGitHubPRsWindow, showQuickLaunchWindow } from './windows';
+import { showDialogWindow, showEditWindow, showExportWindow, showNotesWindow, showNotebookWindow, showSettingsWindow, showGitHubPRsWindow, showQuickLaunchWindow, showKanbanWindow } from './windows';
 import { getLastEntry } from './storage';
 
 let tray: Tray | null = null;
@@ -43,6 +43,10 @@ function getContextMenu(): Menu {
     {
       label: 'Daily Notes',
       click: () => showNotesWindow(),
+    },
+    {
+      label: 'Kanban Board',
+      click: () => showKanbanWindow(),
     },
     {
       label: 'Notebook',

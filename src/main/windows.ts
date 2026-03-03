@@ -11,6 +11,7 @@ let notebookWindow: BrowserWindow | null = null;
 let settingsWindow: BrowserWindow | null = null;
 let githubPRsWindow: BrowserWindow | null = null;
 let quickLaunchWindow: BrowserWindow | null = null;
+let kanbanWindow: BrowserWindow | null = null;
 
 // Check if we're in dev mode by seeing if the built renderer exists
 const rendererPath = path.join(__dirname, '../../renderer/index.html');
@@ -446,4 +447,46 @@ export function closeQuickLaunchWindow(): void {
 
 export function getQuickLaunchWindow(): BrowserWindow | null {
   return quickLaunchWindow;
+}
+
+export function createKanbanWindow(): BrowserWindow {
+  if (kanbanWindow && !kanbanWindow.isDestroyed()) {
+    kanbanWindow.show();
+    kanbanWindow.focus();
+    return kanbanWindow;
+  }
+
+  const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
+  const windowWidth = Math.min(Math.round(screenWidth * 0.9), 1400);
+  const windowHeight = Math.round(screenHeight * 0.8);
+
+  kanbanWindow = new BrowserWindow({
+    width: windowWidth,
+    height: windowHeight,
+    x: Math.round((screenWidth - windowWidth) / 2),
+    y: Math.round((screenHeight - windowHeight) / 2),
+    title: 'Kanban Board',
+    show: false,
+    webPreferences: {
+      preload: getPreloadPath(),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+
+  kanbanWindow.loadURL(getRendererUrl('/kanban'));
+
+  kanbanWindow.once('ready-to-show', () => {
+    kanbanWindow?.show();
+  });
+
+  kanbanWindow.on('closed', () => {
+    kanbanWindow = null;
+  });
+
+  return kanbanWindow;
+}
+
+export function showKanbanWindow(): void {
+  createKanbanWindow();
 }

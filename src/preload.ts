@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import { CalculatedTaskEntry, CurrentState, DailyNote, ElectronAPI, GitHubConfig, GitHubPR, HotkeyConfig, JiraConfig, JiraSearchResult, JiraTicketStatus, Note, PreviousTask, QuickLinkRule, TaskEntry, TaskType } from './shared/types';
+import { CalculatedTaskEntry, CurrentState, DailyNote, ElectronAPI, GitHubConfig, GitHubPR, HotkeyConfig, JiraConfig, JiraSearchResult, JiraTicketStatus, KanbanBoard, KanbanTask, Note, PreviousTask, QuickLinkRule, TaskEntry, TaskType } from './shared/types';
 
 const electronAPI: ElectronAPI = {
   getTasks: (): Promise<CalculatedTaskEntry[]> => ipcRenderer.invoke('get-tasks'),
@@ -122,6 +122,24 @@ const electronAPI: ElectronAPI = {
 
   openView: (view: string): Promise<void> =>
     ipcRenderer.invoke('open-view', view),
+
+  getKanbanBoard: (date: string): Promise<KanbanBoard | null> =>
+    ipcRenderer.invoke('get-kanban-board', date),
+
+  getAllKanbanDates: (): Promise<string[]> =>
+    ipcRenderer.invoke('get-all-kanban-dates'),
+
+  addKanbanTask: (date: string, title: string, description: string): Promise<KanbanTask> =>
+    ipcRenderer.invoke('add-kanban-task', date, title, description),
+
+  updateKanbanTask: (date: string, taskId: string, updates: Partial<Pick<KanbanTask, 'Title' | 'Description' | 'Status'>>): Promise<void> =>
+    ipcRenderer.invoke('update-kanban-task', date, taskId, updates),
+
+  deleteKanbanTask: (date: string, taskId: string): Promise<void> =>
+    ipcRenderer.invoke('delete-kanban-task', date, taskId),
+
+  reorderKanbanTasks: (date: string, tasks: KanbanTask[]): Promise<void> =>
+    ipcRenderer.invoke('reorder-kanban-tasks', date, tasks),
 };
 
 contextBridge.exposeInMainWorld('electronAPI', electronAPI);

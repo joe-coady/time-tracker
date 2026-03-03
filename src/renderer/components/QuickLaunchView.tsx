@@ -7,6 +7,7 @@ interface QuickLaunchButton {
 
 const BUTTONS: QuickLaunchButton[] = [
   { label: 'Daily Notes', view: 'notes' },
+  { label: 'Kanban', view: 'kanban' },
   { label: 'Notebook', view: 'notebook' },
   { label: 'GitHub PRs', view: 'github-prs' },
   { label: 'Edit Entries', view: 'edit' },
