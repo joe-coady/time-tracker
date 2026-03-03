@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import { CalculatedTaskEntry, CurrentState, DailyNote, ElectronAPI, GitHubConfig, GitHubPR, HotkeyConfig, JiraConfig, JiraSearchResult, JiraTicketStatus, KanbanBoard, KanbanTask, Note, PreviousTask, QuickLinkRule, TaskEntry, TaskType } from './shared/types';
+import { CalculatedTaskEntry, CurrentState, DailyNote, ElectronAPI, GitHubConfig, GitHubPR, HotkeyConfig, JiraConfig, JiraSearchResult, JiraTicketStatus, KanbanBoard, KanbanColumnConfig, KanbanTask, Note, PreviousTask, QuickLinkRule, TaskEntry, TaskType } from './shared/types';
 
 const electronAPI: ElectronAPI = {
   getTasks: (): Promise<CalculatedTaskEntry[]> => ipcRenderer.invoke('get-tasks'),
@@ -140,6 +140,15 @@ const electronAPI: ElectronAPI = {
 
   reorderKanbanTasks: (date: string, tasks: KanbanTask[]): Promise<void> =>
     ipcRenderer.invoke('reorder-kanban-tasks', date, tasks),
+
+  getKanbanColumns: (): Promise<KanbanColumnConfig[]> =>
+    ipcRenderer.invoke('get-kanban-columns'),
+
+  saveKanbanColumns: (columns: KanbanColumnConfig[]): Promise<void> =>
+    ipcRenderer.invoke('save-kanban-columns', columns),
+
+  syncKanbanWithJira: (date: string): Promise<{ imported: number; updated: number }> =>
+    ipcRenderer.invoke('sync-kanban-with-jira', date),
 };
 
 contextBridge.exposeInMainWorld('electronAPI', electronAPI);

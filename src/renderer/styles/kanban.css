@@ -177,6 +177,29 @@
   cursor: not-allowed;
 }
 
+.kanban-import-btn {
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #007aff;
+  background: transparent;
+  border: 1px solid #007aff;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.kanban-import-btn:hover:not(:disabled) {
+  background-color: #007aff;
+  color: #fff;
+}
+
+.kanban-import-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* Kanban board area */
 .kanban-board-wrapper {
   flex: 1;
@@ -189,11 +212,21 @@
   height: 100%;
 }
 
-/* Columns */
+/* Columns — make them flex-grow to fill the board width.
+   The library wraps each column in an anonymous <div> (the direct
+   flex child of .rkk-board) and also appends an empty .rkk-column-adder. */
+.kanban-board-wrapper .rkk-board > div:not(.rkk-column-adder) {
+  flex: 1;
+  min-width: 264px;
+}
+
 .kanban-board-wrapper .rkk-column-outer {
   background-color: #f5f5f5;
   border-radius: 8px;
   border: 1px solid #e0e0e0;
+  min-width: 0 !important;
+  max-width: none !important;
+  width: 100%;
 }
 
 .kanban-board-wrapper .rkk-column-content {
@@ -222,6 +255,37 @@
   padding: 1px 7px;
   border-radius: 10px;
   font-weight: 500;
+}
+
+/* Unmapped Jira status columns */
+.kanban-column-header.unmapped {
+  border-bottom: 2px solid #e74c3c;
+}
+
+.kanban-column-header.unmapped .kanban-column-title {
+  color: #e74c3c;
+}
+
+.kanban-column-header.unmapped .kanban-column-count {
+  background-color: #fde8e8;
+  color: #e74c3c;
+}
+
+.kanban-column-copy {
+  padding: 1px 6px;
+  font-size: 10px;
+  font-weight: 500;
+  color: #e74c3c;
+  background: transparent;
+  border: 1px solid #e74c3c;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.kanban-column-copy:hover {
+  background-color: #e74c3c;
+  color: #fff;
 }
 
 /* Card wrapper — the actual card appearance */

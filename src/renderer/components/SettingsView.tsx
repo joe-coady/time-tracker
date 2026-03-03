@@ -4,8 +4,9 @@ import QuickLinksView from './QuickLinksView';
 import JiraSettingsView from './JiraSettingsView';
 import GitHubSettingsView from './GitHubSettingsView';
 import HotkeySettingsView from './HotkeySettingsView';
+import KanbanSettingsView from './KanbanSettingsView';
 
-type SettingsTab = 'task-types' | 'quick-links' | 'jira' | 'github' | 'hotkeys';
+type SettingsTab = 'task-types' | 'quick-links' | 'jira' | 'github' | 'hotkeys' | 'kanban';
 
 export default function SettingsView() {
   const [activeTab, setActiveTab] = useState<SettingsTab>('task-types');
@@ -46,6 +47,12 @@ export default function SettingsView() {
         >
           Hotkeys
         </button>
+        <button
+          className={`settings-tab ${activeTab === 'kanban' ? 'active' : ''}`}
+          onClick={() => setActiveTab('kanban')}
+        >
+          Kanban
+        </button>
       </div>
       <div className="settings-content">
         {activeTab === 'task-types' && <TaskTypesView />}
@@ -53,6 +60,7 @@ export default function SettingsView() {
         {activeTab === 'jira' && <JiraSettingsView />}
         {activeTab === 'github' && <GitHubSettingsView />}
         {activeTab === 'hotkeys' && <HotkeySettingsView />}
+        {activeTab === 'kanban' && <KanbanSettingsView />}
       </div>
     </div>
   );

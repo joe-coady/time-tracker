@@ -98,6 +98,34 @@ export async function fetchJiraTicketStatuses(keys: string[]): Promise<JiraTicke
   return results;
 }
 
+export async function fetchAssignedJiraTickets(): Promise<JiraSearchResult[]> {
+  const config = readJiraConfig();
+  if (!config) return [];
+
+  const auth = Buffer.from(`${config.email}:${config.apiToken}`).toString('base64');
+  const jql = 'assignee = currentUser() AND statusCategory != Done ORDER BY updated DESC';
+  const url = new URL(`${config.baseUrl}/rest/api/3/search/jql`);
+  url.searchParams.set('jql', jql);
+  url.searchParams.set('fields', 'summary,status');
+  url.searchParams.set('maxResults', '50');
+
+  try {
+    const body = await jiraRequest(url.toString(), auth);
+    const data = JSON.parse(body);
+    const results: JiraSearchResult[] = [];
+    for (const issue of data.issues ?? []) {
+      results.push({
+        key: issue.key,
+        summary: issue.fields.summary ?? '',
+      });
+    }
+    return results;
+  } catch (err) {
+    console.error('fetchAssignedJiraTickets failed:', err);
+    return [];
+  }
+}
+
 export async function testJiraConnection(config: JiraConfig): Promise<boolean> {
   const url = `${config.baseUrl}/rest/api/3/myself`;
   const auth = Buffer.from(`${config.email}:${config.apiToken}`).toString('base64');

@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { v4 as uuidv4 } from 'uuid';
-import { TaskEntry, TaskType, TasksData, DailyNote, Note, QuickLinkRule, JiraConfig, GitHubConfig, HotkeyConfig, KanbanBoard, KanbanTask, KanbanStatus } from '../shared/types';
+import { TaskEntry, TaskType, TasksData, DailyNote, Note, QuickLinkRule, JiraConfig, GitHubConfig, HotkeyConfig, KanbanBoard, KanbanTask, KanbanColumnConfig, DEFAULT_KANBAN_COLUMNS, JiraSearchResult, JiraTicketStatus } from '../shared/types';
 
 const TASKS_FILE_PATH = path.join(os.homedir(), 'notes', 'general', 'tasks.json');
 
@@ -392,6 +392,17 @@ export function saveHotkeyConfig(config: HotkeyConfig): void {
   writeTasksData(data);
 }
 
+// Kanban Column Config functions
+export function readKanbanColumns(): KanbanColumnConfig[] {
+  return readTasksData().kanbanColumns ?? DEFAULT_KANBAN_COLUMNS;
+}
+
+export function saveKanbanColumns(columns: KanbanColumnConfig[]): void {
+  const data = readTasksData();
+  data.kanbanColumns = columns;
+  writeTasksData(data);
+}
+
 // Kanban Board functions
 export function readKanbanBoards(): KanbanBoard[] {
   return readTasksData().kanbanBoards || [];
@@ -418,9 +429,12 @@ export function getKanbanBoardForDate(date: string): KanbanBoard | null {
 
     let tasks: KanbanTask[] = [];
     if (previous) {
-      // Copy all tasks except Done, assign new UUIDs
+      // Copy all tasks except those in the last visible column, assign new UUIDs
+      const columns = readKanbanColumns();
+      const visibleColumns = columns.filter(c => !c.hidden);
+      const lastVisibleColumn = visibleColumns[visibleColumns.length - 1]?.name ?? 'Done';
       tasks = previous.tasks
-        .filter(t => t.Status !== 'Done')
+        .filter(t => t.Status !== lastVisibleColumn)
         .map(t => ({
           ...t,
           Id: uuidv4(),
@@ -493,7 +507,7 @@ export function addKanbanTask(date: string, title: string, description: string):
       Id: uuidv4(),
       Title: title,
       Description: description,
-      Status: 'Todo' as KanbanStatus,
+      Status: readKanbanColumns().filter(c => !c.hidden)[0]?.name ?? 'Todo',
     };
     const newBoard: KanbanBoard = {
       id: uuidv4(),
@@ -511,7 +525,7 @@ export function addKanbanTask(date: string, title: string, description: string):
     Id: uuidv4(),
     Title: title,
     Description: description,
-    Status: 'Todo' as KanbanStatus,
+    Status: readKanbanColumns().filter(c => !c.hidden)[0]?.name ?? 'Todo',
   };
   data.kanbanBoards[boardIndex].tasks.push(task);
   data.kanbanBoards[boardIndex].updatedAt = new Date().toISOString();
@@ -561,4 +575,106 @@ export function reorderKanbanTasks(date: string, tasks: KanbanTask[]): void {
   board.tasks = tasks;
   board.updatedAt = new Date().toISOString();
   writeTasksData(data);
+}
+
+export async function syncKanbanWithJira(
+  date: string,
+  fetchStatuses: (keys: string[]) => Promise<JiraTicketStatus[]>,
+  fetchAssigned: () => Promise<JiraSearchResult[]>,
+): Promise<{ imported: number; updated: number }> {
+  // Ensure board exists
+  getKanbanBoardForDate(date);
+
+  const data = readTasksData();
+  if (!data.kanbanBoards) data.kanbanBoards = [];
+  const board = data.kanbanBoards.find(b => b.date === date);
+  if (!board) return { imported: 0, updated: 0 };
+
+  const columns = readKanbanColumns();
+  const visibleColumns = columns.filter(c => !c.hidden);
+  const firstVisibleColumn = visibleColumns[0]?.name ?? 'Todo';
+
+  // Build ticket pattern from jira config
+  const jiraConfig = readJiraConfig();
+  const ticketPattern = jiraConfig?.ticketPattern ? new RegExp(jiraConfig.ticketPattern) : null;
+
+  // 1. Import new assigned tickets (dedup by ticket key)
+  const assigned = await fetchAssigned();
+  const existingKeys = new Set<string>();
+  if (ticketPattern) {
+    for (const task of board.tasks) {
+      const match = task.Title.match(ticketPattern);
+      if (match) existingKeys.add(match[0]);
+    }
+  }
+
+  let imported = 0;
+  const newTickets = assigned.filter(r => !existingKeys.has(r.key));
+  for (const ticket of newTickets) {
+    board.tasks.push({
+      Id: uuidv4(),
+      Title: ticket.key,
+      Description: ticket.summary,
+      Status: firstVisibleColumn,
+    });
+    imported++;
+  }
+
+  // 2. Update statuses for all Jira tickets on the board
+  let updated = 0;
+  if (ticketPattern) {
+    const allKeys: string[] = [];
+    const keyToTaskIds = new Map<string, string[]>();
+    for (const task of board.tasks) {
+      const match = task.Title.match(ticketPattern);
+      if (match) {
+        const key = match[0];
+        if (!keyToTaskIds.has(key)) {
+          keyToTaskIds.set(key, []);
+          allKeys.push(key);
+        }
+        keyToTaskIds.get(key)!.push(task.Id);
+      }
+    }
+
+    if (allKeys.length > 0) {
+      const statuses = await fetchStatuses(allKeys);
+      const statusMap = new Map<string, string>();
+      for (const s of statuses) {
+        statusMap.set(s.key, s.status);
+      }
+
+      for (const [key, taskIds] of keyToTaskIds) {
+        const jiraStatus = statusMap.get(key);
+        if (!jiraStatus) continue;
+
+        // Find which column this Jira status maps to
+        let targetColumn: string | null = null;
+        for (const col of columns) {
+          if (col.jiraStatuses?.some(s => s.toLowerCase() === jiraStatus.toLowerCase())) {
+            targetColumn = col.name;
+            break;
+          }
+        }
+
+        if (!targetColumn) {
+          // No column maps to this Jira status — use raw status name
+          // so the board can show it as an unmapped column for discovery
+          targetColumn = jiraStatus;
+        }
+
+        for (const taskId of taskIds) {
+          const task = board.tasks.find(t => t.Id === taskId);
+          if (task && task.Status !== targetColumn) {
+            task.Status = targetColumn;
+            updated++;
+          }
+        }
+      }
+    }
+  }
+
+  board.updatedAt = new Date().toISOString();
+  writeTasksData(data);
+  return { imported, updated };
 }

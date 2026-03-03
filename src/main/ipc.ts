@@ -36,14 +36,17 @@ import {
   updateKanbanTask,
   deleteKanbanTask,
   reorderKanbanTasks,
+  readKanbanColumns,
+  saveKanbanColumns,
+  syncKanbanWithJira,
 } from './storage';
 import { startTimer, getElapsedMinutes } from './timer';
-import { searchJiraIssues, testJiraConnection, fetchJiraTicketStatuses } from './jira';
+import { searchJiraIssues, testJiraConnection, fetchJiraTicketStatuses, fetchAssignedJiraTickets } from './jira';
 import { testGitHubConnection, fetchGitHubPRs, fetchDevBranchTickets } from './github';
 import { reregisterShortcuts } from './globalShortcut';
 import { closeDialogWindow, closeQuickLaunchWindow, showDialogWindow, showEditWindow, showNotesWindow, showNotebookWindow, showGitHubPRsWindow, showExportWindow, showSettingsWindow, showKanbanWindow } from './windows';
 import { updateTrayMenu } from './tray';
-import { TaskEntry, CalculatedTaskEntry, CurrentState, TaskType, DailyNote, Note, QuickLinkRule, JiraConfig, JiraSearchResult, JiraTicketStatus, GitHubConfig, GitHubPR, HotkeyConfig, KanbanBoard, KanbanTask } from '../shared/types';
+import { TaskEntry, CalculatedTaskEntry, CurrentState, TaskType, DailyNote, Note, QuickLinkRule, JiraConfig, JiraSearchResult, JiraTicketStatus, GitHubConfig, GitHubPR, HotkeyConfig, KanbanBoard, KanbanTask, KanbanColumnConfig } from '../shared/types';
 import { calculateDurations } from '../shared/durationUtils';
 
 export function setupIpcHandlers(): void {
@@ -220,6 +223,10 @@ export function setupIpcHandlers(): void {
     return fetchJiraTicketStatuses(keys);
   });
 
+  ipcMain.handle('sync-kanban-with-jira', async (_event, date: string): Promise<{ imported: number; updated: number }> => {
+    return syncKanbanWithJira(date, fetchJiraTicketStatuses, fetchAssignedJiraTickets);
+  });
+
   // GitHub handlers
   ipcMain.handle('get-github-config', async (): Promise<GitHubConfig | null> => {
     return readGitHubConfig();
@@ -254,6 +261,15 @@ export function setupIpcHandlers(): void {
   // Quick Launch handlers
   ipcMain.handle('close-quick-launch', async (): Promise<void> => {
     closeQuickLaunchWindow();
+  });
+
+  // Kanban column config handlers
+  ipcMain.handle('get-kanban-columns', async (): Promise<KanbanColumnConfig[]> => {
+    return readKanbanColumns();
+  });
+
+  ipcMain.handle('save-kanban-columns', async (_event, columns: KanbanColumnConfig[]): Promise<void> => {
+    saveKanbanColumns(columns);
   });
 
   // Kanban handlers

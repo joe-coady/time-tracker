@@ -33,7 +33,22 @@ export interface HotkeyConfig {
   quickLaunch?: string; // Electron accelerator string, e.g. "Command+`"
 }
 
-export type KanbanStatus = 'Todo' | 'In Progress' | 'Dev Review' | 'QA' | 'Done';
+export interface KanbanColumnConfig {
+  name: string;
+  hidden?: boolean;
+  mappedTo?: string;         // required when hidden — must point to a visible column
+  jiraStatuses?: string[];   // Jira status names that resolve to this column
+}
+
+export const DEFAULT_KANBAN_COLUMNS: KanbanColumnConfig[] = [
+  { name: 'Todo' },
+  { name: 'In Progress' },
+  { name: 'Dev Review' },
+  { name: 'QA' },
+  { name: 'Done' },
+];
+
+export type KanbanStatus = string;
 
 export interface KanbanTask {
   Id: string;
@@ -111,6 +126,7 @@ export interface TasksData {
   githubConfig?: GitHubConfig;
   hotkeyConfig?: HotkeyConfig;
   kanbanBoards?: KanbanBoard[];
+  kanbanColumns?: KanbanColumnConfig[];
 }
 
 export interface CalculatedTaskEntry extends TaskEntry {
@@ -191,6 +207,9 @@ export interface ElectronAPI {
   updateKanbanTask: (date: string, taskId: string, updates: Partial<Pick<KanbanTask, 'Title' | 'Description' | 'Status'>>) => Promise<void>;
   deleteKanbanTask: (date: string, taskId: string) => Promise<void>;
   reorderKanbanTasks: (date: string, tasks: KanbanTask[]) => Promise<void>;
+  getKanbanColumns: () => Promise<KanbanColumnConfig[]>;
+  saveKanbanColumns: (columns: KanbanColumnConfig[]) => Promise<void>;
+  syncKanbanWithJira: (date: string) => Promise<{ imported: number; updated: number }>;
 }
 
 declare global {
