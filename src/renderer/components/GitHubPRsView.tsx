@@ -31,7 +31,7 @@ function GitHubPRsView() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [repoFilter, setRepoFilter] = useState('');
-  const [involvement, setInvolvement] = useState<Involvement>('all');
+  const [involvement, setInvolvement] = useState<Involvement>('mine');
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
 
   const loadData = useCallback(async () => {

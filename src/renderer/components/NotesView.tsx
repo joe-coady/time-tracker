@@ -21,7 +21,8 @@ function applyQuickLinks(text: string, rules: QuickLinkRule[]): string {
 }
 
 function getTodayDateString(): string {
-  return new Date().toISOString().split('T')[0];
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 }
 
 function formatDateForDisplay(dateStr: string): string {
@@ -29,7 +30,7 @@ function formatDateForDisplay(dateStr: string): string {
   const today = getTodayDateString();
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
-  const yesterdayStr = yesterday.toISOString().split('T')[0];
+  const yesterdayStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
 
   if (dateStr === today) {
     return 'Today';
