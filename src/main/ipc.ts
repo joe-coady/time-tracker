@@ -35,7 +35,7 @@ import { startTimer, getElapsedMinutes } from './timer';
 import { searchJiraIssues, testJiraConnection, fetchJiraTicketStatuses } from './jira';
 import { testGitHubConnection, fetchGitHubPRs, fetchDevBranchTickets } from './github';
 import { reregisterShortcuts } from './globalShortcut';
-import { closeDialogWindow } from './windows';
+import { closeDialogWindow, closeQuickLaunchWindow, showDialogWindow, showEditWindow, showNotesWindow, showNotebookWindow, showGitHubPRsWindow, showExportWindow, showSettingsWindow, showTaskTypesWindow } from './windows';
 import { updateTrayMenu } from './tray';
 import { TaskEntry, CalculatedTaskEntry, CurrentState, TaskType, DailyNote, Note, QuickLinkRule, JiraConfig, JiraSearchResult, JiraTicketStatus, GitHubConfig, GitHubPR, HotkeyConfig } from '../shared/types';
 import { calculateDurations } from '../shared/durationUtils';
@@ -242,5 +242,25 @@ export function setupIpcHandlers(): void {
   ipcMain.handle('save-hotkey-config', async (_event, config: HotkeyConfig): Promise<void> => {
     saveHotkeyConfig(config);
     reregisterShortcuts();
+  });
+
+  // Quick Launch handlers
+  ipcMain.handle('close-quick-launch', async (): Promise<void> => {
+    closeQuickLaunchWindow();
+  });
+
+  ipcMain.handle('open-view', async (_event, view: string): Promise<void> => {
+    const viewMap: Record<string, () => void> = {
+      'dialog': showDialogWindow,
+      'edit': showEditWindow,
+      'notes': showNotesWindow,
+      'notebook': showNotebookWindow,
+      'github-prs': showGitHubPRsWindow,
+      'export': showExportWindow,
+      'settings': showSettingsWindow,
+      'task-types': showTaskTypesWindow,
+    };
+    const showFn = viewMap[view];
+    if (showFn) showFn();
   });
 }

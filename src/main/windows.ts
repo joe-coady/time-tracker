@@ -10,6 +10,7 @@ let notesWindow: BrowserWindow | null = null;
 let notebookWindow: BrowserWindow | null = null;
 let settingsWindow: BrowserWindow | null = null;
 let githubPRsWindow: BrowserWindow | null = null;
+let quickLaunchWindow: BrowserWindow | null = null;
 
 // Check if we're in dev mode by seeing if the built renderer exists
 const rendererPath = path.join(__dirname, '../../renderer/index.html');
@@ -381,4 +382,68 @@ export function createGitHubPRsWindow(): BrowserWindow {
 
 export function showGitHubPRsWindow(): void {
   createGitHubPRsWindow();
+}
+
+export function createQuickLaunchWindow(): BrowserWindow {
+  if (quickLaunchWindow && !quickLaunchWindow.isDestroyed()) {
+    quickLaunchWindow.show();
+    quickLaunchWindow.focus();
+    return quickLaunchWindow;
+  }
+
+  const { width: screenWidth } = screen.getPrimaryDisplay().workAreaSize;
+
+  quickLaunchWindow = new BrowserWindow({
+    width: screenWidth,
+    height: 80,
+    x: 0,
+    y: 0,
+    frame: false,
+    alwaysOnTop: true,
+    resizable: false,
+    skipTaskbar: true,
+    show: false,
+    transparent: true,
+    webPreferences: {
+      preload: getPreloadPath(),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+
+  quickLaunchWindow.loadURL(getRendererUrl('/quick-launch'));
+
+  quickLaunchWindow.once('ready-to-show', () => {
+    quickLaunchWindow?.show();
+    quickLaunchWindow?.focus();
+  });
+
+  quickLaunchWindow.on('blur', () => {
+    closeQuickLaunchWindow();
+  });
+
+  quickLaunchWindow.on('closed', () => {
+    quickLaunchWindow = null;
+  });
+
+  return quickLaunchWindow;
+}
+
+export function showQuickLaunchWindow(): void {
+  if (quickLaunchWindow && !quickLaunchWindow.isDestroyed() && quickLaunchWindow.isVisible()) {
+    closeQuickLaunchWindow();
+    return;
+  }
+  createQuickLaunchWindow();
+}
+
+export function closeQuickLaunchWindow(): void {
+  if (quickLaunchWindow && !quickLaunchWindow.isDestroyed()) {
+    quickLaunchWindow.close();
+    quickLaunchWindow = null;
+  }
+}
+
+export function getQuickLaunchWindow(): BrowserWindow | null {
+  return quickLaunchWindow;
 }

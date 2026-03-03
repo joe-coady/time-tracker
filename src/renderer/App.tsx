@@ -7,8 +7,9 @@ import NotesView from './components/NotesView';
 import NotebookView from './components/NotebookView';
 import SettingsView from './components/SettingsView';
 import GitHubPRsView from './components/GitHubPRsView';
+import QuickLaunchView from './components/QuickLaunchView';
 
-type View = 'dialog' | 'edit' | 'task-types' | 'export' | 'notes' | 'notebook' | 'settings' | 'github-prs';
+type View = 'dialog' | 'edit' | 'task-types' | 'export' | 'notes' | 'notebook' | 'settings' | 'github-prs' | 'quick-launch';
 
 function App() {
   const [view, setView] = useState<View>('dialog');
@@ -31,6 +32,8 @@ function App() {
         setView('settings');
       } else if (hash === '#/github-prs') {
         setView('github-prs');
+      } else if (hash === '#/quick-launch') {
+        setView('quick-launch');
       } else {
         setView('dialog');
       }
@@ -48,6 +51,7 @@ function App() {
   if (view === 'notebook') return <NotebookView />;
   if (view === 'settings') return <SettingsView />;
   if (view === 'github-prs') return <GitHubPRsView />;
+  if (view === 'quick-launch') return <QuickLaunchView />;
   return <TaskDialog />;
 }
 

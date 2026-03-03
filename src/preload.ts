@@ -116,6 +116,12 @@ const electronAPI: ElectronAPI = {
 
   saveHotkeyConfig: (config: HotkeyConfig): Promise<void> =>
     ipcRenderer.invoke('save-hotkey-config', config),
+
+  closeQuickLaunch: (): Promise<void> =>
+    ipcRenderer.invoke('close-quick-launch'),
+
+  openView: (view: string): Promise<void> =>
+    ipcRenderer.invoke('open-view', view),
 };
 
 contextBridge.exposeInMainWorld('electronAPI', electronAPI);

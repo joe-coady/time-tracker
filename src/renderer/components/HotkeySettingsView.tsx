@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 
 const DEFAULT_HOTKEY = 'Control+Option+Space';
+const DEFAULT_QUICK_LAUNCH = 'Command+`';
 const IS_MAC = navigator.platform.toUpperCase().includes('MAC');
 
 function keyEventToAccelerator(e: KeyboardEvent): string | null {
@@ -54,15 +55,17 @@ function keyEventToAccelerator(e: KeyboardEvent): string | null {
 
 export default function HotkeySettingsView() {
   const [hotkey, setHotkey] = useState(DEFAULT_HOTKEY);
+  const [quickLaunchHotkey, setQuickLaunchHotkey] = useState(DEFAULT_QUICK_LAUNCH);
   const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(false);
-  const [recording, setRecording] = useState(false);
-  const recordingRef = useRef(false);
+  const [recording, setRecording] = useState<null | 'dialog' | 'quickLaunch'>(null);
+  const recordingRef = useRef<null | 'dialog' | 'quickLaunch'>(null);
 
   const loadConfig = useCallback(async () => {
     const config = await window.electronAPI.getHotkeyConfig();
     if (config) {
       setHotkey(config.showDialog);
+      if (config.quickLaunch) setQuickLaunchHotkey(config.quickLaunch);
     }
     setLoading(false);
   }, []);
@@ -81,8 +84,12 @@ export default function HotkeySettingsView() {
 
       const accelerator = keyEventToAccelerator(e as KeyboardEvent);
       if (accelerator) {
-        setHotkey(accelerator);
-        setRecording(false);
+        if (recordingRef.current === 'dialog') {
+          setHotkey(accelerator);
+        } else {
+          setQuickLaunchHotkey(accelerator);
+        }
+        setRecording(null);
       }
     };
 
@@ -91,13 +98,14 @@ export default function HotkeySettingsView() {
   }, []);
 
   const handleSave = async () => {
-    await window.electronAPI.saveHotkeyConfig({ showDialog: hotkey });
+    await window.electronAPI.saveHotkeyConfig({ showDialog: hotkey, quickLaunch: quickLaunchHotkey });
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
 
   const handleReset = () => {
     setHotkey(DEFAULT_HOTKEY);
+    setQuickLaunchHotkey(DEFAULT_QUICK_LAUNCH);
   };
 
   if (loading) return <div className="settings-tab-content">Loading...</div>;
@@ -111,21 +119,44 @@ export default function HotkeySettingsView() {
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             <input
               type="text"
-              value={recording ? 'Press a key combo...' : hotkey}
-              readOnly={recording}
+              value={recording === 'dialog' ? 'Press a key combo...' : hotkey}
+              readOnly={recording === 'dialog'}
               onChange={(e) => setHotkey(e.target.value)}
               style={{
                 flex: 1,
                 fontFamily: 'monospace',
-                backgroundColor: recording ? '#2a2a3e' : undefined,
-                borderColor: recording ? '#7c6fe0' : undefined,
+                backgroundColor: recording === 'dialog' ? '#2a2a3e' : undefined,
+                borderColor: recording === 'dialog' ? '#7c6fe0' : undefined,
               }}
             />
             <button
-              className={recording ? 'btn-danger' : 'btn-secondary'}
-              onClick={() => setRecording(!recording)}
+              className={recording === 'dialog' ? 'btn-danger' : 'btn-secondary'}
+              onClick={() => setRecording(recording === 'dialog' ? null : 'dialog')}
             >
-              {recording ? 'Cancel' : 'Record'}
+              {recording === 'dialog' ? 'Cancel' : 'Record'}
+            </button>
+          </div>
+        </div>
+        <div className="form-group">
+          <label>Quick Launch</label>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <input
+              type="text"
+              value={recording === 'quickLaunch' ? 'Press a key combo...' : quickLaunchHotkey}
+              readOnly={recording === 'quickLaunch'}
+              onChange={(e) => setQuickLaunchHotkey(e.target.value)}
+              style={{
+                flex: 1,
+                fontFamily: 'monospace',
+                backgroundColor: recording === 'quickLaunch' ? '#2a2a3e' : undefined,
+                borderColor: recording === 'quickLaunch' ? '#7c6fe0' : undefined,
+              }}
+            />
+            <button
+              className={recording === 'quickLaunch' ? 'btn-danger' : 'btn-secondary'}
+              onClick={() => setRecording(recording === 'quickLaunch' ? null : 'quickLaunch')}
+            >
+              {recording === 'quickLaunch' ? 'Cancel' : 'Record'}
             </button>
           </div>
         </div>

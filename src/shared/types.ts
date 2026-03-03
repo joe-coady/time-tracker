@@ -30,6 +30,7 @@ export interface JiraSearchResult {
 
 export interface HotkeyConfig {
   showDialog: string; // Electron accelerator string, e.g. "Control+Option+Space"
+  quickLaunch?: string; // Electron accelerator string, e.g. "Command+`"
 }
 
 export interface GitHubConfig {
@@ -164,6 +165,8 @@ export interface ElectronAPI {
   fetchDevBranchTickets: (repos: string[]) => Promise<string[]>;
   getHotkeyConfig: () => Promise<HotkeyConfig | null>;
   saveHotkeyConfig: (config: HotkeyConfig) => Promise<void>;
+  closeQuickLaunch: () => Promise<void>;
+  openView: (view: string) => Promise<void>;
 }
 
 declare global {
