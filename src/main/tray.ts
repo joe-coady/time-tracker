@@ -1,6 +1,6 @@
 import { Tray, Menu, nativeImage, app } from 'electron';
 import * as path from 'path';
-import { showDialogWindow, showEditWindow, showTaskTypesWindow, showExportWindow, showNotesWindow, showNotebookWindow, showSettingsWindow, showGitHubPRsWindow, showQuickLaunchWindow } from './windows';
+import { showDialogWindow, showEditWindow, showExportWindow, showNotesWindow, showNotebookWindow, showSettingsWindow, showGitHubPRsWindow, showQuickLaunchWindow } from './windows';
 import { getLastEntry } from './storage';
 
 let tray: Tray | null = null;
@@ -56,10 +56,6 @@ function getContextMenu(): Menu {
     {
       label: 'Quick Launch',
       click: () => showQuickLaunchWindow(),
-    },
-    {
-      label: 'Manage task types',
-      click: () => showTaskTypesWindow(),
     },
     {
       label: 'Settings',

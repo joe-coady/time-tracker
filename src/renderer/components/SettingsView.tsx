@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
+import TaskTypesView from './TaskTypesView';
 import QuickLinksView from './QuickLinksView';
 import JiraSettingsView from './JiraSettingsView';
 import GitHubSettingsView from './GitHubSettingsView';
 import HotkeySettingsView from './HotkeySettingsView';
 
-type SettingsTab = 'quick-links' | 'jira' | 'github' | 'hotkeys';
+type SettingsTab = 'task-types' | 'quick-links' | 'jira' | 'github' | 'hotkeys';
 
 export default function SettingsView() {
-  const [activeTab, setActiveTab] = useState<SettingsTab>('quick-links');
+  const [activeTab, setActiveTab] = useState<SettingsTab>('task-types');
 
   return (
     <div className="settings-container">
@@ -15,6 +16,12 @@ export default function SettingsView() {
         <h1 className="settings-title">Settings</h1>
       </div>
       <div className="settings-tabs">
+        <button
+          className={`settings-tab ${activeTab === 'task-types' ? 'active' : ''}`}
+          onClick={() => setActiveTab('task-types')}
+        >
+          Task Types
+        </button>
         <button
           className={`settings-tab ${activeTab === 'quick-links' ? 'active' : ''}`}
           onClick={() => setActiveTab('quick-links')}
@@ -41,6 +48,7 @@ export default function SettingsView() {
         </button>
       </div>
       <div className="settings-content">
+        {activeTab === 'task-types' && <TaskTypesView />}
         {activeTab === 'quick-links' && <QuickLinksView />}
         {activeTab === 'jira' && <JiraSettingsView />}
         {activeTab === 'github' && <GitHubSettingsView />}

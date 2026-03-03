@@ -35,7 +35,7 @@ import { startTimer, getElapsedMinutes } from './timer';
 import { searchJiraIssues, testJiraConnection, fetchJiraTicketStatuses } from './jira';
 import { testGitHubConnection, fetchGitHubPRs, fetchDevBranchTickets } from './github';
 import { reregisterShortcuts } from './globalShortcut';
-import { closeDialogWindow, closeQuickLaunchWindow, showDialogWindow, showEditWindow, showNotesWindow, showNotebookWindow, showGitHubPRsWindow, showExportWindow, showSettingsWindow, showTaskTypesWindow } from './windows';
+import { closeDialogWindow, closeQuickLaunchWindow, showDialogWindow, showEditWindow, showNotesWindow, showNotebookWindow, showGitHubPRsWindow, showExportWindow, showSettingsWindow } from './windows';
 import { updateTrayMenu } from './tray';
 import { TaskEntry, CalculatedTaskEntry, CurrentState, TaskType, DailyNote, Note, QuickLinkRule, JiraConfig, JiraSearchResult, JiraTicketStatus, GitHubConfig, GitHubPR, HotkeyConfig } from '../shared/types';
 import { calculateDurations } from '../shared/durationUtils';
@@ -258,7 +258,7 @@ export function setupIpcHandlers(): void {
       'github-prs': showGitHubPRsWindow,
       'export': showExportWindow,
       'settings': showSettingsWindow,
-      'task-types': showTaskTypesWindow,
+      'task-types': showSettingsWindow,
     };
     const showFn = viewMap[view];
     if (showFn) showFn();

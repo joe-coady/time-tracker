@@ -51,7 +51,7 @@ export default function TaskTypesView() {
 
   if (loading) {
     return (
-      <div className="task-types-container">
+      <div className="settings-tab-content">
         <div className="task-types-header">
           <h1 className="task-types-title">Task Types</h1>
         </div>
@@ -63,7 +63,7 @@ export default function TaskTypesView() {
   }
 
   return (
-    <div className="task-types-container">
+    <div className="settings-tab-content">
       <div className="task-types-header">
         <h1 className="task-types-title">Task Types</h1>
         <span className="entry-count">{taskTypes.length} types</span>
