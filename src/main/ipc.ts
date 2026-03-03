@@ -28,13 +28,16 @@ import {
   saveJiraConfig,
   readGitHubConfig,
   saveGitHubConfig,
+  readHotkeyConfig,
+  saveHotkeyConfig,
 } from './storage';
 import { startTimer, getElapsedMinutes } from './timer';
 import { searchJiraIssues, testJiraConnection, fetchJiraTicketStatuses } from './jira';
-import { testGitHubConnection, fetchGitHubPRs } from './github';
+import { testGitHubConnection, fetchGitHubPRs, fetchDevBranchTickets } from './github';
+import { reregisterShortcuts } from './globalShortcut';
 import { closeDialogWindow } from './windows';
 import { updateTrayMenu } from './tray';
-import { TaskEntry, CalculatedTaskEntry, CurrentState, TaskType, DailyNote, Note, QuickLinkRule, JiraConfig, JiraSearchResult, JiraTicketStatus, GitHubConfig, GitHubPR } from '../shared/types';
+import { TaskEntry, CalculatedTaskEntry, CurrentState, TaskType, DailyNote, Note, QuickLinkRule, JiraConfig, JiraSearchResult, JiraTicketStatus, GitHubConfig, GitHubPR, HotkeyConfig } from '../shared/types';
 import { calculateDurations } from '../shared/durationUtils';
 
 export function setupIpcHandlers(): void {
@@ -225,5 +228,19 @@ export function setupIpcHandlers(): void {
 
   ipcMain.handle('fetch-github-prs', async (): Promise<GitHubPR[]> => {
     return fetchGitHubPRs();
+  });
+
+  ipcMain.handle('fetch-dev-branch-tickets', async (_event, repos: string[]): Promise<string[]> => {
+    return fetchDevBranchTickets(repos);
+  });
+
+  // Hotkey handlers
+  ipcMain.handle('get-hotkey-config', async (): Promise<HotkeyConfig | null> => {
+    return readHotkeyConfig();
+  });
+
+  ipcMain.handle('save-hotkey-config', async (_event, config: HotkeyConfig): Promise<void> => {
+    saveHotkeyConfig(config);
+    reregisterShortcuts();
   });
 }

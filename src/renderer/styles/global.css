@@ -1699,3 +1699,79 @@ input.entry-duration.ongoing {
 .jira-badge.clickable:hover {
   opacity: 0.85;
 }
+
+/* Settings View styles */
+.settings-container {
+  padding: 20px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  max-width: none;
+}
+
+.settings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.settings-title {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.settings-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #ddd;
+}
+
+.settings-tab {
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #666;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-bottom: -1px;
+}
+
+.settings-tab:hover {
+  color: #333;
+}
+
+.settings-tab.active {
+  color: #007aff;
+  border-bottom-color: #007aff;
+}
+
+.settings-content {
+  flex: 1;
+  overflow-y: auto;
+  padding-top: 4px;
+}
+
+.settings-tab-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 600px;
+}
+
+/* DEV-ENV badge */
+.pr-card-dev-env {
+  display: inline-block;
+  padding: 1px 6px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #155724;
+  background-color: #d4edda;
+  border: 1px solid #28a745;
+  border-radius: 3px;
+  flex-shrink: 0;
+}

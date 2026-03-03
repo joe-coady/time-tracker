@@ -27,6 +27,7 @@ function GitHubPRsView() {
   const [jiraConfig, setJiraConfig] = useState<JiraConfig | null>(null);
   const [ticketStatuses, setTicketStatuses] = useState<Map<string, JiraTicketStatus>>(new Map());
   const [ticketStatusLoading, setTicketStatusLoading] = useState(false);
+  const [devBranchTickets, setDevBranchTickets] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [repoFilter, setRepoFilter] = useState('');
@@ -44,6 +45,17 @@ function GitHubPRsView() {
     setJiraConfig(jiraCfg);
     setPrs(results);
     setLoading(false);
+
+    // Fetch dev branch tickets
+    if (cfg?.devBranch && results.length > 0) {
+      try {
+        const repos = Array.from(new Set(results.map(pr => pr.repoFullName)));
+        const keys = await window.electronAPI.fetchDevBranchTickets(repos);
+        setDevBranchTickets(new Set(keys));
+      } catch (err) {
+        console.error('[dev-branch] failed to fetch dev branch tickets:', err);
+      }
+    }
 
     // After loading, extract ticket keys and fetch statuses
     if (jiraCfg?.ticketPattern && results.length > 0) {
@@ -263,7 +275,9 @@ function GitHubPRsView() {
                       return null;
                     }).filter(Boolean) as JiraTicketStatus[];
 
-                    const hasSecondary = jiraItems.length > 0 || pr.draft || pr.labels.length > 0;
+                    const prTicketKeys = getTicketKeys(pr.title);
+                    const isOnDevBranch = prTicketKeys.some(k => devBranchTickets.has(k));
+                    const hasSecondary = jiraItems.length > 0 || pr.draft || pr.labels.length > 0 || isOnDevBranch;
 
                     return (
                       <div className="pr-card" key={`${pr.repoFullName}#${pr.number}`}>
@@ -289,6 +303,7 @@ function GitHubPRsView() {
                         </div>
                         {hasSecondary && (
                           <div className="pr-card-secondary">
+                            {isOnDevBranch && <span className="pr-card-dev-env">DEV-ENV</span>}
                             {pr.draft && <span className="pr-card-draft">Draft</span>}
                             {pr.labels.map(label => (
                               <span

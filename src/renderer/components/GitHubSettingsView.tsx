@@ -6,6 +6,7 @@ function GitHubSettingsView() {
   const [orgs, setOrgs] = useState('');
   const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(false);
+  const [devBranch, setDevBranch] = useState('');
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'failed'>('idle');
   const [username, setUsername] = useState<string | null>(null);
 
@@ -14,6 +15,7 @@ function GitHubSettingsView() {
     if (config) {
       setToken(config.token);
       setOrgs(config.orgs.join(', '));
+      if (config.devBranch) setDevBranch(config.devBranch);
       if (config.username) setUsername(config.username);
     }
     setLoading(false);
@@ -26,6 +28,7 @@ function GitHubSettingsView() {
   const buildConfig = (): GitHubConfig => ({
     token: token.trim(),
     orgs: orgs.split(',').map(o => o.trim()).filter(Boolean),
+    ...(devBranch.trim() ? { devBranch: devBranch.trim() } : {}),
   });
 
   const handleSave = async () => {
@@ -50,17 +53,14 @@ function GitHubSettingsView() {
 
   if (loading) {
     return (
-      <div className="task-types-container">
+      <div className="settings-tab-content">
         <div className="empty-state">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="task-types-container">
-      <div className="task-types-header">
-        <h1 className="task-types-title">GitHub Settings</h1>
-      </div>
+    <div className="settings-tab-content">
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px' }}>
         <label>
           <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -97,6 +97,17 @@ function GitHubSettingsView() {
             value={orgs}
             onChange={e => setOrgs(e.target.value)}
             placeholder="my-org, another-org"
+          />
+        </label>
+        <label>
+          <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>
+            Dev Branch (optional)
+          </div>
+          <input
+            className="task-input"
+            value={devBranch}
+            onChange={e => setDevBranch(e.target.value)}
+            placeholder="my-dev-branch"
           />
         </label>
       </div>

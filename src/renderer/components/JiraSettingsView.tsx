@@ -53,17 +53,14 @@ function JiraSettingsView() {
 
   if (loading) {
     return (
-      <div className="task-types-container">
+      <div className="settings-tab-content">
         <div className="empty-state">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="task-types-container">
-      <div className="task-types-header">
-        <h1 className="task-types-title">Jira Settings</h1>
-      </div>
+    <div className="settings-tab-content">
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px' }}>
         <label>
           <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>Base URL</div>

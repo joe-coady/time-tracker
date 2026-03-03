@@ -1,6 +1,6 @@
 import * as https from 'https';
 import { GitHubConfig, GitHubPR } from '../shared/types';
-import { readGitHubConfig, saveGitHubConfig } from './storage';
+import { readGitHubConfig, readJiraConfig, saveGitHubConfig } from './storage';
 
 function githubRequest(url: string, token: string): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -88,4 +88,38 @@ export async function fetchGitHubPRs(): Promise<GitHubPR[]> {
 
   allPRs.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
   return allPRs;
+}
+
+export async function fetchDevBranchTickets(repos: string[]): Promise<string[]> {
+  const config = readGitHubConfig();
+  if (!config || !config.token || !config.devBranch) return [];
+
+  const jiraConfig = readJiraConfig();
+  const pattern = jiraConfig?.ticketPattern || '[A-Z]+-\\d+';
+  const regex = new RegExp(pattern, 'g');
+
+  const results = await Promise.allSettled(
+    repos.map(async (repo) => {
+      const url = `https://api.github.com/repos/${repo}/commits?sha=${encodeURIComponent(config.devBranch!)}&per_page=100`;
+      const body = await githubRequest(url, config.token);
+      const commits = JSON.parse(body) as { commit: { message: string } }[];
+      const keys: string[] = [];
+      for (const c of commits) {
+        for (const match of c.commit.message.matchAll(regex)) {
+          keys.push(match[0]);
+        }
+      }
+      return keys;
+    })
+  );
+
+  const allKeys = new Set<string>();
+  for (const result of results) {
+    if (result.status === 'fulfilled') {
+      for (const key of result.value) {
+        allKeys.add(key);
+      }
+    }
+  }
+  return Array.from(allKeys);
 }

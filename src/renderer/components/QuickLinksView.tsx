@@ -40,21 +40,15 @@ export default function QuickLinksView() {
 
   if (loading) {
     return (
-      <div className="task-types-container">
-        <div className="task-types-header">
-          <h1 className="task-types-title">Quick Links</h1>
-        </div>
-        <div className="task-types-list">
-          <div className="empty-state">Loading...</div>
-        </div>
+      <div className="settings-tab-content">
+        <div className="empty-state">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="task-types-container">
-      <div className="task-types-header">
-        <h1 className="task-types-title">Quick Links</h1>
+    <div className="settings-tab-content">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
         <span className="entry-count">{rules.length} rules</span>
       </div>
 

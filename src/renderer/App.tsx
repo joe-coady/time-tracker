@@ -5,12 +5,10 @@ import TaskTypesView from './components/TaskTypesView';
 import ExportView from './components/ExportView';
 import NotesView from './components/NotesView';
 import NotebookView from './components/NotebookView';
-import QuickLinksView from './components/QuickLinksView';
-import JiraSettingsView from './components/JiraSettingsView';
-import GitHubSettingsView from './components/GitHubSettingsView';
+import SettingsView from './components/SettingsView';
 import GitHubPRsView from './components/GitHubPRsView';
 
-type View = 'dialog' | 'edit' | 'task-types' | 'export' | 'notes' | 'notebook' | 'quick-links' | 'jira-settings' | 'github-settings' | 'github-prs';
+type View = 'dialog' | 'edit' | 'task-types' | 'export' | 'notes' | 'notebook' | 'settings' | 'github-prs';
 
 function App() {
   const [view, setView] = useState<View>('dialog');
@@ -29,12 +27,8 @@ function App() {
         setView('notes');
       } else if (hash === '#/notebook') {
         setView('notebook');
-      } else if (hash === '#/quick-links') {
-        setView('quick-links');
-      } else if (hash === '#/jira-settings') {
-        setView('jira-settings');
-      } else if (hash === '#/github-settings') {
-        setView('github-settings');
+      } else if (hash === '#/settings') {
+        setView('settings');
       } else if (hash === '#/github-prs') {
         setView('github-prs');
       } else {
@@ -52,9 +46,7 @@ function App() {
   if (view === 'export') return <ExportView />;
   if (view === 'notes') return <NotesView />;
   if (view === 'notebook') return <NotebookView />;
-  if (view === 'quick-links') return <QuickLinksView />;
-  if (view === 'jira-settings') return <JiraSettingsView />;
-  if (view === 'github-settings') return <GitHubSettingsView />;
+  if (view === 'settings') return <SettingsView />;
   if (view === 'github-prs') return <GitHubPRsView />;
   return <TaskDialog />;
 }

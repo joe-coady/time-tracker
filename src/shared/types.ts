@@ -28,11 +28,16 @@ export interface JiraSearchResult {
   summary: string;
 }
 
+export interface HotkeyConfig {
+  showDialog: string; // Electron accelerator string, e.g. "Control+Option+Space"
+}
+
 export interface GitHubConfig {
   token: string;
   orgs: string[];
   username?: string;
   excludedRepos?: string[];
+  devBranch?: string;
 }
 
 export interface GitHubPR {
@@ -86,6 +91,7 @@ export interface TasksData {
   quickLinkRules?: QuickLinkRule[];
   jiraConfig?: JiraConfig;
   githubConfig?: GitHubConfig;
+  hotkeyConfig?: HotkeyConfig;
 }
 
 export interface CalculatedTaskEntry extends TaskEntry {
@@ -155,6 +161,9 @@ export interface ElectronAPI {
   testGitHubConnection: (config: GitHubConfig) => Promise<string | null>;
   fetchGitHubPRs: () => Promise<GitHubPR[]>;
   fetchJiraTicketStatuses: (keys: string[]) => Promise<JiraTicketStatus[]>;
+  fetchDevBranchTickets: (repos: string[]) => Promise<string[]>;
+  getHotkeyConfig: () => Promise<HotkeyConfig | null>;
+  saveHotkeyConfig: (config: HotkeyConfig) => Promise<void>;
 }
 
 declare global {

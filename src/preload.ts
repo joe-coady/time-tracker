@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import { CalculatedTaskEntry, CurrentState, DailyNote, ElectronAPI, GitHubConfig, GitHubPR, JiraConfig, JiraSearchResult, JiraTicketStatus, Note, PreviousTask, QuickLinkRule, TaskEntry, TaskType } from './shared/types';
+import { CalculatedTaskEntry, CurrentState, DailyNote, ElectronAPI, GitHubConfig, GitHubPR, HotkeyConfig, JiraConfig, JiraSearchResult, JiraTicketStatus, Note, PreviousTask, QuickLinkRule, TaskEntry, TaskType } from './shared/types';
 
 const electronAPI: ElectronAPI = {
   getTasks: (): Promise<CalculatedTaskEntry[]> => ipcRenderer.invoke('get-tasks'),
@@ -107,6 +107,15 @@ const electronAPI: ElectronAPI = {
 
   fetchJiraTicketStatuses: (keys: string[]): Promise<JiraTicketStatus[]> =>
     ipcRenderer.invoke('fetch-jira-ticket-statuses', keys),
+
+  fetchDevBranchTickets: (repos: string[]): Promise<string[]> =>
+    ipcRenderer.invoke('fetch-dev-branch-tickets', repos),
+
+  getHotkeyConfig: (): Promise<HotkeyConfig | null> =>
+    ipcRenderer.invoke('get-hotkey-config'),
+
+  saveHotkeyConfig: (config: HotkeyConfig): Promise<void> =>
+    ipcRenderer.invoke('save-hotkey-config', config),
 };
 
 contextBridge.exposeInMainWorld('electronAPI', electronAPI);
