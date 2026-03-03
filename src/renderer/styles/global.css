@@ -1760,7 +1760,6 @@ input.entry-duration.ongoing {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  max-width: 600px;
 }
 
 /* Quick Launch styles */
@@ -1802,6 +1801,221 @@ input.entry-duration.ongoing {
   border-color: #007aff;
   color: #fff;
   box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.4);
+}
+
+/* Shared settings form classes */
+.settings-section {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 16px;
+}
+
+.settings-section h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.settings-description {
+  font-size: 13px;
+  color: #888;
+  margin-bottom: 12px;
+}
+
+.settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.settings-label {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.settings-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.settings-label-hint {
+  font-size: 11px;
+  color: #999;
+  margin-left: 6px;
+}
+
+.settings-label-link {
+  font-size: 11px;
+  color: #007aff;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.settings-label-link:hover {
+  text-decoration: underline;
+}
+
+.settings-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 12px;
+}
+
+.settings-saved {
+  color: #4ade80;
+  font-size: 13px;
+}
+
+.settings-error {
+  color: #f87171;
+  font-size: 13px;
+  margin-top: 8px;
+}
+
+.settings-inline-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.btn-primary {
+  padding: 6px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #fff;
+  background-color: #007aff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+
+.btn-primary:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  padding: 6px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #666;
+  background: transparent;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  border-color: #999;
+  color: #333;
+}
+
+.btn-secondary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-danger {
+  padding: 6px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #dc3545;
+  background: transparent;
+  border: 1px solid #dc3545;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background-color: #dc3545;
+  color: #fff;
+}
+
+.btn-danger:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.form-group {
+  margin-bottom: 12px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+/* Kanban settings card layout */
+.kanban-column-list {
+  border: 1px solid #eee;
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+
+.kanban-column-row {
+  padding: 10px 12px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.kanban-column-row:last-child {
+  border-bottom: none;
+}
+
+.kanban-column-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.kanban-column-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-left: 4px;
+}
+
+.kanban-column-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.kanban-column-field-label {
+  font-size: 11px;
+  color: #888;
+  width: 70px;
+  flex-shrink: 0;
+}
+
+.kanban-column-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.kanban-column-actions button {
+  padding: 2px 8px;
+  font-size: 12px;
 }
 
 /* DEV-ENV badge */

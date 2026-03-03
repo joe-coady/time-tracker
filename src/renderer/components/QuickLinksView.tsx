@@ -48,9 +48,7 @@ export default function QuickLinksView() {
 
   return (
     <div className="settings-tab-content">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-        <span className="entry-count">{rules.length} rules</span>
-      </div>
+      <span className="entry-count">{rules.length} rules</span>
 
       <div className="task-types-list">
         {rules.length === 0 ? (

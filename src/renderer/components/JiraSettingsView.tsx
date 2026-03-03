@@ -61,9 +61,9 @@ function JiraSettingsView() {
 
   return (
     <div className="settings-tab-content">
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px' }}>
+      <div className="settings-form">
         <label>
-          <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>Base URL</div>
+          <div className="settings-label">Base URL</div>
           <input
             className="task-input"
             value={baseUrl}
@@ -72,7 +72,7 @@ function JiraSettingsView() {
           />
         </label>
         <label>
-          <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>Email</div>
+          <div className="settings-label">Email</div>
           <input
             className="task-input"
             value={email}
@@ -81,12 +81,12 @@ function JiraSettingsView() {
           />
         </label>
         <label>
-          <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className="settings-label-row">
             API Token
             <a
               href="#"
               onClick={e => { e.preventDefault(); window.electronAPI.openExternal('https://id.atlassian.com/manage-profile/security/api-tokens'); }}
-              style={{ fontSize: '11px', color: '#007aff', textDecoration: 'none', cursor: 'pointer' }}
+              className="settings-label-link"
             >
               Get token
             </a>
@@ -100,9 +100,9 @@ function JiraSettingsView() {
           />
         </label>
         <label>
-          <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>
+          <div className="settings-label">
             Ticket Pattern
-            <span style={{ fontSize: '11px', color: '#999', marginLeft: '6px' }}>
+            <span className="settings-label-hint">
               Regex to extract ticket keys from PR titles
             </span>
           </div>
@@ -114,9 +114,9 @@ function JiraSettingsView() {
           />
         </label>
       </div>
-      <div style={{ display: 'flex', gap: '8px' }}>
+      <div className="settings-actions" style={{ marginTop: 0 }}>
         <button
-          className="submit-button"
+          className="btn-primary"
           style={{ flex: 1 }}
           onClick={handleSave}
           disabled={!isValid}
@@ -124,12 +124,12 @@ function JiraSettingsView() {
           {saved ? 'Saved!' : 'Save'}
         </button>
         <button
-          className="submit-button"
+          className="btn-primary"
           style={{
             flex: 1,
             backgroundColor: testStatus === 'success' ? '#28a745'
               : testStatus === 'failed' ? '#dc3545'
-              : '#007aff',
+              : undefined,
           }}
           onClick={handleTest}
           disabled={!isValid || testStatus === 'testing'}

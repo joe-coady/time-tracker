@@ -61,14 +61,14 @@ function GitHubSettingsView() {
 
   return (
     <div className="settings-tab-content">
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px' }}>
+      <div className="settings-form">
         <label>
-          <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className="settings-label-row">
             Personal Access Token
             <a
               href="#"
               onClick={e => { e.preventDefault(); window.electronAPI.openExternal('https://github.com/settings/tokens/new?scopes=repo&description=Time+Tracker'); }}
-              style={{ fontSize: '11px', color: '#007aff', textDecoration: 'none', cursor: 'pointer' }}
+              className="settings-label-link"
             >
               Get token
             </a>
@@ -82,12 +82,12 @@ function GitHubSettingsView() {
           />
         </label>
         <label>
-          <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className="settings-label-row">
             Organizations (comma-separated)
             <a
               href="#"
               onClick={e => { e.preventDefault(); window.electronAPI.openExternal('https://github.com/settings/organizations'); }}
-              style={{ fontSize: '11px', color: '#007aff', textDecoration: 'none', cursor: 'pointer' }}
+              className="settings-label-link"
             >
               Your orgs
             </a>
@@ -100,7 +100,7 @@ function GitHubSettingsView() {
           />
         </label>
         <label>
-          <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>
+          <div className="settings-label">
             Dev Branch (optional)
           </div>
           <input
@@ -111,9 +111,9 @@ function GitHubSettingsView() {
           />
         </label>
       </div>
-      <div style={{ display: 'flex', gap: '8px' }}>
+      <div className="settings-actions" style={{ marginTop: 0 }}>
         <button
-          className="submit-button"
+          className="btn-primary"
           style={{ flex: 1 }}
           onClick={handleSave}
           disabled={!isValid}
@@ -121,12 +121,12 @@ function GitHubSettingsView() {
           {saved ? 'Saved!' : 'Save'}
         </button>
         <button
-          className="submit-button"
+          className="btn-primary"
           style={{
             flex: 1,
             backgroundColor: testStatus === 'success' ? '#28a745'
               : testStatus === 'failed' ? '#dc3545'
-              : '#007aff',
+              : undefined,
           }}
           onClick={handleTest}
           disabled={!isValid || testStatus === 'testing'}

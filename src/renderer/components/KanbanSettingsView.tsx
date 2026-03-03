@@ -96,34 +96,22 @@ export default function KanbanSettingsView() {
     <div className="settings-tab-content">
       <div className="settings-section">
         <h3>Kanban Columns</h3>
-        <p style={{ fontSize: '13px', color: '#888', marginBottom: '12px' }}>
+        <p className="settings-description">
           Configure the columns on your kanban board. Hidden columns map their tasks to a visible column.
         </p>
 
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-          <thead>
-            <tr style={{ borderBottom: '1px solid #333' }}>
-              <th style={{ textAlign: 'left', padding: '6px 8px' }}>Name</th>
-              <th style={{ textAlign: 'center', padding: '6px 8px', width: '60px' }}>Hidden</th>
-              <th style={{ textAlign: 'left', padding: '6px 8px', width: '140px' }}>Mapped To</th>
-              <th style={{ textAlign: 'left', padding: '6px 8px' }}>Jira Statuses</th>
-              <th style={{ textAlign: 'center', padding: '6px 8px', width: '100px' }}>Order</th>
-              <th style={{ textAlign: 'center', padding: '6px 8px', width: '50px' }}></th>
-            </tr>
-          </thead>
-          <tbody>
-            {columns.map((col, i) => (
-              <tr key={i} style={{ borderBottom: '1px solid #2a2a2a' }}>
-                <td style={{ padding: '6px 8px' }}>
-                  <input
-                    type="text"
-                    value={col.name}
-                    onChange={(e) => updateColumn(i, { name: e.target.value })}
-                    style={{ width: '100%', boxSizing: 'border-box' }}
-                    placeholder="Column name"
-                  />
-                </td>
-                <td style={{ textAlign: 'center', padding: '6px 8px' }}>
+        <div className="kanban-column-list">
+          {columns.map((col, i) => (
+            <div key={i} className="kanban-column-row">
+              <div className="kanban-column-main">
+                <input
+                  type="text"
+                  className="task-input"
+                  value={col.name}
+                  onChange={(e) => updateColumn(i, { name: e.target.value })}
+                  placeholder="Column name"
+                />
+                <label className="settings-inline-row" style={{ fontSize: '12px', color: '#666', whiteSpace: 'nowrap' }}>
                   <input
                     type="checkbox"
                     checked={!!col.hidden}
@@ -132,26 +120,54 @@ export default function KanbanSettingsView() {
                       mappedTo: e.target.checked ? (col.mappedTo || visibleColumns[0]?.name || '') : undefined,
                     })}
                   />
-                </td>
-                <td style={{ padding: '6px 8px' }}>
-                  {col.hidden ? (
+                  Hidden
+                </label>
+                <div className="kanban-column-actions">
+                  <button
+                    className="btn-secondary"
+                    onClick={() => moveColumn(i, -1)}
+                    disabled={i === 0}
+                  >
+                    Up
+                  </button>
+                  <button
+                    className="btn-secondary"
+                    onClick={() => moveColumn(i, 1)}
+                    disabled={i === columns.length - 1}
+                  >
+                    Down
+                  </button>
+                  <button
+                    className="btn-danger"
+                    onClick={() => deleteColumn(i)}
+                    disabled={columns.length <= 2}
+                    title="Delete column"
+                  >
+                    X
+                  </button>
+                </div>
+              </div>
+              <div className="kanban-column-fields">
+                {col.hidden && (
+                  <div className="kanban-column-field">
+                    <span className="kanban-column-field-label">Mapped to</span>
                     <select
+                      className="task-input"
                       value={col.mappedTo || ''}
                       onChange={(e) => updateColumn(i, { mappedTo: e.target.value })}
-                      style={{ width: '100%', boxSizing: 'border-box' }}
                     >
                       <option value="">-- Select --</option>
                       {columns.filter(c => !c.hidden && c.name.trim() && c.name !== col.name).map(c => (
                         <option key={c.name} value={c.name}>{c.name}</option>
                       ))}
                     </select>
-                  ) : (
-                    <span style={{ color: '#555' }}>-</span>
-                  )}
-                </td>
-                <td style={{ padding: '6px 8px' }}>
+                  </div>
+                )}
+                <div className="kanban-column-field">
+                  <span className="kanban-column-field-label">Jira statuses</span>
                   <input
                     type="text"
+                    className="task-input"
                     value={(col.jiraStatuses || []).join(', ')}
                     onChange={(e) => {
                       const statuses = e.target.value
@@ -160,45 +176,15 @@ export default function KanbanSettingsView() {
                         .filter(Boolean);
                       updateColumn(i, { jiraStatuses: statuses.length > 0 ? statuses : undefined });
                     }}
-                    style={{ width: '100%', boxSizing: 'border-box' }}
                     placeholder="e.g. To Do, Open"
                   />
-                </td>
-                <td style={{ textAlign: 'center', padding: '6px 8px' }}>
-                  <button
-                    className="btn-secondary"
-                    style={{ padding: '2px 8px', fontSize: '12px', marginRight: '4px' }}
-                    onClick={() => moveColumn(i, -1)}
-                    disabled={i === 0}
-                  >
-                    Up
-                  </button>
-                  <button
-                    className="btn-secondary"
-                    style={{ padding: '2px 8px', fontSize: '12px' }}
-                    onClick={() => moveColumn(i, 1)}
-                    disabled={i === columns.length - 1}
-                  >
-                    Down
-                  </button>
-                </td>
-                <td style={{ textAlign: 'center', padding: '6px 8px' }}>
-                  <button
-                    className="btn-danger"
-                    style={{ padding: '2px 8px', fontSize: '12px' }}
-                    onClick={() => deleteColumn(i)}
-                    disabled={columns.length <= 2}
-                    title="Delete column"
-                  >
-                    X
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
 
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginTop: '12px' }}>
+        <div className="settings-actions" style={{ marginTop: 0 }}>
           <button className="btn-secondary" onClick={addColumn}>
             + Add Column
           </button>
@@ -207,15 +193,13 @@ export default function KanbanSettingsView() {
           </button>
         </div>
 
-        {error && (
-          <div style={{ color: '#f87171', fontSize: '13px', marginTop: '8px' }}>{error}</div>
-        )}
+        {error && <div className="settings-error">{error}</div>}
 
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginTop: '12px' }}>
+        <div className="settings-actions">
           <button className="btn-primary" onClick={handleSave}>
             Save
           </button>
-          {saved && <span style={{ color: '#4ade80', fontSize: '13px' }}>Saved!</span>}
+          {saved && <span className="settings-saved">Saved!</span>}
         </div>
       </div>
     </div>

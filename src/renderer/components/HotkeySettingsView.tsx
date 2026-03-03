@@ -116,9 +116,10 @@ export default function HotkeySettingsView() {
         <h3>Global Shortcuts</h3>
         <div className="form-group">
           <label>"What are you working on?" dialog</label>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <div className="settings-inline-row">
             <input
               type="text"
+              className="task-input"
               value={recording === 'dialog' ? 'Press a key combo...' : hotkey}
               readOnly={recording === 'dialog'}
               onChange={(e) => setHotkey(e.target.value)}
@@ -139,9 +140,10 @@ export default function HotkeySettingsView() {
         </div>
         <div className="form-group">
           <label>Quick Launch</label>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <div className="settings-inline-row">
             <input
               type="text"
+              className="task-input"
               value={recording === 'quickLaunch' ? 'Press a key combo...' : quickLaunchHotkey}
               readOnly={recording === 'quickLaunch'}
               onChange={(e) => setQuickLaunchHotkey(e.target.value)}
@@ -160,14 +162,14 @@ export default function HotkeySettingsView() {
             </button>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginTop: '12px' }}>
+        <div className="settings-actions">
           <button className="btn-primary" onClick={handleSave}>
             Save
           </button>
           <button className="btn-secondary" onClick={handleReset}>
             Reset to Default
           </button>
-          {saved && <span style={{ color: '#4ade80', fontSize: '13px' }}>Saved!</span>}
+          {saved && <span className="settings-saved">Saved!</span>}
         </div>
       </div>
     </div>

@@ -38,9 +38,9 @@ export function createDialogWindow(): BrowserWindow {
   const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
 
   dialogWindow = new BrowserWindow({
-    width: 400,
+    width: 800,
     height: 550,
-    x: Math.round((screenWidth - 400) / 2),
+    x: Math.round((screenWidth - 800) / 2),
     y: Math.round((screenHeight - 550) / 2),
     frame: false,
     alwaysOnTop: true,
