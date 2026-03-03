@@ -37,7 +37,7 @@ export async function searchJiraIssues(query: string): Promise<JiraSearchResult[
 
   const url = new URL(`${config.baseUrl}/rest/api/3/issue/picker`);
   url.searchParams.set('query', trimmed);
-  url.searchParams.set('currentJQL', '');
+  url.searchParams.set('currentJQL', 'statusCategory != Done');
   url.searchParams.set('showSubTasks', 'true');
 
   const auth = Buffer.from(`${config.email}:${config.apiToken}`).toString('base64');

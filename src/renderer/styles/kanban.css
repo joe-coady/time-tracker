@@ -78,8 +78,14 @@
   align-items: flex-start;
 }
 
-.kanban-add-form input {
+.kanban-title-wrapper {
   flex: 1;
+  position: relative;
+}
+
+.kanban-add-form input {
+  width: 100%;
+  box-sizing: border-box;
   padding: 8px 12px;
   font-size: 14px;
   border: 1px solid #ddd;
@@ -89,6 +95,48 @@
 
 .kanban-add-form input:focus {
   border-color: #007aff;
+}
+
+.kanban-jira-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 2px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 100;
+}
+
+.kanban-jira-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.kanban-jira-item:hover,
+.kanban-jira-item.selected {
+  background-color: #e8f4ff;
+}
+
+.kanban-jira-item-key {
+  font-weight: 600;
+  color: #333;
+  white-space: nowrap;
+}
+
+.kanban-jira-item-summary {
+  color: #555;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .kanban-add-form textarea {
@@ -236,6 +284,34 @@
   font-size: 11px;
   color: #bbb;
   font-style: italic;
+}
+
+.kanban-card-jira-link {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  font-size: 13px;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.6);
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.15s, background-color 0.15s, color 0.15s;
+}
+
+.kanban-card:hover .kanban-card-jira-link {
+  opacity: 1;
+}
+
+.kanban-card-jira-link:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #fff;
 }
 
 .kanban-card-delete {

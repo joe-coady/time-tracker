@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Kanban, BoardData, BoardItem } from 'react-kanban-kit';
-import { KanbanBoard, KanbanTask, KanbanStatus } from '../../shared/types';
+import { KanbanBoard, KanbanTask, KanbanStatus, JiraSearchResult, JiraConfig } from '../../shared/types';
 import '../styles/kanban.css';
 
 const COLUMNS: KanbanStatus[] = ['Todo', 'In Progress', 'Dev Review', 'QA', 'Done'];
@@ -119,6 +119,12 @@ export default function KanbanView() {
   const [allDates, setAllDates] = useState<string[]>([]);
   const [newTitle, setNewTitle] = useState('');
   const [newDescription, setNewDescription] = useState('');
+  const [jiraResults, setJiraResults] = useState<JiraSearchResult[]>([]);
+  const [showJiraDropdown, setShowJiraDropdown] = useState(false);
+  const [selectedJiraIndex, setSelectedJiraIndex] = useState(0);
+  const [jiraConfig, setJiraConfig] = useState<JiraConfig | null>(null);
+  const jiraDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const titleInputRef = useRef<HTMLInputElement>(null);
 
   const isToday = selectedDate === getTodayDateString();
   const tasks = board?.tasks || [];
@@ -142,6 +148,10 @@ export default function KanbanView() {
   }, [loadAllDates]);
 
   useEffect(() => {
+    window.electronAPI.getJiraConfig().then(setJiraConfig);
+  }, []);
+
+  useEffect(() => {
     loadBoard(selectedDate);
   }, [selectedDate, loadBoard]);
 
@@ -150,6 +160,64 @@ export default function KanbanView() {
       loadAllDates();
     }
   }, [isToday, loadAllDates]);
+
+  // Debounced Jira search
+  useEffect(() => {
+    if (jiraDebounceRef.current) {
+      clearTimeout(jiraDebounceRef.current);
+    }
+
+    const trimmed = newTitle.trim();
+    if (trimmed.length < 2) {
+      setJiraResults([]);
+      setShowJiraDropdown(false);
+      return;
+    }
+
+    jiraDebounceRef.current = setTimeout(async () => {
+      try {
+        const results = await window.electronAPI.searchJira(trimmed);
+        setJiraResults(results);
+        setShowJiraDropdown(results.length > 0);
+        setSelectedJiraIndex(0);
+      } catch {
+        setJiraResults([]);
+        setShowJiraDropdown(false);
+      }
+    }, 300);
+
+    return () => {
+      if (jiraDebounceRef.current) {
+        clearTimeout(jiraDebounceRef.current);
+      }
+    };
+  }, [newTitle]);
+
+  const handleJiraSelect = (result: JiraSearchResult) => {
+    setNewTitle(result.key);
+    setNewDescription(result.summary);
+    setShowJiraDropdown(false);
+    setJiraResults([]);
+  };
+
+  const handleTitleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (showJiraDropdown && jiraResults.length > 0) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setSelectedJiraIndex(prev => Math.min(prev + 1, jiraResults.length - 1));
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSelectedJiraIndex(prev => Math.max(prev - 1, 0));
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        handleJiraSelect(jiraResults[selectedJiraIndex]);
+      } else if (e.key === 'Escape') {
+        setShowJiraDropdown(false);
+      }
+    } else if (e.key === 'Enter') {
+      handleAddTask();
+    }
+  };
 
   const handleDateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedDate(e.target.value);
@@ -213,36 +281,61 @@ export default function KanbanView() {
     await loadBoard(selectedDate);
   }, [isToday, boardData, selectedDate, loadBoard]);
 
+  const getJiraTicketKey = useCallback((title: string): string | null => {
+    if (!jiraConfig?.ticketPattern) return null;
+    try {
+      const match = title.match(new RegExp(jiraConfig.ticketPattern));
+      return match ? match[0] : null;
+    } catch {
+      return null;
+    }
+  }, [jiraConfig]);
+
   const configMap = useMemo(() => ({
     card: {
-      render: ({ data }: { data: BoardItem }) => (
-        <div className="kanban-card">
-          <div className="kanban-card-header">
-            <div className="kanban-card-title">{data.title}</div>
-            {isToday && (
-              <button
-                className="kanban-card-delete"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDeleteTask(data.id);
-                }}
-              >
-                ×
-              </button>
-            )}
+      render: ({ data }: { data: BoardItem }) => {
+        const ticketKey = getJiraTicketKey(data.title);
+        return (
+          <div className="kanban-card">
+            <div className="kanban-card-header">
+              <div className="kanban-card-title">{data.title}</div>
+              {ticketKey && jiraConfig?.baseUrl && (
+                <button
+                  className="kanban-card-jira-link"
+                  title={`Open ${ticketKey} in Jira`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    window.electronAPI.openExternal(`${jiraConfig.baseUrl}/browse/${ticketKey}`);
+                  }}
+                >
+                  ↗
+                </button>
+              )}
+              {isToday && (
+                <button
+                  className="kanban-card-delete"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteTask(data.id);
+                  }}
+                >
+                  ×
+                </button>
+              )}
+            </div>
+            <div className="kanban-card-body">
+              {data.content?.description ? (
+                <div className="kanban-card-description">{data.content.description}</div>
+              ) : (
+                <div className="kanban-card-no-desc">No description</div>
+              )}
+            </div>
           </div>
-          <div className="kanban-card-body">
-            {data.content?.description ? (
-              <div className="kanban-card-description">{data.content.description}</div>
-            ) : (
-              <div className="kanban-card-no-desc">No description</div>
-            )}
-          </div>
-        </div>
-      ),
+        );
+      },
       isDraggable: isToday,
     },
-  }), [isToday]);
+  }), [isToday, jiraConfig, getJiraTicketKey]);
 
   const renderColumnHeader = useCallback((column: BoardItem) => {
     const count = column.children.length;
@@ -281,13 +374,33 @@ export default function KanbanView() {
 
       {isToday && (
         <div className="kanban-add-form">
-          <input
-            type="text"
-            placeholder="Task title"
-            value={newTitle}
-            onChange={(e) => setNewTitle(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') handleAddTask(); }}
-          />
+          <div className="kanban-title-wrapper">
+            <input
+              ref={titleInputRef}
+              type="text"
+              placeholder="Task title"
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+              onKeyDown={handleTitleKeyDown}
+              onBlur={() => setTimeout(() => setShowJiraDropdown(false), 200)}
+            />
+            {showJiraDropdown && jiraResults.length > 0 && (
+              <div className="kanban-jira-dropdown">
+                {jiraResults.map((result, index) => (
+                  <div
+                    key={result.key}
+                    className={`kanban-jira-item${index === selectedJiraIndex ? ' selected' : ''}`}
+                    onMouseDown={() => handleJiraSelect(result)}
+                    onMouseEnter={() => setSelectedJiraIndex(index)}
+                  >
+                    <span className="jira-badge">JIRA</span>
+                    <span className="kanban-jira-item-key">{result.key}</span>
+                    <span className="kanban-jira-item-summary">{result.summary}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
           <textarea
             placeholder="Description (optional)"
             value={newDescription}
