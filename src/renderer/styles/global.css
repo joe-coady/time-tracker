@@ -2028,6 +2028,21 @@ input.entry-duration.ongoing {
   overflow: hidden;
 }
 
+.terminal-launcher-search {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-size: 14px;
+  padding: 8px 14px;
+  outline: none;
+  flex-shrink: 0;
+}
+
+.terminal-launcher-search::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+}
+
 .terminal-launcher-list {
   flex: 1;
   overflow-y: auto;
