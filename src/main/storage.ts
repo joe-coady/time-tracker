@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { v4 as uuidv4 } from 'uuid';
-import { TaskEntry, TaskType, TasksData, DailyNote, Note, QuickLinkRule, JiraConfig, GitHubConfig, HotkeyConfig, KanbanBoard, KanbanTask, KanbanColumnConfig, DEFAULT_KANBAN_COLUMNS, JiraSearchResult, JiraTicketStatus, TerminalConfig } from '../shared/types';
+import { TaskEntry, TaskType, TasksData, DailyNote, Note, QuickLinkRule, JiraConfig, GitHubConfig, HotkeyConfig, KanbanBoard, KanbanTask, KanbanColumnConfig, DEFAULT_KANBAN_COLUMNS, JiraSearchResult, JiraTicketStatus, TerminalConfig, ConfigFilesConfig, ConfigFileEntry } from '../shared/types';
 
 const TASKS_FILE_PATH = path.join(os.homedir(), 'notes', 'general', 'tasks.json');
 
@@ -596,6 +596,60 @@ export function updateTerminalShortcutLastRan(id: string): void {
     shortcut.lastRanAt = new Date().toISOString();
     writeTasksData(data);
   }
+}
+
+// Config Files functions
+const DEFAULT_CONFIG_FILE_PATHS = [
+  { name: 'zshrc', path: path.join(os.homedir(), '.zshrc') },
+  { name: 'gitconfig', path: path.join(os.homedir(), '.gitconfig') },
+  { name: 'npmrc', path: path.join(os.homedir(), '.npmrc') },
+  { name: 'ghostty config', path: path.join(os.homedir(), '.config', 'ghostty', 'config') },
+  { name: 'VS Code settings', path: path.join(os.homedir(), 'Library', 'Application Support', 'Code', 'User', 'settings.json') },
+];
+
+export function readConfigFilesConfig(): ConfigFilesConfig {
+  const data = readTasksData();
+  if (data.configFiles) {
+    return data.configFiles;
+  }
+  // Auto-detect defaults that exist on disk
+  const files: ConfigFileEntry[] = DEFAULT_CONFIG_FILE_PATHS
+    .filter(f => fs.existsSync(f.path))
+    .map(f => ({ id: uuidv4(), name: f.name, path: f.path }));
+  return { files };
+}
+
+export function saveConfigFilesConfig(config: ConfigFilesConfig): void {
+  const data = readTasksData();
+  data.configFiles = config;
+  writeTasksData(data);
+}
+
+export function resetConfigFilesConfig(): ConfigFilesConfig {
+  const data = readTasksData();
+  delete data.configFiles;
+  writeTasksData(data);
+  return readConfigFilesConfig();
+}
+
+export function readConfigFileContent(filePath: string): string {
+  const resolvedPath = filePath.replace(/^~(?=\/|$)/, os.homedir());
+  if (!fs.existsSync(resolvedPath)) {
+    throw new Error(`File not found: ${resolvedPath}`);
+  }
+  return fs.readFileSync(resolvedPath, 'utf-8');
+}
+
+export function writeConfigFileContent(filePath: string, content: string): void {
+  const resolvedPath = filePath.replace(/^~(?=\/|$)/, os.homedir());
+  // Validate the path is in the config list
+  const config = readConfigFilesConfig();
+  const allowed = config.files.some(f => f.path === filePath || f.path === resolvedPath);
+  if (!allowed) {
+    throw new Error(`Path not in config files list: ${filePath}`);
+  }
+  ensureDirectoryExists(resolvedPath);
+  fs.writeFileSync(resolvedPath, content, 'utf-8');
 }
 
 export async function syncKanbanWithJira(

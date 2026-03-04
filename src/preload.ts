@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import { CalculatedTaskEntry, CurrentState, DailyNote, ElectronAPI, GitHubConfig, GitHubPR, HotkeyConfig, JiraConfig, JiraSearchResult, JiraTicketStatus, KanbanBoard, KanbanColumnConfig, KanbanTask, Note, PreviousTask, QuickLinkRule, TaskEntry, TaskType, TerminalConfig } from './shared/types';
+import { CalculatedTaskEntry, CurrentState, DailyNote, ElectronAPI, GitHubConfig, GitHubPR, HotkeyConfig, JiraConfig, JiraSearchResult, JiraTicketStatus, KanbanBoard, KanbanColumnConfig, KanbanTask, Note, PreviousTask, QuickLinkRule, TaskEntry, TaskType, TerminalConfig, ConfigFilesConfig } from './shared/types';
 
 const electronAPI: ElectronAPI = {
   getTasks: (): Promise<CalculatedTaskEntry[]> => ipcRenderer.invoke('get-tasks'),
@@ -178,6 +178,21 @@ const electronAPI: ElectronAPI = {
   resizeTerminal: (cols: number, rows: number): void => {
     ipcRenderer.send('resize-terminal', cols, rows);
   },
+
+  getConfigFilesConfig: (): Promise<ConfigFilesConfig> =>
+    ipcRenderer.invoke('get-config-files-config'),
+
+  saveConfigFilesConfig: (config: ConfigFilesConfig): Promise<void> =>
+    ipcRenderer.invoke('save-config-files-config', config),
+
+  resetConfigFilesConfig: (): Promise<ConfigFilesConfig> =>
+    ipcRenderer.invoke('reset-config-files-config'),
+
+  readConfigFileContent: (filePath: string): Promise<string> =>
+    ipcRenderer.invoke('read-config-file-content', filePath),
+
+  writeConfigFileContent: (filePath: string, content: string): Promise<void> =>
+    ipcRenderer.invoke('write-config-file-content', filePath, content),
 };
 
 contextBridge.exposeInMainWorld('electronAPI', electronAPI);

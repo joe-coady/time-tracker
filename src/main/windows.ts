@@ -13,6 +13,7 @@ let githubPRsWindow: BrowserWindow | null = null;
 let quickLaunchWindow: BrowserWindow | null = null;
 let kanbanWindow: BrowserWindow | null = null;
 let terminalLauncherWindow: BrowserWindow | null = null;
+let configFilesWindow: BrowserWindow | null = null;
 
 // Check if we're in dev mode by seeing if the built renderer exists
 const rendererPath = path.join(__dirname, '../../renderer/index.html');
@@ -545,4 +546,46 @@ export function closeTerminalLauncherWindow(): void {
     terminalLauncherWindow.destroy();
     terminalLauncherWindow = null;
   }
+}
+
+export function createConfigFilesWindow(): BrowserWindow {
+  if (configFilesWindow && !configFilesWindow.isDestroyed()) {
+    configFilesWindow.show();
+    configFilesWindow.focus();
+    return configFilesWindow;
+  }
+
+  const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
+  const windowWidth = Math.min(Math.round(screenWidth * 0.8), 1200);
+  const windowHeight = Math.round(screenHeight * 0.8);
+
+  configFilesWindow = new BrowserWindow({
+    width: windowWidth,
+    height: windowHeight,
+    x: Math.round((screenWidth - windowWidth) / 2),
+    y: Math.round((screenHeight - windowHeight) / 2),
+    title: 'Config Files',
+    show: false,
+    webPreferences: {
+      preload: getPreloadPath(),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+
+  configFilesWindow.loadURL(getRendererUrl('/config-files'));
+
+  configFilesWindow.once('ready-to-show', () => {
+    configFilesWindow?.show();
+  });
+
+  configFilesWindow.on('closed', () => {
+    configFilesWindow = null;
+  });
+
+  return configFilesWindow;
+}
+
+export function showConfigFilesWindow(): void {
+  createConfigFilesWindow();
 }

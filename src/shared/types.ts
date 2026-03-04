@@ -60,6 +60,16 @@ export interface KanbanColumnConfig {
   jiraStatuses?: string[];   // Jira status names that resolve to this column
 }
 
+export interface ConfigFileEntry {
+  id: string;
+  name: string;   // display name, e.g. "zshrc"
+  path: string;   // absolute path, e.g. "/Users/joe/.zshrc"
+}
+
+export interface ConfigFilesConfig {
+  files: ConfigFileEntry[];
+}
+
 export const DEFAULT_KANBAN_COLUMNS: KanbanColumnConfig[] = [
   { name: 'Todo' },
   { name: 'In Progress' },
@@ -149,6 +159,7 @@ export interface TasksData {
   kanbanBoards?: KanbanBoard[];
   kanbanColumns?: KanbanColumnConfig[];
   terminalConfig?: TerminalConfig;
+  configFiles?: ConfigFilesConfig;
 }
 
 export interface CalculatedTaskEntry extends TaskEntry {
@@ -240,6 +251,11 @@ export interface ElectronAPI {
   onTerminalExit: (callback: (code: number | null) => void) => void;
   removeTerminalListeners: () => void;
   resizeTerminal: (cols: number, rows: number) => void;
+  getConfigFilesConfig: () => Promise<ConfigFilesConfig>;
+  saveConfigFilesConfig: (config: ConfigFilesConfig) => Promise<void>;
+  resetConfigFilesConfig: () => Promise<ConfigFilesConfig>;
+  readConfigFileContent: (path: string) => Promise<string>;
+  writeConfigFileContent: (path: string, content: string) => Promise<void>;
 }
 
 declare global {

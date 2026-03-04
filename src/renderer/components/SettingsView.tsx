@@ -6,8 +6,9 @@ import GitHubSettingsView from './GitHubSettingsView';
 import HotkeySettingsView from './HotkeySettingsView';
 import KanbanSettingsView from './KanbanSettingsView';
 import TerminalSettingsView from './TerminalSettingsView';
+import ConfigFilesSettingsView from './ConfigFilesSettingsView';
 
-type SettingsTab = 'task-types' | 'quick-links' | 'jira' | 'github' | 'hotkeys' | 'kanban' | 'terminal';
+type SettingsTab = 'task-types' | 'quick-links' | 'jira' | 'github' | 'hotkeys' | 'kanban' | 'terminal' | 'config-files';
 
 export default function SettingsView() {
   const [activeTab, setActiveTab] = useState<SettingsTab>('task-types');
@@ -60,6 +61,12 @@ export default function SettingsView() {
         >
           Terminal
         </button>
+        <button
+          className={`settings-tab ${activeTab === 'config-files' ? 'active' : ''}`}
+          onClick={() => setActiveTab('config-files')}
+        >
+          Config Files
+        </button>
       </div>
       <div className="settings-content">
         {activeTab === 'task-types' && <TaskTypesView />}
@@ -69,6 +76,7 @@ export default function SettingsView() {
         {activeTab === 'hotkeys' && <HotkeySettingsView />}
         {activeTab === 'kanban' && <KanbanSettingsView />}
         {activeTab === 'terminal' && <TerminalSettingsView />}
+        {activeTab === 'config-files' && <ConfigFilesSettingsView />}
       </div>
     </div>
   );

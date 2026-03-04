@@ -44,14 +44,19 @@ import {
   readTerminalConfig,
   saveTerminalConfig,
   updateTerminalShortcutLastRan,
+  readConfigFilesConfig,
+  saveConfigFilesConfig,
+  resetConfigFilesConfig,
+  readConfigFileContent,
+  writeConfigFileContent,
 } from './storage';
 import { startTimer, getElapsedMinutes } from './timer';
 import { searchJiraIssues, testJiraConnection, fetchJiraTicketStatuses, fetchAssignedJiraTickets } from './jira';
 import { testGitHubConnection, fetchGitHubPRs, fetchDevBranchTickets } from './github';
 import { reregisterShortcuts } from './globalShortcut';
-import { closeDialogWindow, closeQuickLaunchWindow, showDialogWindow, showEditWindow, showNotesWindow, showNotebookWindow, showGitHubPRsWindow, showExportWindow, showSettingsWindow, showKanbanWindow, showTerminalLauncherWindow, closeTerminalLauncherWindow, getTerminalLauncherWindow } from './windows';
+import { closeDialogWindow, closeQuickLaunchWindow, showDialogWindow, showEditWindow, showNotesWindow, showNotebookWindow, showGitHubPRsWindow, showExportWindow, showSettingsWindow, showKanbanWindow, showTerminalLauncherWindow, closeTerminalLauncherWindow, getTerminalLauncherWindow, showConfigFilesWindow } from './windows';
 import { updateTrayMenu } from './tray';
-import { TaskEntry, CalculatedTaskEntry, CurrentState, TaskType, DailyNote, Note, QuickLinkRule, JiraConfig, JiraSearchResult, JiraTicketStatus, GitHubConfig, GitHubPR, HotkeyConfig, KanbanBoard, KanbanTask, KanbanColumnConfig, TerminalConfig } from '../shared/types';
+import { TaskEntry, CalculatedTaskEntry, CurrentState, TaskType, DailyNote, Note, QuickLinkRule, JiraConfig, JiraSearchResult, JiraTicketStatus, GitHubConfig, GitHubPR, HotkeyConfig, KanbanBoard, KanbanTask, KanbanColumnConfig, TerminalConfig, ConfigFilesConfig } from '../shared/types';
 import { calculateDurations } from '../shared/durationUtils';
 
 let activePty: pty.IPty | null = null;
@@ -323,6 +328,7 @@ export function setupIpcHandlers(): void {
       'task-types': showSettingsWindow,
       'kanban': showKanbanWindow,
       'terminal-launcher': showTerminalLauncherWindow,
+      'config-files': showConfigFilesWindow,
     };
     const showFn = viewMap[view];
     if (showFn) showFn();
@@ -382,5 +388,26 @@ export function setupIpcHandlers(): void {
   ipcMain.handle('close-terminal-launcher', async (): Promise<void> => {
     killActiveTerminalProcess();
     closeTerminalLauncherWindow();
+  });
+
+  // Config Files handlers
+  ipcMain.handle('get-config-files-config', async (): Promise<ConfigFilesConfig> => {
+    return readConfigFilesConfig();
+  });
+
+  ipcMain.handle('save-config-files-config', async (_event, config: ConfigFilesConfig): Promise<void> => {
+    saveConfigFilesConfig(config);
+  });
+
+  ipcMain.handle('reset-config-files-config', async (): Promise<ConfigFilesConfig> => {
+    return resetConfigFilesConfig();
+  });
+
+  ipcMain.handle('read-config-file-content', async (_event, filePath: string): Promise<string> => {
+    return readConfigFileContent(filePath);
+  });
+
+  ipcMain.handle('write-config-file-content', async (_event, filePath: string, content: string): Promise<void> => {
+    writeConfigFileContent(filePath, content);
   });
 }

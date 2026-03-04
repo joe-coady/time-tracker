@@ -2222,3 +2222,141 @@ input.entry-duration.ongoing {
   border-radius: 3px;
   flex-shrink: 0;
 }
+
+/* Config Files View */
+.config-files-editor {
+  font-family: 'SF Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  tab-size: 2;
+}
+
+.config-files-header-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.config-files-header-name {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.config-files-header-path {
+  font-size: 12px;
+  color: #888;
+}
+
+.config-files-error {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  font-size: 14px;
+  padding: 20px;
+}
+
+.config-files-empty {
+  padding: 16px;
+  color: #999;
+  font-size: 13px;
+}
+
+/* Config Files Settings */
+.config-files-settings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.config-files-settings-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #f8f8f8;
+  border-radius: 6px;
+  border: 1px solid #eee;
+}
+
+.config-files-settings-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.config-files-settings-item-name {
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.config-files-settings-item-path {
+  font-size: 12px;
+  color: #888;
+  font-family: 'SF Mono', 'Menlo', monospace;
+}
+
+.config-files-settings-delete {
+  background: none;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 12px;
+  color: #d9534f;
+  cursor: pointer;
+}
+
+.config-files-settings-delete:hover {
+  background: #fff0f0;
+  border-color: #d9534f;
+}
+
+.config-files-settings-empty {
+  color: #999;
+  font-size: 13px;
+  padding: 8px 0;
+}
+
+.config-files-settings-add {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.config-files-settings-input {
+  padding: 6px 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 13px;
+  outline: none;
+}
+
+.config-files-settings-input:focus {
+  border-color: #007aff;
+}
+
+.config-files-settings-path-input {
+  flex: 1;
+}
+
+.config-files-settings-add-btn {
+  padding: 6px 14px;
+  background: #007aff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.config-files-settings-add-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.config-files-settings-add-btn:hover:not(:disabled) {
+  background: #0066dd;
+}
