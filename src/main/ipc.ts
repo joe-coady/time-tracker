@@ -1,4 +1,6 @@
 import { ipcMain, shell } from 'electron';
+import { spawn, ChildProcess } from 'child_process';
+import * as os from 'os';
 import { v4 as uuidv4 } from 'uuid';
 import {
   readTasks,
@@ -39,15 +41,27 @@ import {
   readKanbanColumns,
   saveKanbanColumns,
   syncKanbanWithJira,
+  readTerminalConfig,
+  saveTerminalConfig,
+  updateTerminalShortcutLastRan,
 } from './storage';
 import { startTimer, getElapsedMinutes } from './timer';
 import { searchJiraIssues, testJiraConnection, fetchJiraTicketStatuses, fetchAssignedJiraTickets } from './jira';
 import { testGitHubConnection, fetchGitHubPRs, fetchDevBranchTickets } from './github';
 import { reregisterShortcuts } from './globalShortcut';
-import { closeDialogWindow, closeQuickLaunchWindow, showDialogWindow, showEditWindow, showNotesWindow, showNotebookWindow, showGitHubPRsWindow, showExportWindow, showSettingsWindow, showKanbanWindow } from './windows';
+import { closeDialogWindow, closeQuickLaunchWindow, showDialogWindow, showEditWindow, showNotesWindow, showNotebookWindow, showGitHubPRsWindow, showExportWindow, showSettingsWindow, showKanbanWindow, showTerminalLauncherWindow, closeTerminalLauncherWindow, getTerminalLauncherWindow } from './windows';
 import { updateTrayMenu } from './tray';
-import { TaskEntry, CalculatedTaskEntry, CurrentState, TaskType, DailyNote, Note, QuickLinkRule, JiraConfig, JiraSearchResult, JiraTicketStatus, GitHubConfig, GitHubPR, HotkeyConfig, KanbanBoard, KanbanTask, KanbanColumnConfig } from '../shared/types';
+import { TaskEntry, CalculatedTaskEntry, CurrentState, TaskType, DailyNote, Note, QuickLinkRule, JiraConfig, JiraSearchResult, JiraTicketStatus, GitHubConfig, GitHubPR, HotkeyConfig, KanbanBoard, KanbanTask, KanbanColumnConfig, TerminalConfig } from '../shared/types';
 import { calculateDurations } from '../shared/durationUtils';
+
+let activeTerminalProcess: ChildProcess | null = null;
+
+export function killActiveTerminalProcess(): void {
+  if (activeTerminalProcess) {
+    activeTerminalProcess.kill();
+    activeTerminalProcess = null;
+  }
+}
 
 export function setupIpcHandlers(): void {
   ipcMain.handle('get-tasks', async (): Promise<CalculatedTaskEntry[]> => {
@@ -308,8 +322,63 @@ export function setupIpcHandlers(): void {
       'settings': showSettingsWindow,
       'task-types': showSettingsWindow,
       'kanban': showKanbanWindow,
+      'terminal-launcher': showTerminalLauncherWindow,
     };
     const showFn = viewMap[view];
     if (showFn) showFn();
+  });
+
+  // Terminal launcher handlers
+  ipcMain.handle('get-terminal-config', async (): Promise<TerminalConfig | null> => {
+    return readTerminalConfig();
+  });
+
+  ipcMain.handle('save-terminal-config', async (_event, config: TerminalConfig): Promise<void> => {
+    saveTerminalConfig(config);
+  });
+
+  ipcMain.handle('run-terminal-shortcut', async (_event, id: string): Promise<void> => {
+    const config = readTerminalConfig();
+    if (!config) return;
+    const shortcut = config.shortcuts.find(s => s.id === id);
+    if (!shortcut) return;
+
+    updateTerminalShortcutLastRan(id);
+
+    const expandedDir = shortcut.directory.replace(/^~(?=\/|$)/, os.homedir());
+    const command = shortcut.command || 'ls -la';
+
+    killActiveTerminalProcess();
+
+    const child = spawn('/bin/zsh', ['-l', '-c', command], { cwd: expandedDir });
+    activeTerminalProcess = child;
+
+    const win = getTerminalLauncherWindow();
+
+    child.stdout?.on('data', (chunk: Buffer) => {
+      if (win && !win.isDestroyed()) {
+        win.webContents.send('terminal-output', chunk.toString());
+      }
+    });
+
+    child.stderr?.on('data', (chunk: Buffer) => {
+      if (win && !win.isDestroyed()) {
+        win.webContents.send('terminal-output', chunk.toString());
+      }
+    });
+
+    child.on('close', (code: number | null) => {
+      if (win && !win.isDestroyed()) {
+        win.webContents.send('terminal-exit', code);
+      }
+      if (activeTerminalProcess === child) {
+        activeTerminalProcess = null;
+      }
+    });
+  });
+
+  ipcMain.handle('close-terminal-launcher', async (): Promise<void> => {
+    killActiveTerminalProcess();
+    closeTerminalLauncherWindow();
   });
 }

@@ -41,6 +41,18 @@ export interface HotkeyConfig {
   quickLaunch?: string; // Electron accelerator string, e.g. "Command+`"
 }
 
+export interface TerminalShortcut {
+  id: string;
+  name: string;          // "incept-backend"
+  directory: string;     // "/Users/joe/repo/resimac-incept"
+  command?: string;      // "docker compose exec app php artisan migrate"
+  lastRanAt?: string;    // ISO timestamp for sort order
+}
+
+export interface TerminalConfig {
+  shortcuts: TerminalShortcut[];
+}
+
 export interface KanbanColumnConfig {
   name: string;
   hidden?: boolean;
@@ -136,6 +148,7 @@ export interface TasksData {
   hotkeyConfig?: HotkeyConfig;
   kanbanBoards?: KanbanBoard[];
   kanbanColumns?: KanbanColumnConfig[];
+  terminalConfig?: TerminalConfig;
 }
 
 export interface CalculatedTaskEntry extends TaskEntry {
@@ -219,6 +232,13 @@ export interface ElectronAPI {
   getKanbanColumns: () => Promise<KanbanColumnConfig[]>;
   saveKanbanColumns: (columns: KanbanColumnConfig[]) => Promise<void>;
   syncKanbanWithJira: (date: string) => Promise<{ imported: number; updated: number }>;
+  getTerminalConfig: () => Promise<TerminalConfig | null>;
+  saveTerminalConfig: (config: TerminalConfig) => Promise<void>;
+  runTerminalShortcut: (id: string) => Promise<void>;
+  closeTerminalLauncher: () => Promise<void>;
+  onTerminalOutput: (callback: (data: string) => void) => void;
+  onTerminalExit: (callback: (code: number | null) => void) => void;
+  removeTerminalListeners: () => void;
 }
 
 declare global {

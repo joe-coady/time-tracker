@@ -9,8 +9,9 @@ import SettingsView from './components/SettingsView';
 import GitHubPRsView from './components/GitHubPRsView';
 import QuickLaunchView from './components/QuickLaunchView';
 import KanbanView from './components/KanbanView';
+import TerminalLauncherView from './components/TerminalLauncherView';
 
-type View = 'dialog' | 'edit' | 'task-types' | 'export' | 'notes' | 'notebook' | 'settings' | 'github-prs' | 'quick-launch' | 'kanban';
+type View = 'dialog' | 'edit' | 'task-types' | 'export' | 'notes' | 'notebook' | 'settings' | 'github-prs' | 'quick-launch' | 'kanban' | 'terminal-launcher';
 
 function App() {
   const [view, setView] = useState<View>('dialog');
@@ -37,6 +38,8 @@ function App() {
         setView('quick-launch');
       } else if (hash === '#/kanban') {
         setView('kanban');
+      } else if (hash === '#/terminal-launcher') {
+        setView('terminal-launcher');
       } else {
         setView('dialog');
       }
@@ -56,6 +59,7 @@ function App() {
   if (view === 'github-prs') return <GitHubPRsView />;
   if (view === 'quick-launch') return <QuickLaunchView />;
   if (view === 'kanban') return <KanbanView />;
+  if (view === 'terminal-launcher') return <TerminalLauncherView />;
   return <TaskDialog />;
 }
 

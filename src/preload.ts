@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import { CalculatedTaskEntry, CurrentState, DailyNote, ElectronAPI, GitHubConfig, GitHubPR, HotkeyConfig, JiraConfig, JiraSearchResult, JiraTicketStatus, KanbanBoard, KanbanColumnConfig, KanbanTask, Note, PreviousTask, QuickLinkRule, TaskEntry, TaskType } from './shared/types';
+import { CalculatedTaskEntry, CurrentState, DailyNote, ElectronAPI, GitHubConfig, GitHubPR, HotkeyConfig, JiraConfig, JiraSearchResult, JiraTicketStatus, KanbanBoard, KanbanColumnConfig, KanbanTask, Note, PreviousTask, QuickLinkRule, TaskEntry, TaskType, TerminalConfig } from './shared/types';
 
 const electronAPI: ElectronAPI = {
   getTasks: (): Promise<CalculatedTaskEntry[]> => ipcRenderer.invoke('get-tasks'),
@@ -149,6 +149,31 @@ const electronAPI: ElectronAPI = {
 
   syncKanbanWithJira: (date: string): Promise<{ imported: number; updated: number }> =>
     ipcRenderer.invoke('sync-kanban-with-jira', date),
+
+  getTerminalConfig: (): Promise<TerminalConfig | null> =>
+    ipcRenderer.invoke('get-terminal-config'),
+
+  saveTerminalConfig: (config: TerminalConfig): Promise<void> =>
+    ipcRenderer.invoke('save-terminal-config', config),
+
+  runTerminalShortcut: (id: string): Promise<void> =>
+    ipcRenderer.invoke('run-terminal-shortcut', id),
+
+  closeTerminalLauncher: (): Promise<void> =>
+    ipcRenderer.invoke('close-terminal-launcher'),
+
+  onTerminalOutput: (callback: (data: string) => void): void => {
+    ipcRenderer.on('terminal-output', (_e, data: string) => callback(data));
+  },
+
+  onTerminalExit: (callback: (code: number | null) => void): void => {
+    ipcRenderer.on('terminal-exit', (_e, code: number | null) => callback(code));
+  },
+
+  removeTerminalListeners: (): void => {
+    ipcRenderer.removeAllListeners('terminal-output');
+    ipcRenderer.removeAllListeners('terminal-exit');
+  },
 };
 
 contextBridge.exposeInMainWorld('electronAPI', electronAPI);

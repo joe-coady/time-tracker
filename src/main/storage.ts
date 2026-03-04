@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { v4 as uuidv4 } from 'uuid';
-import { TaskEntry, TaskType, TasksData, DailyNote, Note, QuickLinkRule, JiraConfig, GitHubConfig, HotkeyConfig, KanbanBoard, KanbanTask, KanbanColumnConfig, DEFAULT_KANBAN_COLUMNS, JiraSearchResult, JiraTicketStatus } from '../shared/types';
+import { TaskEntry, TaskType, TasksData, DailyNote, Note, QuickLinkRule, JiraConfig, GitHubConfig, HotkeyConfig, KanbanBoard, KanbanTask, KanbanColumnConfig, DEFAULT_KANBAN_COLUMNS, JiraSearchResult, JiraTicketStatus, TerminalConfig } from '../shared/types';
 
 const TASKS_FILE_PATH = path.join(os.homedir(), 'notes', 'general', 'tasks.json');
 
@@ -575,6 +575,27 @@ export function reorderKanbanTasks(date: string, tasks: KanbanTask[]): void {
   board.tasks = tasks;
   board.updatedAt = new Date().toISOString();
   writeTasksData(data);
+}
+
+// Terminal Config functions
+export function readTerminalConfig(): TerminalConfig | null {
+  return readTasksData().terminalConfig || null;
+}
+
+export function saveTerminalConfig(config: TerminalConfig): void {
+  const data = readTasksData();
+  data.terminalConfig = config;
+  writeTasksData(data);
+}
+
+export function updateTerminalShortcutLastRan(id: string): void {
+  const data = readTasksData();
+  if (!data.terminalConfig) return;
+  const shortcut = data.terminalConfig.shortcuts.find(s => s.id === id);
+  if (shortcut) {
+    shortcut.lastRanAt = new Date().toISOString();
+    writeTasksData(data);
+  }
 }
 
 export async function syncKanbanWithJira(

@@ -12,6 +12,7 @@ let settingsWindow: BrowserWindow | null = null;
 let githubPRsWindow: BrowserWindow | null = null;
 let quickLaunchWindow: BrowserWindow | null = null;
 let kanbanWindow: BrowserWindow | null = null;
+let terminalLauncherWindow: BrowserWindow | null = null;
 
 // Check if we're in dev mode by seeing if the built renderer exists
 const rendererPath = path.join(__dirname, '../../renderer/index.html');
@@ -489,4 +490,59 @@ export function createKanbanWindow(): BrowserWindow {
 
 export function showKanbanWindow(): void {
   createKanbanWindow();
+}
+
+export function createTerminalLauncherWindow(): BrowserWindow {
+  if (terminalLauncherWindow && !terminalLauncherWindow.isDestroyed()) {
+    terminalLauncherWindow.show();
+    terminalLauncherWindow.focus();
+    return terminalLauncherWindow;
+  }
+
+  const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
+
+  terminalLauncherWindow = new BrowserWindow({
+    width: 500,
+    height: 400,
+    x: Math.round((screenWidth - 500) / 2),
+    y: Math.round((screenHeight - 400) / 2),
+    frame: false,
+    alwaysOnTop: true,
+    resizable: false,
+    skipTaskbar: true,
+    show: false,
+    webPreferences: {
+      preload: getPreloadPath(),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+
+  terminalLauncherWindow.loadURL(getRendererUrl('/terminal-launcher'));
+
+  terminalLauncherWindow.once('ready-to-show', () => {
+    terminalLauncherWindow?.show();
+    terminalLauncherWindow?.focus();
+  });
+
+  terminalLauncherWindow.on('closed', () => {
+    terminalLauncherWindow = null;
+  });
+
+  return terminalLauncherWindow;
+}
+
+export function showTerminalLauncherWindow(): void {
+  createTerminalLauncherWindow();
+}
+
+export function getTerminalLauncherWindow(): BrowserWindow | null {
+  return terminalLauncherWindow;
+}
+
+export function closeTerminalLauncherWindow(): void {
+  if (terminalLauncherWindow && !terminalLauncherWindow.isDestroyed()) {
+    terminalLauncherWindow.destroy();
+    terminalLauncherWindow = null;
+  }
 }
