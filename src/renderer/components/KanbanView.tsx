@@ -362,6 +362,16 @@ export default function KanbanView() {
           <div className="kanban-card">
             <div className="kanban-card-header">
               <div className="kanban-card-title">{data.title}</div>
+              <button
+                className="kanban-card-copy"
+                title="Copy title"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigator.clipboard.writeText(data.title);
+                }}
+              >
+                ⧉
+              </button>
               {ticketKey && jiraConfig?.baseUrl && (
                 <button
                   className="kanban-card-jira-link"
