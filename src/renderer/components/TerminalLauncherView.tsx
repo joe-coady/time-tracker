@@ -17,7 +17,7 @@ export default function TerminalLauncherView() {
   const xtermContainerRef = useRef<HTMLDivElement>(null);
   const terminalRef = useRef<Terminal | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
-  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const loadShortcuts = useCallback(async () => {
@@ -50,16 +50,8 @@ export default function TerminalLauncherView() {
   // Auto-close after process exits
   useEffect(() => {
     if (exitCode !== undefined) {
-      if (terminalRef.current) {
-        terminalRef.current.write(`\r\n\x1b[2m\x1b[3mProcess exited with code ${exitCode}\x1b[0m\r\n`);
-      }
-      closeTimerRef.current = setTimeout(() => {
-        window.electronAPI.closeTerminalLauncher();
-      }, 1500);
+      window.electronAPI.closeTerminalLauncher();
     }
-    return () => {
-      if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
-    };
   }, [exitCode]);
 
   const disposeTerminal = useCallback(() => {
@@ -71,7 +63,6 @@ export default function TerminalLauncherView() {
   }, []);
 
   const goBackToPicker = useCallback(() => {
-    if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
     window.electronAPI.removeTerminalListeners();
     disposeTerminal();
     setMode('picker');
@@ -155,13 +146,7 @@ export default function TerminalLauncherView() {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         if (mode === 'running') {
-          if (exitCode !== undefined) {
-            // Already exiting, just close now
-            if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
-            window.electronAPI.closeTerminalLauncher();
-          } else {
-            goBackToPicker();
-          }
+          goBackToPicker();
         } else {
           window.electronAPI.closeTerminalLauncher();
         }
@@ -201,7 +186,6 @@ export default function TerminalLauncherView() {
     return () => {
       window.electronAPI.removeTerminalListeners();
       disposeTerminal();
-      if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
     };
   }, [disposeTerminal]);
 
