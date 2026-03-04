@@ -174,6 +174,10 @@ const electronAPI: ElectronAPI = {
     ipcRenderer.removeAllListeners('terminal-output');
     ipcRenderer.removeAllListeners('terminal-exit');
   },
+
+  resizeTerminal: (cols: number, rows: number): void => {
+    ipcRenderer.send('resize-terminal', cols, rows);
+  },
 };
 
 contextBridge.exposeInMainWorld('electronAPI', electronAPI);

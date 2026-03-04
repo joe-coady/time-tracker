@@ -2125,24 +2125,10 @@ input.entry-duration.ongoing {
   text-overflow: ellipsis;
 }
 
-.terminal-output-pre {
+.terminal-output-xterm {
   flex: 1;
-  overflow-y: auto;
-  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Menlo, monospace;
-  font-size: 12px;
-  line-height: 1.5;
-  color: #e0e0e0;
-  background-color: rgba(0, 0, 0, 0.3);
+  overflow: hidden;
   border-radius: 6px;
-  padding: 10px;
-  white-space: pre-wrap;
-  word-break: break-all;
-  margin: 0;
-}
-
-.terminal-output-exit {
-  color: rgba(255, 255, 255, 0.4);
-  font-style: italic;
 }
 
 /* Terminal Settings styles */

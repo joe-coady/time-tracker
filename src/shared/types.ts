@@ -239,6 +239,7 @@ export interface ElectronAPI {
   onTerminalOutput: (callback: (data: string) => void) => void;
   onTerminalExit: (callback: (code: number | null) => void) => void;
   removeTerminalListeners: () => void;
+  resizeTerminal: (cols: number, rows: number) => void;
 }
 
 declare global {

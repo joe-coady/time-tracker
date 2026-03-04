@@ -28,6 +28,9 @@
     "vite": "^5.0.0"
   },
   "dependencies": {
+    "@xterm/addon-fit": "^0.11.0",
+    "@xterm/xterm": "^6.0.0",
+    "node-pty": "^1.1.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-kanban-kit": "^0.0.2-beta.6",

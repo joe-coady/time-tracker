@@ -1,5 +1,5 @@
 import { ipcMain, shell } from 'electron';
-import { spawn, ChildProcess } from 'child_process';
+import * as pty from 'node-pty';
 import * as os from 'os';
 import { v4 as uuidv4 } from 'uuid';
 import {
@@ -54,12 +54,12 @@ import { updateTrayMenu } from './tray';
 import { TaskEntry, CalculatedTaskEntry, CurrentState, TaskType, DailyNote, Note, QuickLinkRule, JiraConfig, JiraSearchResult, JiraTicketStatus, GitHubConfig, GitHubPR, HotkeyConfig, KanbanBoard, KanbanTask, KanbanColumnConfig, TerminalConfig } from '../shared/types';
 import { calculateDurations } from '../shared/durationUtils';
 
-let activeTerminalProcess: ChildProcess | null = null;
+let activePty: pty.IPty | null = null;
 
 export function killActiveTerminalProcess(): void {
-  if (activeTerminalProcess) {
-    activeTerminalProcess.kill();
-    activeTerminalProcess = null;
+  if (activePty) {
+    activePty.kill();
+    activePty = null;
   }
 }
 
@@ -350,31 +350,33 @@ export function setupIpcHandlers(): void {
 
     killActiveTerminalProcess();
 
-    const child = spawn('/bin/zsh', ['-l', '-c', command], { cwd: expandedDir });
-    activeTerminalProcess = child;
+    const ptyProcess = pty.spawn('/bin/zsh', ['-l', '-c', command], {
+      cwd: expandedDir,
+      cols: 80,
+      rows: 24,
+    });
+    activePty = ptyProcess;
 
     const win = getTerminalLauncherWindow();
 
-    child.stdout?.on('data', (chunk: Buffer) => {
+    ptyProcess.onData((data: string) => {
       if (win && !win.isDestroyed()) {
-        win.webContents.send('terminal-output', chunk.toString());
+        win.webContents.send('terminal-output', data);
       }
     });
 
-    child.stderr?.on('data', (chunk: Buffer) => {
+    ptyProcess.onExit(({ exitCode }) => {
       if (win && !win.isDestroyed()) {
-        win.webContents.send('terminal-output', chunk.toString());
+        win.webContents.send('terminal-exit', exitCode);
+      }
+      if (activePty === ptyProcess) {
+        activePty = null;
       }
     });
+  });
 
-    child.on('close', (code: number | null) => {
-      if (win && !win.isDestroyed()) {
-        win.webContents.send('terminal-exit', code);
-      }
-      if (activeTerminalProcess === child) {
-        activeTerminalProcess = null;
-      }
-    });
+  ipcMain.on('resize-terminal', (_event, cols: number, rows: number) => {
+    if (activePty) activePty.resize(cols, rows);
   });
 
   ipcMain.handle('close-terminal-launcher', async (): Promise<void> => {
