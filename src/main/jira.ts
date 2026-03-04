@@ -63,6 +63,21 @@ export async function searchJiraIssues(query: string): Promise<JiraSearchResult[
   }
 }
 
+export function extractFieldDisplayValue(value: unknown): string {
+  if (value == null) return '';
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number') return String(value);
+  if (Array.isArray(value)) {
+    return value.map(extractFieldDisplayValue).filter(Boolean).join(', ');
+  }
+  if (typeof value === 'object') {
+    const obj = value as Record<string, unknown>;
+    if (typeof obj.name === 'string') return obj.name;
+    if (typeof obj.displayName === 'string') return obj.displayName;
+  }
+  return '';
+}
+
 export async function fetchJiraTicketStatuses(keys: string[]): Promise<JiraTicketStatus[]> {
   const config = readJiraConfig();
   if (!config || keys.length === 0) return [];
@@ -70,24 +85,35 @@ export async function fetchJiraTicketStatuses(keys: string[]): Promise<JiraTicke
   const auth = Buffer.from(`${config.email}:${config.apiToken}`).toString('base64');
   const results: JiraTicketStatus[] = [];
 
+  const customFieldIds = (config.customFields ?? []).map(cf => cf.fieldId);
+  const fields = ['status', 'summary', ...customFieldIds].join(',');
+
   // Batch up to 50 keys per request (Jira limit)
   for (let i = 0; i < keys.length; i += 50) {
     const batch = keys.slice(i, i + 50);
     const jql = `key in (${batch.join(',')})`;
     const url = new URL(`${config.baseUrl}/rest/api/3/search/jql`);
     url.searchParams.set('jql', jql);
-    url.searchParams.set('fields', 'status,summary');
+    url.searchParams.set('fields', fields);
     url.searchParams.set('maxResults', '50');
 
     try {
       const body = await jiraRequest(url.toString(), auth);
       const data = JSON.parse(body);
       for (const issue of data.issues ?? []) {
+        const customFields: Record<string, string> = {};
+        for (const fieldId of customFieldIds) {
+          const displayValue = extractFieldDisplayValue(issue.fields[fieldId]);
+          if (displayValue) {
+            customFields[fieldId] = displayValue;
+          }
+        }
         results.push({
           key: issue.key,
           summary: issue.fields.summary ?? '',
           status: issue.fields.status.name,
           statusCategory: issue.fields.status.statusCategory.key,
+          customFields: Object.keys(customFields).length > 0 ? customFields : undefined,
         });
       }
     } catch (err) {

@@ -405,3 +405,24 @@
   background-color: rgba(255, 255, 255, 0.2);
   color: #fff;
 }
+
+/* Custom fields on cards */
+.kanban-card-custom-fields {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid #e8e8e8;
+}
+
+.kanban-card-field {
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.kanban-card-field-label {
+  color: #888;
+  font-weight: 500;
+}
+
+.kanban-card-field-value {
+  color: #555;
+}

@@ -9,11 +9,18 @@ export interface QuickLinkRule {
   linkTarget: string;
 }
 
+export interface JiraCustomFieldConfig {
+  id: string;          // UUID for the config entry
+  fieldId: string;     // Jira API field ID: "fixVersions", "customfield_10001"
+  label: string;       // Display label: "Fix Versions"
+}
+
 export interface JiraConfig {
   baseUrl: string;
   email: string;
   apiToken: string;
   ticketPattern?: string;  // regex string, e.g. "[A-Z]+-\\d+"
+  customFields?: JiraCustomFieldConfig[];
 }
 
 export interface JiraTicketStatus {
@@ -21,6 +28,7 @@ export interface JiraTicketStatus {
   summary: string;      // "Fix the auth flow for SSO users"
   status: string;       // "In Progress"
   statusCategory: string; // "new" | "indeterminate" | "done"
+  customFields?: Record<string, string>; // fieldId → display value
 }
 
 export interface JiraSearchResult {
@@ -55,6 +63,7 @@ export interface KanbanTask {
   Title: string;
   Description: string;
   Status: KanbanStatus;
+  customFields?: Record<string, string>; // fieldId → display value
 }
 
 export interface KanbanBoard {

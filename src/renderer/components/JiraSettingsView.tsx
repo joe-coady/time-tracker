@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { JiraConfig } from '../../shared/types';
+import { v4 as uuidv4 } from 'uuid';
+import { JiraConfig, JiraCustomFieldConfig } from '../../shared/types';
 
 function JiraSettingsView() {
   const [baseUrl, setBaseUrl] = useState('');
   const [email, setEmail] = useState('');
   const [apiToken, setApiToken] = useState('');
   const [ticketPattern, setTicketPattern] = useState('');
+  const [customFields, setCustomFields] = useState<JiraCustomFieldConfig[]>([]);
   const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(false);
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'failed'>('idle');
@@ -17,6 +19,7 @@ function JiraSettingsView() {
       setEmail(config.email);
       setApiToken(config.apiToken);
       setTicketPattern(config.ticketPattern ?? '');
+      setCustomFields(config.customFields ?? []);
     }
     setLoading(false);
   }, []);
@@ -32,6 +35,7 @@ function JiraSettingsView() {
       email: email.trim(),
       apiToken: apiToken.trim(),
       ticketPattern: ticketPattern.trim() || undefined,
+      customFields: customFields.length > 0 ? customFields : undefined,
     };
     await window.electronAPI.saveJiraConfig(config);
     setSaved(true);
@@ -113,6 +117,54 @@ function JiraSettingsView() {
             placeholder="[A-Z]+-\d+"
           />
         </label>
+        <div>
+          <div className="settings-label">
+            Custom Fields
+            <span className="settings-label-hint">
+              Jira fields to display on Kanban cards
+            </span>
+          </div>
+          {customFields.map((cf, i) => (
+            <div key={cf.id} style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
+              <input
+                className="task-input"
+                style={{ flex: 1 }}
+                value={cf.fieldId}
+                onChange={e => {
+                  const updated = [...customFields];
+                  updated[i] = { ...updated[i], fieldId: e.target.value };
+                  setCustomFields(updated);
+                }}
+                placeholder="Field ID (e.g. fixVersions)"
+              />
+              <input
+                className="task-input"
+                style={{ flex: 1 }}
+                value={cf.label}
+                onChange={e => {
+                  const updated = [...customFields];
+                  updated[i] = { ...updated[i], label: e.target.value };
+                  setCustomFields(updated);
+                }}
+                placeholder="Display Label"
+              />
+              <button
+                className="kanban-card-delete"
+                style={{ opacity: 1, color: '#dc3545', width: 28, height: 28, fontSize: 16, border: '1px solid #ddd', borderRadius: 6 }}
+                onClick={() => setCustomFields(customFields.filter((_, j) => j !== i))}
+              >
+                ×
+              </button>
+            </div>
+          ))}
+          <button
+            className="kanban-import-btn"
+            style={{ marginTop: 4, fontSize: 13, padding: '4px 12px' }}
+            onClick={() => setCustomFields([...customFields, { id: uuidv4(), fieldId: '', label: '' }])}
+          >
+            + Add Field
+          </button>
+        </div>
       </div>
       <div className="settings-actions" style={{ marginTop: 0 }}>
         <button

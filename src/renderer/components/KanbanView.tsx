@@ -99,6 +99,7 @@ function buildBoardData(
         content: {
           description: task.Description,
           status: task.Status, // preserve original stored status
+          customFields: task.customFields,
         },
       };
     }
@@ -124,6 +125,7 @@ function boardDataToTasks(boardData: BoardData, allCols: string[], movedCardId: 
           Title: item.title,
           Description: item.content?.description || '',
           Status: item.id === movedCardId ? col : (item.content?.status || col),
+          customFields: item.content?.customFields,
         });
       }
     }
@@ -389,6 +391,20 @@ export default function KanbanView() {
                 <div className="kanban-card-description">{data.content.description}</div>
               ) : (
                 <div className="kanban-card-no-desc">No description</div>
+              )}
+              {data.content?.customFields && jiraConfig?.customFields && jiraConfig.customFields.length > 0 && (
+                <div className="kanban-card-custom-fields">
+                  {jiraConfig.customFields.map(cf => {
+                    const value = data.content?.customFields?.[cf.fieldId];
+                    if (!value) return null;
+                    return (
+                      <div key={cf.fieldId} className="kanban-card-field">
+                        <span className="kanban-card-field-label">{cf.label}:</span>{' '}
+                        <span className="kanban-card-field-value">{value}</span>
+                      </div>
+                    );
+                  })}
+                </div>
               )}
             </div>
           </div>

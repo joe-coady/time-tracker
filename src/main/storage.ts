@@ -639,19 +639,19 @@ export async function syncKanbanWithJira(
 
     if (allKeys.length > 0) {
       const statuses = await fetchStatuses(allKeys);
-      const statusMap = new Map<string, string>();
+      const ticketMap = new Map<string, JiraTicketStatus>();
       for (const s of statuses) {
-        statusMap.set(s.key, s.status);
+        ticketMap.set(s.key, s);
       }
 
       for (const [key, taskIds] of keyToTaskIds) {
-        const jiraStatus = statusMap.get(key);
-        if (!jiraStatus) continue;
+        const jiraTicket = ticketMap.get(key);
+        if (!jiraTicket) continue;
 
         // Find which column this Jira status maps to
         let targetColumn: string | null = null;
         for (const col of columns) {
-          if (col.jiraStatuses?.some(s => s.toLowerCase() === jiraStatus.toLowerCase())) {
+          if (col.jiraStatuses?.some(s => s.toLowerCase() === jiraTicket.status.toLowerCase())) {
             targetColumn = col.name;
             break;
           }
@@ -660,14 +660,19 @@ export async function syncKanbanWithJira(
         if (!targetColumn) {
           // No column maps to this Jira status — use raw status name
           // so the board can show it as an unmapped column for discovery
-          targetColumn = jiraStatus;
+          targetColumn = jiraTicket.status;
         }
 
         for (const taskId of taskIds) {
           const task = board.tasks.find(t => t.Id === taskId);
-          if (task && task.Status !== targetColumn) {
-            task.Status = targetColumn;
-            updated++;
+          if (task) {
+            if (task.Status !== targetColumn) {
+              task.Status = targetColumn;
+              updated++;
+            }
+            if (jiraTicket.customFields) {
+              task.customFields = { ...task.customFields, ...jiraTicket.customFields };
+            }
           }
         }
       }
