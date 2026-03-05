@@ -152,6 +152,47 @@ export async function fetchAssignedJiraTickets(): Promise<JiraSearchResult[]> {
   }
 }
 
+export interface JiraComment {
+  author: string;
+  body: string;
+  created: string;
+}
+
+export async function fetchJiraTicketComments(key: string): Promise<JiraComment[]> {
+  const config = readJiraConfig();
+  if (!config) return [];
+
+  const auth = Buffer.from(`${config.email}:${config.apiToken}`).toString('base64');
+  const url = `${config.baseUrl}/rest/api/3/issue/${encodeURIComponent(key)}/comment?orderBy=-created&maxResults=20`;
+
+  try {
+    const body = await jiraRequest(url, auth);
+    const data = JSON.parse(body);
+    const results: JiraComment[] = [];
+    for (const c of data.comments ?? []) {
+      // ADF body → extract plain text from paragraph/text nodes
+      let text = '';
+      if (c.body?.content) {
+        for (const block of c.body.content) {
+          for (const inline of block.content ?? []) {
+            if (inline.type === 'text') text += inline.text;
+          }
+          text += '\n';
+        }
+      }
+      results.push({
+        author: c.author?.displayName ?? c.author?.emailAddress ?? 'Unknown',
+        body: text.trim(),
+        created: c.created,
+      });
+    }
+    return results;
+  } catch (err) {
+    console.error('fetchJiraTicketComments failed:', err);
+    return [];
+  }
+}
+
 export async function testJiraConnection(config: JiraConfig): Promise<boolean> {
   const url = `${config.baseUrl}/rest/api/3/myself`;
   const auth = Buffer.from(`${config.email}:${config.apiToken}`).toString('base64');

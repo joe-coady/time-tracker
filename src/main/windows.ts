@@ -14,6 +14,7 @@ let quickLaunchWindow: BrowserWindow | null = null;
 let kanbanWindow: BrowserWindow | null = null;
 let terminalLauncherWindow: BrowserWindow | null = null;
 let configFilesWindow: BrowserWindow | null = null;
+let chatWindow: BrowserWindow | null = null;
 
 // Check if we're in dev mode by seeing if the built renderer exists
 const rendererPath = path.join(__dirname, '../../renderer/index.html');
@@ -28,6 +29,41 @@ function getRendererUrl(route: string = ''): string {
     return `http://localhost:5173${route}`;
   }
   return `file://${path.join(__dirname, '../../renderer/index.html')}${route ? `#${route}` : ''}`;
+}
+
+interface StandardWindowOptions {
+  title: string;
+  route: string;
+  widthRatio?: number;
+  heightRatio?: number;
+  maxWidth?: number;
+}
+
+function createStandardWindow(opts: StandardWindowOptions): BrowserWindow {
+  const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
+  const windowWidth = Math.min(
+    Math.round(screenWidth * (opts.widthRatio ?? 0.8)),
+    opts.maxWidth ?? 1200
+  );
+  const windowHeight = Math.round(screenHeight * (opts.heightRatio ?? 0.8));
+
+  const win = new BrowserWindow({
+    width: windowWidth,
+    height: windowHeight,
+    x: Math.round((screenWidth - windowWidth) / 2),
+    y: Math.round((screenHeight - windowHeight) / 2),
+    title: opts.title,
+    show: false,
+    webPreferences: {
+      preload: getPreloadPath(),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+
+  win.loadURL(getRendererUrl(opts.route));
+
+  return win;
 }
 
 export function createDialogWindow(): BrowserWindow {
@@ -96,25 +132,7 @@ export function createEditWindow(): BrowserWindow {
     return editWindow;
   }
 
-  const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
-  const windowWidth = Math.min(Math.round(screenWidth * 0.8), 1200);
-  const windowHeight = Math.round(screenHeight * 0.8);
-
-  editWindow = new BrowserWindow({
-    width: windowWidth,
-    height: windowHeight,
-    x: Math.round((screenWidth - windowWidth) / 2),
-    y: Math.round((screenHeight - windowHeight) / 2),
-    title: 'Edit Time Entries',
-    show: false,
-    webPreferences: {
-      preload: getPreloadPath(),
-      contextIsolation: true,
-      nodeIntegration: false,
-    },
-  });
-
-  editWindow.loadURL(getRendererUrl('/edit'));
+  editWindow = createStandardWindow({ title: 'Edit Time Entries', route: '/edit' });
 
   editWindow.once('ready-to-show', () => {
     editWindow?.show();
@@ -184,25 +202,7 @@ export function createExportWindow(): BrowserWindow {
     return exportWindow;
   }
 
-  const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
-  const windowWidth = Math.round(screenWidth * 0.8);
-  const windowHeight = Math.round(screenHeight * 0.8);
-
-  exportWindow = new BrowserWindow({
-    width: windowWidth,
-    height: windowHeight,
-    x: Math.round((screenWidth - windowWidth) / 2),
-    y: Math.round((screenHeight - windowHeight) / 2),
-    title: 'Export View',
-    show: false,
-    webPreferences: {
-      preload: getPreloadPath(),
-      contextIsolation: true,
-      nodeIntegration: false,
-    },
-  });
-
-  exportWindow.loadURL(getRendererUrl('/export'));
+  exportWindow = createStandardWindow({ title: 'Export View', route: '/export' });
 
   exportWindow.once('ready-to-show', () => {
     exportWindow?.show();
@@ -226,25 +226,7 @@ export function createNotesWindow(): BrowserWindow {
     return notesWindow;
   }
 
-  const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
-  const windowWidth = Math.min(Math.round(screenWidth * 0.8), 1200);
-  const windowHeight = Math.round(screenHeight * 0.8);
-
-  notesWindow = new BrowserWindow({
-    width: windowWidth,
-    height: windowHeight,
-    x: Math.round((screenWidth - windowWidth) / 2),
-    y: Math.round((screenHeight - windowHeight) / 2),
-    title: 'Daily Notes',
-    show: false,
-    webPreferences: {
-      preload: getPreloadPath(),
-      contextIsolation: true,
-      nodeIntegration: false,
-    },
-  });
-
-  notesWindow.loadURL(getRendererUrl('/notes'));
+  notesWindow = createStandardWindow({ title: 'Daily Notes', route: '/notes' });
 
   notesWindow.once('ready-to-show', () => {
     notesWindow?.show();
@@ -268,25 +250,7 @@ export function createNotebookWindow(): BrowserWindow {
     return notebookWindow;
   }
 
-  const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
-  const windowWidth = Math.min(Math.round(screenWidth * 0.8), 1200);
-  const windowHeight = Math.round(screenHeight * 0.8);
-
-  notebookWindow = new BrowserWindow({
-    width: windowWidth,
-    height: windowHeight,
-    x: Math.round((screenWidth - windowWidth) / 2),
-    y: Math.round((screenHeight - windowHeight) / 2),
-    title: 'Notebook',
-    show: false,
-    webPreferences: {
-      preload: getPreloadPath(),
-      contextIsolation: true,
-      nodeIntegration: false,
-    },
-  });
-
-  notebookWindow.loadURL(getRendererUrl('/notebook'));
+  notebookWindow = createStandardWindow({ title: 'Notebook', route: '/notebook' });
 
   notebookWindow.once('ready-to-show', () => {
     notebookWindow?.show();
@@ -310,25 +274,7 @@ export function createSettingsWindow(): BrowserWindow {
     return settingsWindow;
   }
 
-  const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
-  const windowWidth = Math.min(Math.round(screenWidth * 0.8), 1200);
-  const windowHeight = Math.round(screenHeight * 0.8);
-
-  settingsWindow = new BrowserWindow({
-    width: windowWidth,
-    height: windowHeight,
-    x: Math.round((screenWidth - windowWidth) / 2),
-    y: Math.round((screenHeight - windowHeight) / 2),
-    title: 'Settings',
-    show: false,
-    webPreferences: {
-      preload: getPreloadPath(),
-      contextIsolation: true,
-      nodeIntegration: false,
-    },
-  });
-
-  settingsWindow.loadURL(getRendererUrl('/settings'));
+  settingsWindow = createStandardWindow({ title: 'Settings', route: '/settings' });
 
   settingsWindow.once('ready-to-show', () => {
     settingsWindow?.show();
@@ -352,25 +298,7 @@ export function createGitHubPRsWindow(): BrowserWindow {
     return githubPRsWindow;
   }
 
-  const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
-  const windowWidth = Math.round(screenWidth * 0.8);
-  const windowHeight = Math.round(screenHeight * 0.8);
-
-  githubPRsWindow = new BrowserWindow({
-    width: windowWidth,
-    height: windowHeight,
-    x: Math.round((screenWidth - windowWidth) / 2),
-    y: Math.round((screenHeight - windowHeight) / 2),
-    title: 'GitHub PRs',
-    show: false,
-    webPreferences: {
-      preload: getPreloadPath(),
-      contextIsolation: true,
-      nodeIntegration: false,
-    },
-  });
-
-  githubPRsWindow.loadURL(getRendererUrl('/github-prs'));
+  githubPRsWindow = createStandardWindow({ title: 'GitHub PRs', route: '/github-prs' });
 
   githubPRsWindow.once('ready-to-show', () => {
     githubPRsWindow?.show();
@@ -458,25 +386,7 @@ export function createKanbanWindow(): BrowserWindow {
     return kanbanWindow;
   }
 
-  const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
-  const windowWidth = Math.min(Math.round(screenWidth * 0.9), 1400);
-  const windowHeight = Math.round(screenHeight * 0.8);
-
-  kanbanWindow = new BrowserWindow({
-    width: windowWidth,
-    height: windowHeight,
-    x: Math.round((screenWidth - windowWidth) / 2),
-    y: Math.round((screenHeight - windowHeight) / 2),
-    title: 'Kanban Board',
-    show: false,
-    webPreferences: {
-      preload: getPreloadPath(),
-      contextIsolation: true,
-      nodeIntegration: false,
-    },
-  });
-
-  kanbanWindow.loadURL(getRendererUrl('/kanban'));
+  kanbanWindow = createStandardWindow({ title: 'Kanban Board', route: '/kanban', widthRatio: 0.9, maxWidth: 1400 });
 
   kanbanWindow.once('ready-to-show', () => {
     kanbanWindow?.show();
@@ -555,25 +465,7 @@ export function createConfigFilesWindow(): BrowserWindow {
     return configFilesWindow;
   }
 
-  const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
-  const windowWidth = Math.min(Math.round(screenWidth * 0.8), 1200);
-  const windowHeight = Math.round(screenHeight * 0.8);
-
-  configFilesWindow = new BrowserWindow({
-    width: windowWidth,
-    height: windowHeight,
-    x: Math.round((screenWidth - windowWidth) / 2),
-    y: Math.round((screenHeight - windowHeight) / 2),
-    title: 'Config Files',
-    show: false,
-    webPreferences: {
-      preload: getPreloadPath(),
-      contextIsolation: true,
-      nodeIntegration: false,
-    },
-  });
-
-  configFilesWindow.loadURL(getRendererUrl('/config-files'));
+  configFilesWindow = createStandardWindow({ title: 'Config Files', route: '/config-files' });
 
   configFilesWindow.once('ready-to-show', () => {
     configFilesWindow?.show();
@@ -588,4 +480,32 @@ export function createConfigFilesWindow(): BrowserWindow {
 
 export function showConfigFilesWindow(): void {
   createConfigFilesWindow();
+}
+
+export function createChatWindow(): BrowserWindow {
+  if (chatWindow && !chatWindow.isDestroyed()) {
+    chatWindow.show();
+    chatWindow.focus();
+    return chatWindow;
+  }
+
+  chatWindow = createStandardWindow({ title: 'AI Chat', route: '/chat', widthRatio: 0.5, maxWidth: 700 });
+
+  chatWindow.once('ready-to-show', () => {
+    chatWindow?.show();
+  });
+
+  chatWindow.on('closed', () => {
+    chatWindow = null;
+  });
+
+  return chatWindow;
+}
+
+export function showChatWindow(): void {
+  createChatWindow();
+}
+
+export function getChatWindow(): BrowserWindow | null {
+  return chatWindow;
 }

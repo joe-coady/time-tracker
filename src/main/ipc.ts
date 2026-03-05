@@ -49,15 +49,18 @@ import {
   resetConfigFilesConfig,
   readConfigFileContent,
   writeConfigFileContent,
+  readClaudeConfig,
+  saveClaudeConfig,
 } from './storage';
 import { startTimer, getElapsedMinutes } from './timer';
 import { searchJiraIssues, testJiraConnection, fetchJiraTicketStatuses, fetchAssignedJiraTickets } from './jira';
 import { testGitHubConnection, fetchGitHubPRs, fetchDevBranchTickets } from './github';
 import { reregisterShortcuts } from './globalShortcut';
-import { closeDialogWindow, closeQuickLaunchWindow, showDialogWindow, showEditWindow, showNotesWindow, showNotebookWindow, showGitHubPRsWindow, showExportWindow, showSettingsWindow, showKanbanWindow, showTerminalLauncherWindow, closeTerminalLauncherWindow, getTerminalLauncherWindow, showConfigFilesWindow } from './windows';
+import { closeDialogWindow, closeQuickLaunchWindow, showDialogWindow, showEditWindow, showNotesWindow, showNotebookWindow, showGitHubPRsWindow, showExportWindow, showSettingsWindow, showKanbanWindow, showTerminalLauncherWindow, closeTerminalLauncherWindow, getTerminalLauncherWindow, showConfigFilesWindow, showChatWindow, getChatWindow } from './windows';
 import { updateTrayMenu } from './tray';
-import { TaskEntry, CalculatedTaskEntry, CurrentState, TaskType, DailyNote, Note, QuickLinkRule, JiraConfig, JiraSearchResult, JiraTicketStatus, GitHubConfig, GitHubPR, HotkeyConfig, KanbanBoard, KanbanTask, KanbanColumnConfig, TerminalConfig, ConfigFilesConfig } from '../shared/types';
+import { TaskEntry, CalculatedTaskEntry, CurrentState, TaskType, DailyNote, Note, QuickLinkRule, JiraConfig, JiraSearchResult, JiraTicketStatus, GitHubConfig, GitHubPR, HotkeyConfig, KanbanBoard, KanbanTask, KanbanColumnConfig, TerminalConfig, ConfigFilesConfig, ClaudeConfig, ChatMessage } from '../shared/types';
 import { calculateDurations } from '../shared/durationUtils';
+import { handleChatMessage, clearChatHistory, getChatHistory } from './chatHandler';
 
 let activePty: pty.IPty | null = null;
 
@@ -329,6 +332,7 @@ export function setupIpcHandlers(): void {
       'kanban': showKanbanWindow,
       'terminal-launcher': showTerminalLauncherWindow,
       'config-files': showConfigFilesWindow,
+      'chat': showChatWindow,
     };
     const showFn = viewMap[view];
     if (showFn) showFn();
@@ -409,5 +413,28 @@ export function setupIpcHandlers(): void {
 
   ipcMain.handle('write-config-file-content', async (_event, filePath: string, content: string): Promise<void> => {
     writeConfigFileContent(filePath, content);
+  });
+
+  // Claude config handlers
+  ipcMain.handle('get-claude-config', async (): Promise<ClaudeConfig | null> => {
+    return readClaudeConfig();
+  });
+
+  ipcMain.handle('save-claude-config', async (_event, config: ClaudeConfig): Promise<void> => {
+    saveClaudeConfig(config);
+  });
+
+  // Chat handlers
+  ipcMain.handle('chat-send-message', async (_event, message: string): Promise<void> => {
+    const win = getChatWindow();
+    await handleChatMessage(message, win);
+  });
+
+  ipcMain.handle('chat-clear-history', async (): Promise<void> => {
+    clearChatHistory();
+  });
+
+  ipcMain.handle('chat-get-history', async (): Promise<ChatMessage[]> => {
+    return getChatHistory();
   });
 }

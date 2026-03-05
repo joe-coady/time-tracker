@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import { CalculatedTaskEntry, CurrentState, DailyNote, ElectronAPI, GitHubConfig, GitHubPR, HotkeyConfig, JiraConfig, JiraSearchResult, JiraTicketStatus, KanbanBoard, KanbanColumnConfig, KanbanTask, Note, PreviousTask, QuickLinkRule, TaskEntry, TaskType, TerminalConfig, ConfigFilesConfig } from './shared/types';
+import { CalculatedTaskEntry, CurrentState, DailyNote, ElectronAPI, GitHubConfig, GitHubPR, HotkeyConfig, JiraConfig, JiraSearchResult, JiraTicketStatus, KanbanBoard, KanbanColumnConfig, KanbanTask, Note, PreviousTask, QuickLinkRule, TaskEntry, TaskType, TerminalConfig, ConfigFilesConfig, ClaudeConfig, ChatMessage } from './shared/types';
 
 const electronAPI: ElectronAPI = {
   getTasks: (): Promise<CalculatedTaskEntry[]> => ipcRenderer.invoke('get-tasks'),
@@ -193,6 +193,39 @@ const electronAPI: ElectronAPI = {
 
   writeConfigFileContent: (filePath: string, content: string): Promise<void> =>
     ipcRenderer.invoke('write-config-file-content', filePath, content),
+
+  getClaudeConfig: (): Promise<ClaudeConfig | null> =>
+    ipcRenderer.invoke('get-claude-config'),
+
+  saveClaudeConfig: (config: ClaudeConfig): Promise<void> =>
+    ipcRenderer.invoke('save-claude-config', config),
+
+  chatSendMessage: (message: string): Promise<void> =>
+    ipcRenderer.invoke('chat-send-message', message),
+
+  chatClearHistory: (): Promise<void> =>
+    ipcRenderer.invoke('chat-clear-history'),
+
+  chatGetHistory: (): Promise<ChatMessage[]> =>
+    ipcRenderer.invoke('chat-get-history'),
+
+  onChatDelta: (callback: (data: { type: string; content?: string; toolName?: string; toolCallId?: string; result?: string }) => void): void => {
+    ipcRenderer.on('chat-delta', (_e, data) => callback(data));
+  },
+
+  onChatError: (callback: (error: string) => void): void => {
+    ipcRenderer.on('chat-error', (_e, error: string) => callback(error));
+  },
+
+  onChatDone: (callback: (usage?: { inputTokens: number; outputTokens: number }) => void): void => {
+    ipcRenderer.on('chat-done', (_e, usage) => callback(usage));
+  },
+
+  removeChatListeners: (): void => {
+    ipcRenderer.removeAllListeners('chat-delta');
+    ipcRenderer.removeAllListeners('chat-error');
+    ipcRenderer.removeAllListeners('chat-done');
+  },
 };
 
 contextBridge.exposeInMainWorld('electronAPI', electronAPI);

@@ -12,6 +12,7 @@ const BUTTONS: QuickLaunchButton[] = [
   { label: 'Notebook', view: 'notebook' },
   { label: 'Config Files', view: 'config-files' },
   { label: 'GitHub PRs', view: 'github-prs' },
+  { label: 'AI Chat', view: 'chat' },
   { label: 'Edit Entries', view: 'edit' },
   { label: 'Working On?', view: 'dialog' },
 ];

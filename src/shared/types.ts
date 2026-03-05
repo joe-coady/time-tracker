@@ -70,6 +70,25 @@ export interface ConfigFilesConfig {
   files: ConfigFileEntry[];
 }
 
+export interface ClaudeConfig {
+  apiKey: string;
+  model?: string;
+}
+
+export interface ChatToolCall {
+  id: string;
+  toolName: string;
+  input: Record<string, unknown>;
+  result?: string;
+}
+
+export interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+  toolCalls?: ChatToolCall[];
+  timestamp: string;
+}
+
 export const DEFAULT_KANBAN_COLUMNS: KanbanColumnConfig[] = [
   { name: 'Todo' },
   { name: 'In Progress' },
@@ -160,6 +179,7 @@ export interface TasksData {
   kanbanColumns?: KanbanColumnConfig[];
   terminalConfig?: TerminalConfig;
   configFiles?: ConfigFilesConfig;
+  claudeConfig?: ClaudeConfig;
 }
 
 export interface CalculatedTaskEntry extends TaskEntry {
@@ -256,6 +276,15 @@ export interface ElectronAPI {
   resetConfigFilesConfig: () => Promise<ConfigFilesConfig>;
   readConfigFileContent: (path: string) => Promise<string>;
   writeConfigFileContent: (path: string, content: string) => Promise<void>;
+  getClaudeConfig: () => Promise<ClaudeConfig | null>;
+  saveClaudeConfig: (config: ClaudeConfig) => Promise<void>;
+  chatSendMessage: (message: string) => Promise<void>;
+  chatClearHistory: () => Promise<void>;
+  chatGetHistory: () => Promise<ChatMessage[]>;
+  onChatDelta: (callback: (data: { type: string; content?: string; toolName?: string; toolCallId?: string; result?: string }) => void) => void;
+  onChatError: (callback: (error: string) => void) => void;
+  onChatDone: (callback: (usage?: { inputTokens: number; outputTokens: number }) => void) => void;
+  removeChatListeners: () => void;
 }
 
 declare global {
