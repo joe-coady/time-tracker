@@ -60,37 +60,21 @@ function contrastColor(hex: string): string {
   return luminance > 0.5 ? '#000' : '#fff';
 }
 
-function PRCard({ pr, ticketStatusMap, devBranchSet, jiraBaseUrl, ticketPattern }: {
+function PRRow({ pr, devBranchSet, ticketKeys }: {
   pr: GitHubPR;
-  ticketStatusMap: Map<string, JiraTicketStatus>;
   devBranchSet: Set<string>;
-  jiraBaseUrl: string | null;
-  ticketPattern: RegExp | null;
+  ticketKeys: string[];
 }) {
   const repoShort = pr.repoFullName.split('/').pop() || pr.repoFullName;
-
-  const ticketKeys: string[] = [];
-  if (ticketPattern) {
-    for (const match of pr.title.matchAll(ticketPattern)) {
-      ticketKeys.push(match[0]);
-    }
-  }
-
-  const jiraItems = ticketKeys
-    .map(key => ticketStatusMap.get(key) ?? null)
-    .filter(Boolean) as JiraTicketStatus[];
-
   const isOnDevBranch = ticketKeys.some(k => devBranchSet.has(k));
 
   return (
-    <div className="today-card today-pr-card">
-      <div className="today-pr-top">
-        <span className="today-pr-repo">{repoShort}</span>
-        <span className="today-pr-number">#{pr.number}</span>
-        <span className="today-pr-time">{relativeTime(pr.updatedAt)}</span>
-      </div>
+    <div className="today-pr-row">
+      <span className="today-pr-row-number">#{pr.number}</span>
+      <span className="today-pr-row-repo">{repoShort}</span>
+      <span className="today-pr-row-age">{relativeTime(pr.updatedAt)}</span>
       <a
-        className="today-card-title today-pr-link"
+        className="today-pr-row-title"
         href="#"
         onClick={e => { e.preventDefault(); window.electronAPI.openExternal(pr.htmlUrl); }}
         title={pr.title}
@@ -112,14 +96,63 @@ function PRCard({ pr, ticketStatusMap, devBranchSet, jiraBaseUrl, ticketPattern 
             {label.name}
           </span>
         ))}
-        {jiraItems.map(ts => (
-          <span
-            key={ts.key}
-            className={`jira-badge clickable status-${ts.statusCategory}`}
-            onClick={() => jiraBaseUrl && window.electronAPI.openExternal(`${jiraBaseUrl}/browse/${ts.key}`)}
-          >
-            {ts.status}
-          </span>
+      </div>
+    </div>
+  );
+}
+
+function TicketPRGroup({ ticketKey, prs, ticketStatusMap, devBranchSet, jiraBaseUrl, ticketPattern }: {
+  ticketKey: string | null;
+  prs: GitHubPR[];
+  ticketStatusMap: Map<string, JiraTicketStatus>;
+  devBranchSet: Set<string>;
+  jiraBaseUrl: string | null;
+  ticketPattern: RegExp | null;
+}) {
+  const ticketStatus = ticketKey ? ticketStatusMap.get(ticketKey) ?? null : null;
+
+  const getTicketKeys = (pr: GitHubPR): string[] => {
+    if (!ticketPattern) return [];
+    const keys: string[] = [];
+    for (const match of pr.title.matchAll(new RegExp(ticketPattern.source, ticketPattern.flags))) {
+      keys.push(match[0]);
+    }
+    return keys;
+  };
+
+  return (
+    <div className="today-ticket-group">
+      <div className="today-ticket-header">
+        {ticketKey ? (
+          <>
+            <a
+              className="today-ticket-key"
+              href="#"
+              onClick={e => { e.preventDefault(); jiraBaseUrl && window.electronAPI.openExternal(`${jiraBaseUrl}/browse/${ticketKey}`); }}
+            >
+              {ticketKey}
+            </a>
+            {ticketStatus && (
+              <span className={`jira-badge status-${ticketStatus.statusCategory}`}>
+                {ticketStatus.status}
+              </span>
+            )}
+            {ticketStatus?.summary && (
+              <span className="today-ticket-summary">{ticketStatus.summary}</span>
+            )}
+          </>
+        ) : (
+          <span className="today-ticket-key unlinked">Unlinked PRs</span>
+        )}
+      </div>
+      <div className="today-ticket-prs">
+        {prs.map(pr => (
+          <PRRow
+            key={`${pr.repoFullName}#${pr.number}`}
+            pr={pr}
+            devBranchSet={devBranchSet}
+            ticketKeys={getTicketKeys(pr)}
+          />
         ))}
       </div>
     </div>
@@ -173,6 +206,47 @@ export default function TodayView() {
     try { return new RegExp(jiraConfig.ticketPattern, 'g'); } catch { return null; }
   }, [jiraConfig?.ticketPattern]);
 
+  const prGroups = useMemo(() => {
+    if (!data?.myPRs.length) return [];
+    const groupMap = new Map<string | null, GitHubPR[]>();
+    const assigned = new Set<string>(); // track PR keys already assigned to a group
+
+    for (const pr of data.myPRs) {
+      const prKey = `${pr.repoFullName}#${pr.number}`;
+      if (assigned.has(prKey)) continue;
+
+      let ticketKey: string | null = null;
+      if (ticketPattern) {
+        const match = pr.title.match(new RegExp(ticketPattern.source, ticketPattern.flags));
+        if (match) ticketKey = match[0];
+      }
+
+      if (!groupMap.has(ticketKey)) groupMap.set(ticketKey, []);
+      groupMap.get(ticketKey)!.push(pr);
+      assigned.add(prKey);
+    }
+
+    // Sort PRs within each group by updatedAt descending
+    for (const prs of groupMap.values()) {
+      prs.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+    }
+
+    // Build sorted array of groups; null-key group goes last
+    const entries = Array.from(groupMap.entries());
+    const linked = entries.filter(([key]) => key !== null);
+    const unlinked = entries.find(([key]) => key === null);
+
+    linked.sort((a, b) => {
+      const maxA = new Date(a[1][0].updatedAt).getTime();
+      const maxB = new Date(b[1][0].updatedAt).getTime();
+      return maxB - maxA;
+    });
+
+    const result = linked as [string | null, GitHubPR[]][];
+    if (unlinked) result.push(unlinked);
+    return result;
+  }, [data?.myPRs, ticketPattern]);
+
   return (
     <div className="today-container">
       <div className="today-header">
@@ -219,21 +293,20 @@ export default function TodayView() {
             )}
           </div>
 
-          {data.myPRs.length > 0 && (
+          {prGroups.length > 0 && (
             <div className="today-section">
               <h2 className="today-section-title">My PRs</h2>
-              <div className="today-card-list">
-                {data.myPRs.map(pr => (
-                  <PRCard
-                    key={`${pr.repoFullName}#${pr.number}`}
-                    pr={pr}
-                    ticketStatusMap={ticketStatusMap}
-                    devBranchSet={devBranchSet}
-                    jiraBaseUrl={jiraConfig?.baseUrl ?? null}
-                    ticketPattern={ticketPattern}
-                  />
-                ))}
-              </div>
+              {prGroups.map(([ticketKey, prs]) => (
+                <TicketPRGroup
+                  key={ticketKey ?? '__unlinked'}
+                  ticketKey={ticketKey}
+                  prs={prs}
+                  ticketStatusMap={ticketStatusMap}
+                  devBranchSet={devBranchSet}
+                  jiraBaseUrl={jiraConfig?.baseUrl ?? null}
+                  ticketPattern={ticketPattern}
+                />
+              ))}
             </div>
           )}
 
