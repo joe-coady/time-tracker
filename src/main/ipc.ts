@@ -483,12 +483,38 @@ export function setupIpcHandlers(): void {
     const board = getKanbanBoardForDate(todayStr);
     const columns = readKanbanColumns();
 
-    const workingColNames = new Set(columns.filter(c => c.columnType === 'working').map(c => c.name));
-    const todoColNames = new Set(columns.filter(c => c.columnType === 'todo').map(c => c.name));
+    // Build hidden→visible column mapping
+    const hiddenMap = new Map<string, string>();
+    for (const col of columns) {
+      if (col.hidden && col.mappedTo) {
+        hiddenMap.set(col.name, col.mappedTo);
+      }
+    }
+
+    // Resolve a task's status to the visible column it belongs to,
+    // then check columnType on that visible column
+    const columnByName = new Map(columns.map(c => [c.name, c]));
+
+    function resolveColumnType(status: string): string | undefined {
+      // Check if status matches a column name directly
+      const direct = columnByName.get(status);
+      if (direct) {
+        const resolved = direct.hidden && direct.mappedTo ? columnByName.get(direct.mappedTo) : direct;
+        return resolved?.columnType;
+      }
+      // Check if status is a jiraStatus mapped to a column
+      for (const col of columns) {
+        if (col.jiraStatuses?.some(s => s.toLowerCase() === status.toLowerCase())) {
+          const resolved = col.hidden && col.mappedTo ? columnByName.get(col.mappedTo) : col;
+          return resolved?.columnType;
+        }
+      }
+      return undefined;
+    }
 
     const tasks = board?.tasks || [];
-    const workingTasks = tasks.filter(t => workingColNames.has(t.Status));
-    const todoTasks = tasks.filter(t => todoColNames.has(t.Status));
+    const workingTasks = tasks.filter(t => resolveColumnType(t.Status) === 'working');
+    const todoTasks = tasks.filter(t => resolveColumnType(t.Status) === 'todo');
 
     let meetings: CalendarEvent[] = [];
     try {
@@ -497,6 +523,53 @@ export function setupIpcHandlers(): void {
       // Calendar fetch failed — return empty meetings
     }
 
-    return { workingTasks, todoTasks, meetings };
+    // Fetch GitHub PRs for the current user
+    let myPRs: GitHubPR[] = [];
+    let jiraTicketStatuses: JiraTicketStatus[] = [];
+    let devBranchTickets: string[] = [];
+
+    try {
+      const ghConfig = readGitHubConfig();
+      if (ghConfig?.token) {
+        const allPRs = await fetchGitHubPRs();
+        const username = ghConfig.username?.toLowerCase();
+        myPRs = username
+          ? allPRs.filter(pr => pr.author.toLowerCase() === username)
+          : allPRs;
+
+        // Fetch Jira ticket statuses for ticket keys in PR titles
+        const jiraConfig = readJiraConfig();
+        if (jiraConfig?.ticketPattern && myPRs.length > 0) {
+          try {
+            const regex = new RegExp(jiraConfig.ticketPattern, 'g');
+            const keys = new Set<string>();
+            for (const pr of myPRs) {
+              for (const match of pr.title.matchAll(regex)) {
+                keys.add(match[0]);
+              }
+            }
+            if (keys.size > 0) {
+              jiraTicketStatuses = await fetchJiraTicketStatuses(Array.from(keys));
+            }
+          } catch {
+            // Jira fetch failed — leave empty
+          }
+        }
+
+        // Fetch dev branch tickets
+        if (ghConfig.devBranch && myPRs.length > 0) {
+          try {
+            const repos = Array.from(new Set(myPRs.map(pr => pr.repoFullName)));
+            devBranchTickets = await fetchDevBranchTickets(repos);
+          } catch {
+            // Dev branch fetch failed — leave empty
+          }
+        }
+      }
+    } catch {
+      // GitHub fetch failed — leave empty
+    }
+
+    return { workingTasks, todoTasks, meetings, myPRs, jiraTicketStatuses, devBranchTickets };
   });
 }

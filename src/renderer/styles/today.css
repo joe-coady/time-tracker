@@ -97,6 +97,55 @@
   padding: 8px 0;
 }
 
+.today-pr-card {
+  border-left: 3px solid #6f42c1;
+}
+
+.today-pr-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.today-pr-repo {
+  font-size: 11px;
+  font-weight: 600;
+  color: #666;
+}
+
+.today-pr-number {
+  font-size: 11px;
+  color: #999;
+}
+
+.today-pr-time {
+  font-size: 11px;
+  color: #999;
+  margin-left: auto;
+}
+
+.today-pr-link {
+  display: block;
+  text-decoration: none;
+  color: #333;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.today-pr-link:hover {
+  color: #007aff;
+}
+
+.today-pr-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+
 .today-hint {
   background: #fff3cd;
   border: 1px solid #ffc107;

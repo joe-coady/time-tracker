@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { KanbanTask, CalendarEvent, TodayData } from '../../shared/types';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { KanbanTask, CalendarEvent, GitHubPR, JiraTicketStatus, TodayData } from '../../shared/types';
 import '../styles/today.css';
 
 function formatTime(iso: string): string {
@@ -42,6 +42,90 @@ function MeetingCard({ event }: { event: CalendarEvent }) {
   );
 }
 
+function relativeTime(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const minutes = Math.floor(diff / 60000);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
+
+function contrastColor(hex: string): string {
+  const r = parseInt(hex.slice(0, 2), 16);
+  const g = parseInt(hex.slice(2, 4), 16);
+  const b = parseInt(hex.slice(4, 6), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.5 ? '#000' : '#fff';
+}
+
+function PRCard({ pr, ticketStatusMap, devBranchSet, jiraBaseUrl, ticketPattern }: {
+  pr: GitHubPR;
+  ticketStatusMap: Map<string, JiraTicketStatus>;
+  devBranchSet: Set<string>;
+  jiraBaseUrl: string | null;
+  ticketPattern: RegExp | null;
+}) {
+  const repoShort = pr.repoFullName.split('/').pop() || pr.repoFullName;
+
+  const ticketKeys: string[] = [];
+  if (ticketPattern) {
+    for (const match of pr.title.matchAll(ticketPattern)) {
+      ticketKeys.push(match[0]);
+    }
+  }
+
+  const jiraItems = ticketKeys
+    .map(key => ticketStatusMap.get(key) ?? null)
+    .filter(Boolean) as JiraTicketStatus[];
+
+  const isOnDevBranch = ticketKeys.some(k => devBranchSet.has(k));
+
+  return (
+    <div className="today-card today-pr-card">
+      <div className="today-pr-top">
+        <span className="today-pr-repo">{repoShort}</span>
+        <span className="today-pr-number">#{pr.number}</span>
+        <span className="today-pr-time">{relativeTime(pr.updatedAt)}</span>
+      </div>
+      <a
+        className="today-card-title today-pr-link"
+        href="#"
+        onClick={e => { e.preventDefault(); window.electronAPI.openExternal(pr.htmlUrl); }}
+        title={pr.title}
+      >
+        {pr.title}
+      </a>
+      <div className="today-pr-badges">
+        {isOnDevBranch && <span className="pr-card-dev-env">DEV-ENV</span>}
+        {pr.draft && <span className="pr-card-draft">Draft</span>}
+        {pr.labels.map(label => (
+          <span
+            key={label.name}
+            className="pr-card-label"
+            style={{
+              backgroundColor: label.color ? `#${label.color}` : '#eee',
+              color: label.color ? contrastColor(label.color) : '#333',
+            }}
+          >
+            {label.name}
+          </span>
+        ))}
+        {jiraItems.map(ts => (
+          <span
+            key={ts.key}
+            className={`jira-badge clickable status-${ts.statusCategory}`}
+            onClick={() => jiraBaseUrl && window.electronAPI.openExternal(`${jiraBaseUrl}/browse/${ts.key}`)}
+          >
+            {ts.status}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function TodayView() {
   const [data, setData] = useState<TodayData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -63,6 +147,31 @@ export default function TodayView() {
   useEffect(() => { load(); }, [load]);
 
   const hasNoColumnTags = data && data.workingTasks.length === 0 && data.todoTasks.length === 0;
+
+  const [jiraConfig, setJiraConfig] = useState<{ baseUrl: string; ticketPattern?: string } | null>(null);
+  useEffect(() => {
+    window.electronAPI.getJiraConfig().then(cfg => {
+      if (cfg) setJiraConfig({ baseUrl: cfg.baseUrl, ticketPattern: cfg.ticketPattern });
+    }).catch(() => {});
+  }, []);
+
+  const ticketStatusMap = useMemo(() => {
+    const map = new Map<string, JiraTicketStatus>();
+    if (data) {
+      for (const s of data.jiraTicketStatuses) map.set(s.key, s);
+    }
+    return map;
+  }, [data?.jiraTicketStatuses]);
+
+  const devBranchSet = useMemo(
+    () => new Set(data?.devBranchTickets ?? []),
+    [data?.devBranchTickets],
+  );
+
+  const ticketPattern = useMemo(() => {
+    if (!jiraConfig?.ticketPattern) return null;
+    try { return new RegExp(jiraConfig.ticketPattern, 'g'); } catch { return null; }
+  }, [jiraConfig?.ticketPattern]);
 
   return (
     <div className="today-container">
@@ -109,6 +218,24 @@ export default function TodayView() {
               <div className="today-empty">No upcoming tasks</div>
             )}
           </div>
+
+          {data.myPRs.length > 0 && (
+            <div className="today-section">
+              <h2 className="today-section-title">My PRs</h2>
+              <div className="today-card-list">
+                {data.myPRs.map(pr => (
+                  <PRCard
+                    key={`${pr.repoFullName}#${pr.number}`}
+                    pr={pr}
+                    ticketStatusMap={ticketStatusMap}
+                    devBranchSet={devBranchSet}
+                    jiraBaseUrl={jiraConfig?.baseUrl ?? null}
+                    ticketPattern={ticketPattern}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
 
           {hasNoColumnTags && (
             <div className="today-hint">

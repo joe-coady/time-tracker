@@ -95,6 +95,9 @@ export interface TodayData {
   workingTasks: KanbanTask[];
   todoTasks: KanbanTask[];
   meetings: CalendarEvent[];
+  myPRs: GitHubPR[];
+  jiraTicketStatuses: JiraTicketStatus[];
+  devBranchTickets: string[];
 }
 
 export interface ConfigFileEntry {
