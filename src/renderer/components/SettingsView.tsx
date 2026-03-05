@@ -8,8 +8,9 @@ import KanbanSettingsView from './KanbanSettingsView';
 import TerminalSettingsView from './TerminalSettingsView';
 import ConfigFilesSettingsView from './ConfigFilesSettingsView';
 import ClaudeSettingsView from './ClaudeSettingsView';
+import GoogleCalendarSettingsView from './GoogleCalendarSettingsView';
 
-type SettingsTab = 'task-types' | 'quick-links' | 'jira' | 'github' | 'hotkeys' | 'kanban' | 'terminal' | 'config-files' | 'claude';
+type SettingsTab = 'task-types' | 'quick-links' | 'jira' | 'github' | 'hotkeys' | 'kanban' | 'terminal' | 'config-files' | 'claude' | 'google-calendar';
 
 export default function SettingsView() {
   const [activeTab, setActiveTab] = useState<SettingsTab>('task-types');
@@ -74,6 +75,12 @@ export default function SettingsView() {
         >
           Claude
         </button>
+        <button
+          className={`settings-tab ${activeTab === 'google-calendar' ? 'active' : ''}`}
+          onClick={() => setActiveTab('google-calendar')}
+        >
+          Calendar
+        </button>
       </div>
       <div className="settings-content">
         {activeTab === 'task-types' && <TaskTypesView />}
@@ -85,6 +92,7 @@ export default function SettingsView() {
         {activeTab === 'terminal' && <TerminalSettingsView />}
         {activeTab === 'config-files' && <ConfigFilesSettingsView />}
         {activeTab === 'claude' && <ClaudeSettingsView />}
+        {activeTab === 'google-calendar' && <GoogleCalendarSettingsView />}
       </div>
     </div>
   );

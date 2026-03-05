@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { v4 as uuidv4 } from 'uuid';
-import { TaskEntry, TaskType, TasksData, DailyNote, Note, QuickLinkRule, JiraConfig, GitHubConfig, HotkeyConfig, KanbanBoard, KanbanTask, KanbanColumnConfig, DEFAULT_KANBAN_COLUMNS, JiraSearchResult, JiraTicketStatus, TerminalConfig, ConfigFilesConfig, ConfigFileEntry, ClaudeConfig } from '../shared/types';
+import { TaskEntry, TaskType, TasksData, DailyNote, Note, QuickLinkRule, JiraConfig, GitHubConfig, HotkeyConfig, KanbanBoard, KanbanTask, KanbanColumnConfig, DEFAULT_KANBAN_COLUMNS, JiraSearchResult, JiraTicketStatus, TerminalConfig, ConfigFilesConfig, ConfigFileEntry, ClaudeConfig, GoogleCalendarConfig } from '../shared/types';
 
 const TASKS_FILE_PATH = path.join(os.homedir(), 'notes', 'general', 'tasks.json');
 
@@ -660,6 +660,17 @@ export function readClaudeConfig(): ClaudeConfig | null {
 export function saveClaudeConfig(config: ClaudeConfig): void {
   const data = readTasksData();
   data.claudeConfig = config;
+  writeTasksData(data);
+}
+
+// Google Calendar Config functions
+export function readGoogleCalendarConfig(): GoogleCalendarConfig | null {
+  return readTasksData().googleCalendarConfig || null;
+}
+
+export function saveGoogleCalendarConfig(config: GoogleCalendarConfig): void {
+  const data = readTasksData();
+  data.googleCalendarConfig = config;
   writeTasksData(data);
 }
 

@@ -51,16 +51,19 @@ import {
   writeConfigFileContent,
   readClaudeConfig,
   saveClaudeConfig,
+  readGoogleCalendarConfig,
+  saveGoogleCalendarConfig,
 } from './storage';
 import { startTimer, getElapsedMinutes } from './timer';
 import { searchJiraIssues, testJiraConnection, fetchJiraTicketStatuses, fetchAssignedJiraTickets } from './jira';
 import { testGitHubConnection, fetchGitHubPRs, fetchDevBranchTickets } from './github';
 import { reregisterShortcuts } from './globalShortcut';
-import { closeDialogWindow, closeQuickLaunchWindow, showDialogWindow, showEditWindow, showNotesWindow, showNotebookWindow, showGitHubPRsWindow, showExportWindow, showSettingsWindow, showKanbanWindow, showTerminalLauncherWindow, closeTerminalLauncherWindow, getTerminalLauncherWindow, showConfigFilesWindow, showChatWindow, getChatWindow } from './windows';
+import { closeDialogWindow, closeQuickLaunchWindow, showDialogWindow, showEditWindow, showNotesWindow, showNotebookWindow, showGitHubPRsWindow, showExportWindow, showSettingsWindow, showKanbanWindow, showTerminalLauncherWindow, closeTerminalLauncherWindow, getTerminalLauncherWindow, showConfigFilesWindow, showChatWindow, getChatWindow, showTodayWindow } from './windows';
 import { updateTrayMenu } from './tray';
-import { TaskEntry, CalculatedTaskEntry, CurrentState, TaskType, DailyNote, Note, QuickLinkRule, JiraConfig, JiraSearchResult, JiraTicketStatus, GitHubConfig, GitHubPR, HotkeyConfig, KanbanBoard, KanbanTask, KanbanColumnConfig, TerminalConfig, ConfigFilesConfig, ClaudeConfig, ChatMessage } from '../shared/types';
+import { TaskEntry, CalculatedTaskEntry, CurrentState, TaskType, DailyNote, Note, QuickLinkRule, JiraConfig, JiraSearchResult, JiraTicketStatus, GitHubConfig, GitHubPR, HotkeyConfig, KanbanBoard, KanbanTask, KanbanColumnConfig, TerminalConfig, ConfigFilesConfig, ClaudeConfig, ChatMessage, GoogleCalendarConfig, GoogleCalendarListItem, CalendarEvent, TodayData } from '../shared/types';
 import { calculateDurations } from '../shared/durationUtils';
 import { handleChatMessage, clearChatHistory, getChatHistory } from './chatHandler';
+import { fetchTodayCalendarEvents, testCalendarUrl, startOAuthFlow, signOut, listGoogleCalendars, selectCalendars } from './googleCalendar';
 
 let activePty: pty.IPty | null = null;
 
@@ -333,6 +336,7 @@ export function setupIpcHandlers(): void {
       'terminal-launcher': showTerminalLauncherWindow,
       'config-files': showConfigFilesWindow,
       'chat': showChatWindow,
+      'today': showTodayWindow,
     };
     const showFn = viewMap[view];
     if (showFn) showFn();
@@ -436,5 +440,63 @@ export function setupIpcHandlers(): void {
 
   ipcMain.handle('chat-get-history', async (): Promise<ChatMessage[]> => {
     return getChatHistory();
+  });
+
+  // Google Calendar handlers
+  ipcMain.handle('get-google-calendar-config', async (): Promise<GoogleCalendarConfig | null> => {
+    return readGoogleCalendarConfig();
+  });
+
+  ipcMain.handle('save-google-calendar-config', async (_event, config: GoogleCalendarConfig): Promise<void> => {
+    saveGoogleCalendarConfig(config);
+  });
+
+  ipcMain.handle('fetch-calendar-events', async (): Promise<CalendarEvent[]> => {
+    return fetchTodayCalendarEvents();
+  });
+
+  ipcMain.handle('test-calendar-url', async (_event, url: string): Promise<{ ok: boolean; error?: string; resolvedUrl?: string }> => {
+    return testCalendarUrl(url);
+  });
+
+  ipcMain.handle('google-oauth-sign-in', async (_event, clientId: string, clientSecret: string): Promise<{ email: string }> => {
+    return startOAuthFlow(clientId, clientSecret);
+  });
+
+  ipcMain.handle('google-oauth-sign-out', async (): Promise<void> => {
+    return signOut();
+  });
+
+  ipcMain.handle('google-list-calendars', async (): Promise<GoogleCalendarListItem[]> => {
+    return listGoogleCalendars();
+  });
+
+  ipcMain.handle('google-select-calendars', async (_event, calendarIds: string[]): Promise<void> => {
+    return selectCalendars(calendarIds);
+  });
+
+  ipcMain.handle('get-today-data', async (): Promise<TodayData> => {
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+    // Get kanban board for today
+    const board = getKanbanBoardForDate(todayStr);
+    const columns = readKanbanColumns();
+
+    const workingColNames = new Set(columns.filter(c => c.columnType === 'working').map(c => c.name));
+    const todoColNames = new Set(columns.filter(c => c.columnType === 'todo').map(c => c.name));
+
+    const tasks = board?.tasks || [];
+    const workingTasks = tasks.filter(t => workingColNames.has(t.Status));
+    const todoTasks = tasks.filter(t => todoColNames.has(t.Status));
+
+    let meetings: CalendarEvent[] = [];
+    try {
+      meetings = await fetchTodayCalendarEvents();
+    } catch {
+      // Calendar fetch failed — return empty meetings
+    }
+
+    return { workingTasks, todoTasks, meetings };
   });
 }

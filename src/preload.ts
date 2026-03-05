@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import { CalculatedTaskEntry, CurrentState, DailyNote, ElectronAPI, GitHubConfig, GitHubPR, HotkeyConfig, JiraConfig, JiraSearchResult, JiraTicketStatus, KanbanBoard, KanbanColumnConfig, KanbanTask, Note, PreviousTask, QuickLinkRule, TaskEntry, TaskType, TerminalConfig, ConfigFilesConfig, ClaudeConfig, ChatMessage } from './shared/types';
+import { CalculatedTaskEntry, CurrentState, DailyNote, ElectronAPI, GitHubConfig, GitHubPR, HotkeyConfig, JiraConfig, JiraSearchResult, JiraTicketStatus, KanbanBoard, KanbanColumnConfig, KanbanTask, Note, PreviousTask, QuickLinkRule, TaskEntry, TaskType, TerminalConfig, ConfigFilesConfig, ClaudeConfig, ChatMessage, GoogleCalendarConfig, GoogleCalendarListItem, CalendarEvent, TodayData } from './shared/types';
 
 const electronAPI: ElectronAPI = {
   getTasks: (): Promise<CalculatedTaskEntry[]> => ipcRenderer.invoke('get-tasks'),
@@ -226,6 +226,33 @@ const electronAPI: ElectronAPI = {
     ipcRenderer.removeAllListeners('chat-error');
     ipcRenderer.removeAllListeners('chat-done');
   },
+
+  getGoogleCalendarConfig: (): Promise<GoogleCalendarConfig | null> =>
+    ipcRenderer.invoke('get-google-calendar-config'),
+
+  saveGoogleCalendarConfig: (config: GoogleCalendarConfig): Promise<void> =>
+    ipcRenderer.invoke('save-google-calendar-config', config),
+
+  fetchCalendarEvents: (): Promise<CalendarEvent[]> =>
+    ipcRenderer.invoke('fetch-calendar-events'),
+
+  testCalendarUrl: (url: string): Promise<{ ok: boolean; error?: string; resolvedUrl?: string }> =>
+    ipcRenderer.invoke('test-calendar-url', url),
+
+  googleOAuthSignIn: (clientId: string, clientSecret: string): Promise<{ email: string }> =>
+    ipcRenderer.invoke('google-oauth-sign-in', clientId, clientSecret),
+
+  googleOAuthSignOut: (): Promise<void> =>
+    ipcRenderer.invoke('google-oauth-sign-out'),
+
+  googleListCalendars: (): Promise<GoogleCalendarListItem[]> =>
+    ipcRenderer.invoke('google-list-calendars'),
+
+  googleSelectCalendars: (calendarIds: string[]): Promise<void> =>
+    ipcRenderer.invoke('google-select-calendars', calendarIds),
+
+  getTodayData: (): Promise<TodayData> =>
+    ipcRenderer.invoke('get-today-data'),
 };
 
 contextBridge.exposeInMainWorld('electronAPI', electronAPI);

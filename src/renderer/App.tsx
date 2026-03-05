@@ -12,8 +12,9 @@ import KanbanView from './components/KanbanView';
 import TerminalLauncherView from './components/TerminalLauncherView';
 import ConfigFilesView from './components/ConfigFilesView';
 import ChatView from './components/ChatView';
+import TodayView from './components/TodayView';
 
-type View = 'dialog' | 'edit' | 'task-types' | 'export' | 'notes' | 'notebook' | 'settings' | 'github-prs' | 'quick-launch' | 'kanban' | 'terminal-launcher' | 'config-files' | 'chat';
+type View = 'dialog' | 'edit' | 'task-types' | 'export' | 'notes' | 'notebook' | 'settings' | 'github-prs' | 'quick-launch' | 'kanban' | 'terminal-launcher' | 'config-files' | 'chat' | 'today';
 
 function App() {
   const [view, setView] = useState<View>('dialog');
@@ -46,6 +47,8 @@ function App() {
         setView('config-files');
       } else if (hash === '#/chat') {
         setView('chat');
+      } else if (hash === '#/today') {
+        setView('today');
       } else {
         setView('dialog');
       }
@@ -68,6 +71,7 @@ function App() {
   if (view === 'terminal-launcher') return <TerminalLauncherView />;
   if (view === 'config-files') return <ConfigFilesView />;
   if (view === 'chat') return <ChatView />;
+  if (view === 'today') return <TodayView />;
   return <TaskDialog />;
 }
 

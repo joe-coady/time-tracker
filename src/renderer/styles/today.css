@@ -1,0 +1,102 @@
+.today-container {
+  max-width: 650px;
+  margin: 0 auto;
+  padding: 24px;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.today-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.today-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+.today-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.today-section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 10px 0;
+}
+
+.today-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.today-card {
+  background: #f9f9f9;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+
+.today-card-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+
+.today-card-desc {
+  font-size: 12px;
+  color: #888;
+  margin-top: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.today-card-status {
+  font-size: 11px;
+  color: #999;
+  margin-top: 6px;
+}
+
+.today-meeting-card {
+  border-left: 3px solid #007aff;
+}
+
+.today-meeting-time {
+  font-size: 12px;
+  font-weight: 600;
+  color: #007aff;
+  margin-bottom: 4px;
+}
+
+.today-card-calendar {
+  font-size: 11px;
+  color: #999;
+  margin-top: 6px;
+}
+
+.today-empty {
+  font-size: 13px;
+  color: #999;
+  padding: 8px 0;
+}
+
+.today-hint {
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: #856404;
+}

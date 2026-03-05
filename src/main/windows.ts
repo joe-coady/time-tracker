@@ -15,6 +15,7 @@ let kanbanWindow: BrowserWindow | null = null;
 let terminalLauncherWindow: BrowserWindow | null = null;
 let configFilesWindow: BrowserWindow | null = null;
 let chatWindow: BrowserWindow | null = null;
+let todayWindow: BrowserWindow | null = null;
 
 // Check if we're in dev mode by seeing if the built renderer exists
 const rendererPath = path.join(__dirname, '../../renderer/index.html');
@@ -508,4 +509,28 @@ export function showChatWindow(): void {
 
 export function getChatWindow(): BrowserWindow | null {
   return chatWindow;
+}
+
+export function createTodayWindow(): BrowserWindow {
+  if (todayWindow && !todayWindow.isDestroyed()) {
+    todayWindow.show();
+    todayWindow.focus();
+    return todayWindow;
+  }
+
+  todayWindow = createStandardWindow({ title: 'Today', route: '/today', widthRatio: 0.5, maxWidth: 700 });
+
+  todayWindow.once('ready-to-show', () => {
+    todayWindow?.show();
+  });
+
+  todayWindow.on('closed', () => {
+    todayWindow = null;
+  });
+
+  return todayWindow;
+}
+
+export function showTodayWindow(): void {
+  createTodayWindow();
 }

@@ -82,6 +82,9 @@ export default function KanbanSettingsView() {
       if (c.jiraStatuses && c.jiraStatuses.length > 0) {
         col.jiraStatuses = c.jiraStatuses;
       }
+      if (c.columnType) {
+        col.columnType = c.columnType;
+      }
       return col;
     });
     await window.electronAPI.saveKanbanColumns(cleaned);
@@ -163,6 +166,19 @@ export default function KanbanSettingsView() {
                     </select>
                   </div>
                 )}
+                <div className="kanban-column-field">
+                  <span className="kanban-column-field-label">Column type</span>
+                  <select
+                    className="task-input"
+                    value={col.columnType || ''}
+                    onChange={(e) => updateColumn(i, { columnType: (e.target.value || undefined) as KanbanColumnConfig['columnType'] })}
+                  >
+                    <option value="">--</option>
+                    <option value="working">Working</option>
+                    <option value="todo">Todo</option>
+                    <option value="done">Done</option>
+                  </select>
+                </div>
                 <div className="kanban-column-field">
                   <span className="kanban-column-field-label">Jira statuses</span>
                   <input

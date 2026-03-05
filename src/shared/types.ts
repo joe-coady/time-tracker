@@ -58,6 +58,43 @@ export interface KanbanColumnConfig {
   hidden?: boolean;
   mappedTo?: string;         // required when hidden — must point to a visible column
   jiraStatuses?: string[];   // Jira status names that resolve to this column
+  columnType?: 'working' | 'todo' | 'done';
+}
+
+export interface GoogleOAuthTokens {
+  accessToken: string;
+  refreshToken: string;
+  expiresAt: number; // epoch ms
+  email?: string;
+}
+
+export interface GoogleCalendarListItem {
+  id: string;
+  summary: string;
+  primary?: boolean;
+}
+
+export interface GoogleCalendarConfig {
+  icalUrls: { id: string; name: string; url: string }[];
+  oauth?: GoogleOAuthTokens;
+  selectedCalendarIds?: string[];
+  clientId?: string;
+  clientSecret?: string;
+}
+
+export interface CalendarEvent {
+  id: string;
+  summary: string;
+  startTime: string;   // ISO string
+  endTime: string;     // ISO string
+  location?: string;
+  calendarName: string;
+}
+
+export interface TodayData {
+  workingTasks: KanbanTask[];
+  todoTasks: KanbanTask[];
+  meetings: CalendarEvent[];
 }
 
 export interface ConfigFileEntry {
@@ -180,6 +217,7 @@ export interface TasksData {
   terminalConfig?: TerminalConfig;
   configFiles?: ConfigFilesConfig;
   claudeConfig?: ClaudeConfig;
+  googleCalendarConfig?: GoogleCalendarConfig;
 }
 
 export interface CalculatedTaskEntry extends TaskEntry {
@@ -285,6 +323,15 @@ export interface ElectronAPI {
   onChatError: (callback: (error: string) => void) => void;
   onChatDone: (callback: (usage?: { inputTokens: number; outputTokens: number }) => void) => void;
   removeChatListeners: () => void;
+  getGoogleCalendarConfig: () => Promise<GoogleCalendarConfig | null>;
+  saveGoogleCalendarConfig: (config: GoogleCalendarConfig) => Promise<void>;
+  fetchCalendarEvents: () => Promise<CalendarEvent[]>;
+  testCalendarUrl: (url: string) => Promise<{ ok: boolean; error?: string; resolvedUrl?: string }>;
+  googleOAuthSignIn: (clientId: string, clientSecret: string) => Promise<{ email: string }>;
+  googleOAuthSignOut: () => Promise<void>;
+  googleListCalendars: () => Promise<GoogleCalendarListItem[]>;
+  googleSelectCalendars: (calendarIds: string[]) => Promise<void>;
+  getTodayData: () => Promise<TodayData>;
 }
 
 declare global {
