@@ -1,5 +1,5 @@
 .today-container {
-  max-width: 650px;
+  max-width: 100%;
   margin: 0 auto;
   padding: 24px;
   height: 100vh;
@@ -37,8 +37,13 @@
 
 .today-card-list {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   gap: 8px;
+}
+
+.today-card-list > * {
+  flex: 1 1 250px;
+  max-width: calc(50% - 4px);
 }
 
 .today-card {
