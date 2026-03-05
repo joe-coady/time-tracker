@@ -19,7 +19,7 @@ function contrastColor(hex: string): string {
   return luminance > 0.5 ? '#000' : '#fff';
 }
 
-type Involvement = 'all' | 'mine' | 'assigned';
+type Involvement = 'all' | 'mine' | 'assigned' | string;
 
 function GitHubPRsView() {
   const [prs, setPrs] = useState<GitHubPR[]>([]);
@@ -31,7 +31,7 @@ function GitHubPRsView() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [repoFilter, setRepoFilter] = useState('');
-  const [involvement, setInvolvement] = useState<Involvement>('mine');
+  const [involvement, setInvolvement] = useState<string>('mine');
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
 
   const loadData = useCallback(async () => {
@@ -129,12 +129,15 @@ function GitHubPRsView() {
       result = result.filter(pr => pr.repoFullName === repoFilter);
     }
 
-    if (involvement !== 'all' && config?.username) {
-      const u = config.username.toLowerCase();
-      if (involvement === 'mine') {
+    if (involvement !== 'all') {
+      if (involvement === 'mine' && config?.username) {
+        const u = config.username.toLowerCase();
         result = result.filter(pr => pr.author.toLowerCase() === u);
-      } else if (involvement === 'assigned') {
+      } else if (involvement === 'assigned' && config?.username) {
+        const u = config.username.toLowerCase();
         result = result.filter(pr => pr.assignees.some(a => a.toLowerCase() === u));
+      } else if (involvement !== 'mine' && involvement !== 'assigned') {
+        result = result.filter(pr => pr.author.toLowerCase() === involvement.toLowerCase());
       }
     }
 
@@ -150,6 +153,12 @@ function GitHubPRsView() {
     }
     return Array.from(map.entries());
   }, [filtered]);
+
+  const uniqueAuthors = useMemo(() => {
+    const visible = prs.filter(pr => !excludedRepos.has(pr.repoFullName));
+    const authors = Array.from(new Set(visible.map(pr => pr.author)));
+    return authors.sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+  }, [prs, excludedRepos]);
 
   const repos = useMemo(() => {
     const set = new Set(prs.map(pr => pr.repoFullName));
@@ -225,11 +234,15 @@ function GitHubPRsView() {
         <select
           className="filter-select"
           value={involvement}
-          onChange={e => setInvolvement(e.target.value as Involvement)}
+          onChange={e => setInvolvement(e.target.value)}
         >
           <option value="all">All PRs</option>
           <option value="mine">My PRs</option>
           <option value="assigned">Assigned to me</option>
+          {uniqueAuthors.length > 0 && <option disabled>──────────</option>}
+          {uniqueAuthors.map(author => (
+            <option key={author} value={author}>{author}</option>
+          ))}
         </select>
       </div>
 
