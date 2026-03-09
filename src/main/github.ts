@@ -86,6 +86,29 @@ export async function fetchGitHubPRs(): Promise<GitHubPR[]> {
     }
   }
 
+  // Fetch review status for each PR in parallel
+  const reviewResults = await Promise.allSettled(
+    allPRs.map(async (pr) => {
+      const url = `https://api.github.com/repos/${pr.repoFullName}/pulls/${pr.number}/reviews`;
+      const body = await githubRequest(url, config.token);
+      const reviews = JSON.parse(body) as { state: string }[];
+      // Walk reviews in order; approved only if last decisive review is APPROVED
+      let approved = false;
+      for (const review of reviews) {
+        if (review.state === 'APPROVED') approved = true;
+        else if (review.state === 'CHANGES_REQUESTED') approved = false;
+      }
+      return approved;
+    })
+  );
+
+  for (let i = 0; i < allPRs.length; i++) {
+    const result = reviewResults[i];
+    if (result.status === 'fulfilled') {
+      allPRs[i].approved = result.value;
+    }
+  }
+
   allPRs.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
   return allPRs;
 }

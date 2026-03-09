@@ -193,6 +193,7 @@ export interface GitHubPR {
   updatedAt: string;
   draft: boolean;
   repoFullName: string;
+  approved?: boolean;
 }
 
 export interface DailyNote {

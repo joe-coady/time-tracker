@@ -82,6 +82,7 @@ function PRRow({ pr, devBranchSet, ticketKeys }: {
         {pr.title}
       </a>
       <div className="today-pr-badges">
+        {pr.approved && <span className="pr-card-approved">✓</span>}
         {isOnDevBranch && <span className="pr-card-dev-env">DEV-ENV</span>}
         {pr.draft && <span className="pr-card-draft">Draft</span>}
         {pr.labels.map(label => (
