@@ -171,6 +171,8 @@
   color: #6f42c1;
   text-decoration: none;
   cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .today-ticket-key:hover {

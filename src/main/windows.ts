@@ -16,6 +16,7 @@ let terminalLauncherWindow: BrowserWindow | null = null;
 let configFilesWindow: BrowserWindow | null = null;
 let chatWindow: BrowserWindow | null = null;
 let todayWindow: BrowserWindow | null = null;
+let releaseWindow: BrowserWindow | null = null;
 
 // Check if we're in dev mode by seeing if the built renderer exists
 const rendererPath = path.join(__dirname, '../../renderer/index.html');
@@ -40,8 +41,22 @@ interface StandardWindowOptions {
   maxWidth?: number;
 }
 
+function getCurrentDisplay(): Electron.Display {
+  const cursorPoint = screen.getCursorScreenPoint();
+  return screen.getDisplayNearestPoint(cursorPoint);
+}
+
+function repositionToCurrentDisplay(win: BrowserWindow): void {
+  const { x, y, width, height } = getCurrentDisplay().workArea;
+  const bounds = win.getBounds();
+  win.setPosition(
+    Math.round(x + (width - bounds.width) / 2),
+    Math.round(y + (height - bounds.height) / 2)
+  );
+}
+
 function createStandardWindow(opts: StandardWindowOptions): BrowserWindow {
-  const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
+  const { x: displayX, y: displayY, width: screenWidth, height: screenHeight } = getCurrentDisplay().workArea;
   const windowWidth = Math.min(
     Math.round(screenWidth * (opts.widthRatio ?? 0.8)),
     opts.maxWidth ?? 1200
@@ -51,8 +66,8 @@ function createStandardWindow(opts: StandardWindowOptions): BrowserWindow {
   const win = new BrowserWindow({
     width: windowWidth,
     height: windowHeight,
-    x: Math.round((screenWidth - windowWidth) / 2),
-    y: Math.round((screenHeight - windowHeight) / 2),
+    x: Math.round(displayX + (screenWidth - windowWidth) / 2),
+    y: Math.round(displayY + (screenHeight - windowHeight) / 2),
     title: opts.title,
     show: false,
     webPreferences: {
@@ -69,18 +84,19 @@ function createStandardWindow(opts: StandardWindowOptions): BrowserWindow {
 
 export function createDialogWindow(): BrowserWindow {
   if (dialogWindow && !dialogWindow.isDestroyed()) {
+    repositionToCurrentDisplay(dialogWindow);
     dialogWindow.show();
     dialogWindow.focus();
     return dialogWindow;
   }
 
-  const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
+  const { x: displayX, y: displayY, width: screenWidth, height: screenHeight } = getCurrentDisplay().workArea;
 
   dialogWindow = new BrowserWindow({
     width: 800,
     height: 550,
-    x: Math.round((screenWidth - 800) / 2),
-    y: Math.round((screenHeight - 550) / 2),
+    x: Math.round(displayX + (screenWidth - 800) / 2),
+    y: Math.round(displayY + (screenHeight - 550) / 2),
     frame: false,
     alwaysOnTop: true,
     resizable: false,
@@ -128,6 +144,7 @@ export function getDialogWindow(): BrowserWindow | null {
 
 export function createEditWindow(): BrowserWindow {
   if (editWindow && !editWindow.isDestroyed()) {
+    repositionToCurrentDisplay(editWindow);
     editWindow.show();
     editWindow.focus();
     return editWindow;
@@ -158,18 +175,19 @@ export function sendToDialog(channel: string, ...args: unknown[]): void {
 
 export function createTaskTypesWindow(): BrowserWindow {
   if (taskTypesWindow && !taskTypesWindow.isDestroyed()) {
+    repositionToCurrentDisplay(taskTypesWindow);
     taskTypesWindow.show();
     taskTypesWindow.focus();
     return taskTypesWindow;
   }
 
-  const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
+  const { x: displayX, y: displayY, width: screenWidth, height: screenHeight } = getCurrentDisplay().workArea;
 
   taskTypesWindow = new BrowserWindow({
     width: 400,
     height: 500,
-    x: Math.round((screenWidth - 400) / 2),
-    y: Math.round((screenHeight - 500) / 2),
+    x: Math.round(displayX + (screenWidth - 400) / 2),
+    y: Math.round(displayY + (screenHeight - 500) / 2),
     title: 'Manage Task Types',
     show: false,
     webPreferences: {
@@ -198,6 +216,7 @@ export function showTaskTypesWindow(): void {
 
 export function createExportWindow(): BrowserWindow {
   if (exportWindow && !exportWindow.isDestroyed()) {
+    repositionToCurrentDisplay(exportWindow);
     exportWindow.show();
     exportWindow.focus();
     return exportWindow;
@@ -222,6 +241,7 @@ export function showExportWindow(): void {
 
 export function createNotesWindow(): BrowserWindow {
   if (notesWindow && !notesWindow.isDestroyed()) {
+    repositionToCurrentDisplay(notesWindow);
     notesWindow.show();
     notesWindow.focus();
     return notesWindow;
@@ -246,6 +266,7 @@ export function showNotesWindow(): void {
 
 export function createNotebookWindow(): BrowserWindow {
   if (notebookWindow && !notebookWindow.isDestroyed()) {
+    repositionToCurrentDisplay(notebookWindow);
     notebookWindow.show();
     notebookWindow.focus();
     return notebookWindow;
@@ -270,6 +291,7 @@ export function showNotebookWindow(): void {
 
 export function createSettingsWindow(): BrowserWindow {
   if (settingsWindow && !settingsWindow.isDestroyed()) {
+    repositionToCurrentDisplay(settingsWindow);
     settingsWindow.show();
     settingsWindow.focus();
     return settingsWindow;
@@ -294,6 +316,7 @@ export function showSettingsWindow(): void {
 
 export function createGitHubPRsWindow(): BrowserWindow {
   if (githubPRsWindow && !githubPRsWindow.isDestroyed()) {
+    repositionToCurrentDisplay(githubPRsWindow);
     githubPRsWindow.show();
     githubPRsWindow.focus();
     return githubPRsWindow;
@@ -318,18 +341,20 @@ export function showGitHubPRsWindow(): void {
 
 export function createQuickLaunchWindow(): BrowserWindow {
   if (quickLaunchWindow && !quickLaunchWindow.isDestroyed()) {
+    const { x, y, width } = getCurrentDisplay().workArea;
+    quickLaunchWindow.setBounds({ x, y, width, height: 80 });
     quickLaunchWindow.show();
     quickLaunchWindow.focus();
     return quickLaunchWindow;
   }
 
-  const { width: screenWidth } = screen.getPrimaryDisplay().workAreaSize;
+  const { x: displayX, y: displayY, width: screenWidth } = getCurrentDisplay().workArea;
 
   quickLaunchWindow = new BrowserWindow({
     width: screenWidth,
     height: 80,
-    x: 0,
-    y: 0,
+    x: displayX,
+    y: displayY,
     frame: false,
     alwaysOnTop: true,
     resizable: false,
@@ -382,6 +407,7 @@ export function getQuickLaunchWindow(): BrowserWindow | null {
 
 export function createKanbanWindow(): BrowserWindow {
   if (kanbanWindow && !kanbanWindow.isDestroyed()) {
+    repositionToCurrentDisplay(kanbanWindow);
     kanbanWindow.show();
     kanbanWindow.focus();
     return kanbanWindow;
@@ -406,18 +432,19 @@ export function showKanbanWindow(): void {
 
 export function createTerminalLauncherWindow(): BrowserWindow {
   if (terminalLauncherWindow && !terminalLauncherWindow.isDestroyed()) {
+    repositionToCurrentDisplay(terminalLauncherWindow);
     terminalLauncherWindow.show();
     terminalLauncherWindow.focus();
     return terminalLauncherWindow;
   }
 
-  const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
+  const { x: displayX, y: displayY, width: screenWidth, height: screenHeight } = getCurrentDisplay().workArea;
 
   terminalLauncherWindow = new BrowserWindow({
     width: 500,
     height: 400,
-    x: Math.round((screenWidth - 500) / 2),
-    y: Math.round((screenHeight - 400) / 2),
+    x: Math.round(displayX + (screenWidth - 500) / 2),
+    y: Math.round(displayY + (screenHeight - 400) / 2),
     frame: false,
     alwaysOnTop: true,
     resizable: false,
@@ -461,6 +488,7 @@ export function closeTerminalLauncherWindow(): void {
 
 export function createConfigFilesWindow(): BrowserWindow {
   if (configFilesWindow && !configFilesWindow.isDestroyed()) {
+    repositionToCurrentDisplay(configFilesWindow);
     configFilesWindow.show();
     configFilesWindow.focus();
     return configFilesWindow;
@@ -485,6 +513,7 @@ export function showConfigFilesWindow(): void {
 
 export function createChatWindow(): BrowserWindow {
   if (chatWindow && !chatWindow.isDestroyed()) {
+    repositionToCurrentDisplay(chatWindow);
     chatWindow.show();
     chatWindow.focus();
     return chatWindow;
@@ -513,6 +542,7 @@ export function getChatWindow(): BrowserWindow | null {
 
 export function createTodayWindow(): BrowserWindow {
   if (todayWindow && !todayWindow.isDestroyed()) {
+    repositionToCurrentDisplay(todayWindow);
     todayWindow.show();
     todayWindow.focus();
     return todayWindow;
@@ -533,4 +563,29 @@ export function createTodayWindow(): BrowserWindow {
 
 export function showTodayWindow(): void {
   createTodayWindow();
+}
+
+export function createReleaseWindow(): BrowserWindow {
+  if (releaseWindow && !releaseWindow.isDestroyed()) {
+    repositionToCurrentDisplay(releaseWindow);
+    releaseWindow.show();
+    releaseWindow.focus();
+    return releaseWindow;
+  }
+
+  releaseWindow = createStandardWindow({ title: 'Release', route: '/release', widthRatio: 0.7, maxWidth: 1000 });
+
+  releaseWindow.once('ready-to-show', () => {
+    releaseWindow?.show();
+  });
+
+  releaseWindow.on('closed', () => {
+    releaseWindow = null;
+  });
+
+  return releaseWindow;
+}
+
+export function showReleaseWindow(): void {
+  createReleaseWindow();
 }

@@ -55,12 +55,12 @@ import {
   saveGoogleCalendarConfig,
 } from './storage';
 import { startTimer, getElapsedMinutes } from './timer';
-import { searchJiraIssues, testJiraConnection, fetchJiraTicketStatuses, fetchAssignedJiraTickets } from './jira';
+import { searchJiraIssues, testJiraConnection, fetchJiraTicketStatuses, fetchAssignedJiraTickets, fetchJiraProjects, fetchJiraVersions, fetchReleaseTickets } from './jira';
 import { testGitHubConnection, fetchGitHubPRs, fetchDevBranchTickets } from './github';
 import { reregisterShortcuts } from './globalShortcut';
-import { closeDialogWindow, closeQuickLaunchWindow, showDialogWindow, showEditWindow, showNotesWindow, showNotebookWindow, showGitHubPRsWindow, showExportWindow, showSettingsWindow, showKanbanWindow, showTerminalLauncherWindow, closeTerminalLauncherWindow, getTerminalLauncherWindow, showConfigFilesWindow, showChatWindow, getChatWindow, showTodayWindow } from './windows';
+import { closeDialogWindow, closeQuickLaunchWindow, showDialogWindow, showEditWindow, showNotesWindow, showNotebookWindow, showGitHubPRsWindow, showExportWindow, showSettingsWindow, showKanbanWindow, showTerminalLauncherWindow, closeTerminalLauncherWindow, getTerminalLauncherWindow, showConfigFilesWindow, showChatWindow, getChatWindow, showTodayWindow, showReleaseWindow } from './windows';
 import { updateTrayMenu } from './tray';
-import { TaskEntry, CalculatedTaskEntry, CurrentState, TaskType, DailyNote, Note, QuickLinkRule, JiraConfig, JiraSearchResult, JiraTicketStatus, GitHubConfig, GitHubPR, HotkeyConfig, KanbanBoard, KanbanTask, KanbanColumnConfig, TerminalConfig, ConfigFilesConfig, ClaudeConfig, ChatMessage, GoogleCalendarConfig, GoogleCalendarListItem, CalendarEvent, TodayData } from '../shared/types';
+import { TaskEntry, CalculatedTaskEntry, CurrentState, TaskType, DailyNote, Note, QuickLinkRule, JiraConfig, JiraProject, JiraSearchResult, JiraTicketStatus, JiraVersion, GitHubConfig, GitHubPR, HotkeyConfig, KanbanBoard, KanbanTask, KanbanColumnConfig, TerminalConfig, ConfigFilesConfig, ClaudeConfig, ChatMessage, GoogleCalendarConfig, GoogleCalendarListItem, CalendarEvent, TodayData, ReleaseData } from '../shared/types';
 import { calculateDurations } from '../shared/durationUtils';
 import { handleChatMessage, clearChatHistory, getChatHistory } from './chatHandler';
 import { fetchTodayCalendarEvents, testCalendarUrl, startOAuthFlow, signOut, listGoogleCalendars, selectCalendars } from './googleCalendar';
@@ -337,6 +337,7 @@ export function setupIpcHandlers(): void {
       'config-files': showConfigFilesWindow,
       'chat': showChatWindow,
       'today': showTodayWindow,
+      'release': showReleaseWindow,
     };
     const showFn = viewMap[view];
     if (showFn) showFn();
@@ -473,6 +474,42 @@ export function setupIpcHandlers(): void {
 
   ipcMain.handle('google-select-calendars', async (_event, calendarIds: string[]): Promise<void> => {
     return selectCalendars(calendarIds);
+  });
+
+  // Release view handlers
+  ipcMain.handle('fetch-jira-projects', async (): Promise<JiraProject[]> => {
+    return fetchJiraProjects();
+  });
+
+  ipcMain.handle('fetch-jira-versions', async (_event, projectKey: string): Promise<JiraVersion[]> => {
+    return fetchJiraVersions(projectKey);
+  });
+
+  ipcMain.handle('get-release-data', async (_event, projectKey: string, versionName: string): Promise<ReleaseData> => {
+    const tickets = await fetchReleaseTickets(projectKey, versionName);
+
+    let prs: GitHubPR[] = [];
+    let devBranchTickets: string[] = [];
+
+    try {
+      const ghConfig = readGitHubConfig();
+      if (ghConfig?.token) {
+        prs = await fetchGitHubPRs();
+
+        if (ghConfig.devBranch && prs.length > 0) {
+          try {
+            const repos = Array.from(new Set(prs.map(pr => pr.repoFullName)));
+            devBranchTickets = await fetchDevBranchTickets(repos);
+          } catch {
+            // Dev branch fetch failed
+          }
+        }
+      }
+    } catch {
+      // GitHub fetch failed
+    }
+
+    return { tickets, prs, devBranchTickets };
   });
 
   ipcMain.handle('get-today-data', async (): Promise<TodayData> => {

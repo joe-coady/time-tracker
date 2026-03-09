@@ -1,6 +1,6 @@
 import * as https from 'https';
 import { URL } from 'url';
-import { JiraConfig, JiraSearchResult, JiraTicketStatus } from '../shared/types';
+import { JiraConfig, JiraProject, JiraSearchResult, JiraTicketStatus, JiraVersion } from '../shared/types';
 import { readJiraConfig } from './storage';
 
 function jiraRequest(url: string, auth: string): Promise<string> {
@@ -191,6 +191,98 @@ export async function fetchJiraTicketComments(key: string): Promise<JiraComment[
     console.error('fetchJiraTicketComments failed:', err);
     return [];
   }
+}
+
+export async function fetchJiraProjects(): Promise<JiraProject[]> {
+  const config = readJiraConfig();
+  if (!config) return [];
+
+  const auth = Buffer.from(`${config.email}:${config.apiToken}`).toString('base64');
+  const url = `${config.baseUrl}/rest/api/3/project`;
+
+  try {
+    const body = await jiraRequest(url, auth);
+    const data = JSON.parse(body);
+    return (data as Array<{ key: string; name: string }>).map(p => ({ key: p.key, name: p.name }));
+  } catch (err) {
+    console.error('fetchJiraProjects failed:', err);
+    return [];
+  }
+}
+
+export async function fetchJiraVersions(projectKey: string): Promise<JiraVersion[]> {
+  const config = readJiraConfig();
+  if (!config) return [];
+
+  const auth = Buffer.from(`${config.email}:${config.apiToken}`).toString('base64');
+  const url = `${config.baseUrl}/rest/api/3/project/${encodeURIComponent(projectKey)}/versions`;
+
+  try {
+    const body = await jiraRequest(url, auth);
+    const data = JSON.parse(body) as Array<{ id: string; name: string; released: boolean; releaseDate?: string }>;
+    return data.map(v => ({
+      id: v.id,
+      name: v.name,
+      released: v.released,
+      releaseDate: v.releaseDate,
+    }));
+  } catch (err) {
+    console.error('fetchJiraVersions failed:', err);
+    return [];
+  }
+}
+
+export async function fetchReleaseTickets(projectKey: string, versionName: string): Promise<JiraTicketStatus[]> {
+  const config = readJiraConfig();
+  if (!config) return [];
+
+  const auth = Buffer.from(`${config.email}:${config.apiToken}`).toString('base64');
+  const customFieldIds = (config.customFields ?? []).map(cf => cf.fieldId);
+  const fields = ['status', 'summary', ...customFieldIds].join(',');
+  const results: JiraTicketStatus[] = [];
+
+  let startAt = 0;
+  const maxResults = 50;
+  let total = Infinity;
+
+  while (startAt < total) {
+    const jql = `fixVersion = "${versionName}" AND project = "${projectKey}"`;
+    const url = new URL(`${config.baseUrl}/rest/api/3/search/jql`);
+    url.searchParams.set('jql', jql);
+    url.searchParams.set('fields', fields);
+    url.searchParams.set('maxResults', String(maxResults));
+    url.searchParams.set('startAt', String(startAt));
+
+    try {
+      const body = await jiraRequest(url.toString(), auth);
+      const data = JSON.parse(body);
+      total = data.total ?? 0;
+
+      for (const issue of data.issues ?? []) {
+        const customFields: Record<string, string> = {};
+        for (const fieldId of customFieldIds) {
+          const displayValue = extractFieldDisplayValue(issue.fields[fieldId]);
+          if (displayValue) {
+            customFields[fieldId] = displayValue;
+          }
+        }
+        results.push({
+          key: issue.key,
+          summary: issue.fields.summary ?? '',
+          status: issue.fields.status.name,
+          statusCategory: issue.fields.status.statusCategory.key,
+          customFields: Object.keys(customFields).length > 0 ? customFields : undefined,
+        });
+      }
+
+      startAt += maxResults;
+    } catch (err) {
+      console.error('fetchReleaseTickets failed:', err);
+      break;
+    }
+  }
+
+  return results;
 }
 
 export async function testJiraConnection(config: JiraConfig): Promise<boolean> {

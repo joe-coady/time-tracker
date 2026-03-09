@@ -91,6 +91,24 @@ export interface CalendarEvent {
   calendarName: string;
 }
 
+export interface JiraProject {
+  key: string;
+  name: string;
+}
+
+export interface JiraVersion {
+  id: string;
+  name: string;
+  released: boolean;
+  releaseDate?: string;
+}
+
+export interface ReleaseData {
+  tickets: JiraTicketStatus[];
+  prs: GitHubPR[];
+  devBranchTickets: string[];
+}
+
 export interface TodayData {
   workingTasks: KanbanTask[];
   todoTasks: KanbanTask[];
@@ -335,6 +353,9 @@ export interface ElectronAPI {
   googleListCalendars: () => Promise<GoogleCalendarListItem[]>;
   googleSelectCalendars: (calendarIds: string[]) => Promise<void>;
   getTodayData: () => Promise<TodayData>;
+  fetchJiraProjects: () => Promise<JiraProject[]>;
+  fetchJiraVersions: (projectKey: string) => Promise<JiraVersion[]>;
+  getReleaseData: (projectKey: string, versionName: string) => Promise<ReleaseData>;
 }
 
 declare global {

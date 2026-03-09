@@ -1,6 +1,6 @@
 import { Tray, Menu, nativeImage, app } from 'electron';
 import * as path from 'path';
-import { showDialogWindow, showEditWindow, showExportWindow, showNotesWindow, showNotebookWindow, showSettingsWindow, showGitHubPRsWindow, showQuickLaunchWindow, showKanbanWindow, showConfigFilesWindow, showChatWindow, showTodayWindow } from './windows';
+import { showDialogWindow, showEditWindow, showExportWindow, showNotesWindow, showNotebookWindow, showSettingsWindow, showGitHubPRsWindow, showQuickLaunchWindow, showKanbanWindow, showConfigFilesWindow, showChatWindow, showTodayWindow, showReleaseWindow } from './windows';
 import { getLastEntry } from './storage';
 
 let tray: Tray | null = null;
@@ -63,6 +63,10 @@ function getContextMenu(): Menu {
     {
       label: 'GitHub PRs',
       click: () => showGitHubPRsWindow(),
+    },
+    {
+      label: 'Release',
+      click: () => showReleaseWindow(),
     },
     {
       label: 'AI Chat',

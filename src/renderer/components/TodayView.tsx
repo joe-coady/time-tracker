@@ -250,7 +250,7 @@ export default function TodayView() {
   return (
     <div className="today-container">
       <div className="today-header">
-        <h1 className="today-title">Today</h1>
+        <h1 className="today-title">Today &mdash; {new Date().toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'long' })}</h1>
         <button className="btn-secondary" onClick={load} disabled={loading}>
           {loading ? 'Loading...' : 'Refresh'}
         </button>

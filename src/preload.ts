@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import { CalculatedTaskEntry, CurrentState, DailyNote, ElectronAPI, GitHubConfig, GitHubPR, HotkeyConfig, JiraConfig, JiraSearchResult, JiraTicketStatus, KanbanBoard, KanbanColumnConfig, KanbanTask, Note, PreviousTask, QuickLinkRule, TaskEntry, TaskType, TerminalConfig, ConfigFilesConfig, ClaudeConfig, ChatMessage, GoogleCalendarConfig, GoogleCalendarListItem, CalendarEvent, TodayData } from './shared/types';
+import { CalculatedTaskEntry, CurrentState, DailyNote, ElectronAPI, GitHubConfig, GitHubPR, HotkeyConfig, JiraConfig, JiraProject, JiraSearchResult, JiraTicketStatus, JiraVersion, KanbanBoard, KanbanColumnConfig, KanbanTask, Note, PreviousTask, QuickLinkRule, TaskEntry, TaskType, TerminalConfig, ConfigFilesConfig, ClaudeConfig, ChatMessage, GoogleCalendarConfig, GoogleCalendarListItem, CalendarEvent, TodayData, ReleaseData } from './shared/types';
 
 const electronAPI: ElectronAPI = {
   getTasks: (): Promise<CalculatedTaskEntry[]> => ipcRenderer.invoke('get-tasks'),
@@ -253,6 +253,15 @@ const electronAPI: ElectronAPI = {
 
   getTodayData: (): Promise<TodayData> =>
     ipcRenderer.invoke('get-today-data'),
+
+  fetchJiraProjects: (): Promise<JiraProject[]> =>
+    ipcRenderer.invoke('fetch-jira-projects'),
+
+  fetchJiraVersions: (projectKey: string): Promise<JiraVersion[]> =>
+    ipcRenderer.invoke('fetch-jira-versions', projectKey),
+
+  getReleaseData: (projectKey: string, versionName: string): Promise<ReleaseData> =>
+    ipcRenderer.invoke('get-release-data', projectKey, versionName),
 };
 
 contextBridge.exposeInMainWorld('electronAPI', electronAPI);

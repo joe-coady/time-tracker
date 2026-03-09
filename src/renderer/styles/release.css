@@ -1,0 +1,164 @@
+.release-container {
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 24px;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.release-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.release-header h1 {
+  font-size: 24px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+.release-selectors {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.release-select {
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 13px;
+  background: #fff;
+  color: #333;
+  min-width: 180px;
+}
+
+.release-select:focus {
+  outline: none;
+  border-color: #007aff;
+}
+
+.release-stats {
+  font-size: 13px;
+  color: #888;
+  margin-bottom: 8px;
+}
+
+.release-custom-field-badges {
+  display: inline-flex;
+  gap: 4px;
+  margin-left: 4px;
+}
+
+.release-custom-field-badges .jira-badge {
+  font-size: 10px;
+  padding: 1px 6px;
+}
+
+/* Progress bar */
+.release-progress-bar {
+  position: relative;
+  height: 18px;
+  background: #e9ecef;
+  border-radius: 9px;
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+
+.release-progress-fill {
+  height: 100%;
+  background: #28a745;
+  border-radius: 9px;
+  transition: width 0.3s ease;
+  min-width: 0;
+}
+
+.release-progress-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 18px;
+  color: #333;
+}
+
+/* Sections */
+.release-section {
+  margin-bottom: 20px;
+}
+
+.release-section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 10px 0;
+}
+
+.release-section-toggle {
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 10px 0;
+  cursor: pointer;
+  user-select: none;
+}
+
+.release-section-toggle:hover {
+  color: #333;
+}
+
+.release-toggle-chevron {
+  display: inline-block;
+  font-size: 10px;
+  margin-right: 6px;
+  transition: transform 0.2s ease;
+}
+
+.release-toggle-open {
+  transform: rotate(90deg);
+}
+
+/* Left border colors per status */
+.release-ticket-inprogress .today-ticket-group {
+  border-left-color: #2563EB;
+}
+
+.release-ticket-todo .today-ticket-group {
+  border-left-color: #aaa;
+}
+
+.release-ticket-done .today-ticket-group {
+  border-left-color: #28a745;
+  opacity: 0.55;
+}
+
+/* Custom field badge colors */
+.release-cf-badge-0 {
+  background-color: #0d9488 !important;
+  color: #fff !important;
+}
+
+.release-cf-badge-1 {
+  background-color: #ea580c !important;
+  color: #fff !important;
+}
+
+.release-cf-badge-2 {
+  background-color: #7c3aed !important;
+  color: #fff !important;
+}
+
+.release-cf-badge-3 {
+  background-color: #db2777 !important;
+  color: #fff !important;
+}

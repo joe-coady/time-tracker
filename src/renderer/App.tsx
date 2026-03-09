@@ -13,8 +13,9 @@ import TerminalLauncherView from './components/TerminalLauncherView';
 import ConfigFilesView from './components/ConfigFilesView';
 import ChatView from './components/ChatView';
 import TodayView from './components/TodayView';
+import ReleaseView from './components/ReleaseView';
 
-type View = 'dialog' | 'edit' | 'task-types' | 'export' | 'notes' | 'notebook' | 'settings' | 'github-prs' | 'quick-launch' | 'kanban' | 'terminal-launcher' | 'config-files' | 'chat' | 'today';
+type View = 'dialog' | 'edit' | 'task-types' | 'export' | 'notes' | 'notebook' | 'settings' | 'github-prs' | 'quick-launch' | 'kanban' | 'terminal-launcher' | 'config-files' | 'chat' | 'today' | 'release';
 
 function App() {
   const [view, setView] = useState<View>('dialog');
@@ -49,6 +50,8 @@ function App() {
         setView('chat');
       } else if (hash === '#/today') {
         setView('today');
+      } else if (hash === '#/release') {
+        setView('release');
       } else {
         setView('dialog');
       }
@@ -72,6 +75,7 @@ function App() {
   if (view === 'config-files') return <ConfigFilesView />;
   if (view === 'chat') return <ChatView />;
   if (view === 'today') return <TodayView />;
+  if (view === 'release') return <ReleaseView />;
   return <TaskDialog />;
 }
 

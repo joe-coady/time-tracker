@@ -1672,6 +1672,8 @@ input.entry-duration.ongoing {
   border-radius: 3px;
   vertical-align: middle;
   letter-spacing: 0.3px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .jira-badge.status-new {

@@ -428,11 +428,11 @@ async function fetchTodayEventsViaApi(): Promise<CalendarEvent[]> {
   const token = await getValidAccessToken();
   if (!token) return [];
 
-  const todayStr = getTodayString();
-  const timeMin = `${todayStr}T00:00:00Z`;
-  const tomorrow = new Date(`${todayStr}T00:00:00Z`);
-  tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
-  const timeMax = tomorrow.toISOString();
+  const now = new Date();
+  const localStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const localEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+  const timeMin = localStart.toISOString();
+  const timeMax = localEnd.toISOString();
 
   const allEvents: CalendarEvent[] = [];
 
