@@ -200,6 +200,11 @@ function TaskDialog() {
         ref={inputRef}
         value={taskName}
         onChange={handleTaskNameChange}
+        onClear={() => {
+          setTaskName('');
+          setSelectedTaskTypeIds([]);
+          inputRef.current?.focus();
+        }}
         placeholder="Enter task name..."
       />
 
