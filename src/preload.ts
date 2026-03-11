@@ -276,8 +276,8 @@ const electronAPI: ElectronAPI = {
   saveScriptConfig: (config: ScriptConfig): Promise<void> =>
     ipcRenderer.invoke('save-script-config', config),
 
-  runTicketScript: (ticketId: string, body: string): Promise<void> =>
-    ipcRenderer.invoke('run-ticket-script', ticketId, body),
+  runTicketScript: (ticketId: string, body: string, isJira?: boolean): Promise<void> =>
+    ipcRenderer.invoke('run-ticket-script', ticketId, body, isJira),
 };
 
 contextBridge.exposeInMainWorld('electronAPI', electronAPI);

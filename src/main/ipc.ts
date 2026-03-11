@@ -57,7 +57,9 @@ import {
   saveScriptConfig,
 } from './storage';
 import { startTimer, getElapsedMinutes } from './timer';
-import { searchJiraIssues, testJiraConnection, fetchJiraTicketStatuses, fetchAssignedJiraTickets, fetchJiraProjects, fetchJiraVersions, fetchReleaseTickets } from './jira';
+import * as fs from 'fs';
+import * as path from 'path';
+import { searchJiraIssues, testJiraConnection, fetchJiraTicketStatuses, fetchAssignedJiraTickets, fetchJiraProjects, fetchJiraVersions, fetchReleaseTickets, fetchJiraTicketMarkdown } from './jira';
 import { testGitHubConnection, fetchGitHubPRs, fetchDevBranchTickets } from './github';
 import { reregisterShortcuts } from './globalShortcut';
 import { closeDialogWindow, closeQuickLaunchWindow, showDialogWindow, showEditWindow, showNotesWindow, showNotebookWindow, showGitHubPRsWindow, showExportWindow, showSettingsWindow, showKanbanWindow, showTerminalLauncherWindow, closeTerminalLauncherWindow, showConfigFilesWindow, showChatWindow, getChatWindow, showTodayWindow, showReleaseWindow, createTerminalExecWindow, getTerminalExecWindow, cleanupTerminalExecWindow } from './windows';
@@ -538,18 +540,30 @@ export function setupIpcHandlers(): void {
     saveScriptConfig(config);
   });
 
-  ipcMain.handle('run-ticket-script', async (_event, ticketId: string, body: string): Promise<void> => {
+  ipcMain.handle('run-ticket-script', async (_event, ticketId: string, body: string, isJira?: boolean): Promise<void> => {
     const config = readScriptConfig();
     if (!config?.scriptPath) return;
 
     const expandedDir = config.scriptDir?.replace(/^~(?=\/|$)/, os.homedir()) || os.homedir();
     const expandedCommand = config.scriptPath.replace(/^~(?=\/|$)/, os.homedir());
 
+    let scriptArgs: string;
+    let tempFilePath: string | null = null;
+
+    if (isJira) {
+      const markdown = await fetchJiraTicketMarkdown(ticketId);
+      tempFilePath = path.join('/tmp', `jira-ticket-${ticketId}-${Date.now()}.md`);
+      fs.writeFileSync(tempFilePath, markdown, 'utf-8');
+      scriptArgs = `${JSON.stringify(ticketId)} ${JSON.stringify(tempFilePath)}`;
+    } else {
+      scriptArgs = `${JSON.stringify(ticketId)} ${JSON.stringify(body)}`;
+    }
+
     const execId = uuidv4();
     const win = createTerminalExecWindow(execId, ticketId);
 
     ipcMain.once(`terminal-ready-${execId}`, () => {
-      const ptyProcess = pty.spawn('/bin/zsh', ['-il', '-c', `${expandedCommand} ${JSON.stringify(ticketId)} ${JSON.stringify(body)}`], {
+      const ptyProcess = pty.spawn('/bin/zsh', ['-il', '-c', `${expandedCommand} ${scriptArgs}`], {
         cwd: expandedDir,
         cols: 80,
         rows: 24,
@@ -567,6 +581,10 @@ export function setupIpcHandlers(): void {
           win.webContents.send(`terminal-exit-${execId}`, exitCode);
         }
         activePtys.delete(execId);
+        // Clean up temp file
+        if (tempFilePath) {
+          try { fs.unlinkSync(tempFilePath); } catch { /* ignore */ }
+        }
       });
     });
   });

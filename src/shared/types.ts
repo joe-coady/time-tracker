@@ -367,7 +367,7 @@ export interface ElectronAPI {
   getReleaseData: (projectKey: string, versionName: string) => Promise<ReleaseData>;
   getScriptConfig: () => Promise<ScriptConfig | null>;
   saveScriptConfig: (config: ScriptConfig) => Promise<void>;
-  runTicketScript: (ticketId: string, body: string) => Promise<void>;
+  runTicketScript: (ticketId: string, body: string, isJira?: boolean) => Promise<void>;
 }
 
 declare global {

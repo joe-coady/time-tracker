@@ -28,6 +28,340 @@ function jiraRequest(url: string, auth: string): Promise<string> {
   });
 }
 
+function jiraRequestBinary(url: string, auth: string): Promise<{ data: Buffer; redirectUrl?: string }> {
+  return new Promise((resolve, reject) => {
+    const makeRequest = (requestUrl: string) => {
+      const parsedUrl = new URL(requestUrl);
+      const mod = https;
+      const req = mod.get(requestUrl, {
+        headers: {
+          'Authorization': `Basic ${auth}`,
+        },
+        timeout: 30000,
+      }, (res) => {
+        // Follow redirects (Jira S3 presigned URLs)
+        if (res.statusCode && (res.statusCode === 301 || res.statusCode === 302 || res.statusCode === 303) && res.headers.location) {
+          const redirectLocation = res.headers.location;
+          // For redirects to S3, don't send auth header
+          const redirectReq = https.get(redirectLocation, { timeout: 30000 }, (redirectRes) => {
+            const chunks: Buffer[] = [];
+            redirectRes.on('data', (chunk: Buffer) => { chunks.push(chunk); });
+            redirectRes.on('end', () => {
+              if (redirectRes.statusCode && redirectRes.statusCode >= 200 && redirectRes.statusCode < 300) {
+                resolve({ data: Buffer.concat(chunks), redirectUrl: redirectLocation });
+              } else {
+                reject(new Error(`HTTP ${redirectRes.statusCode} on redirect`));
+              }
+            });
+          });
+          redirectReq.on('error', reject);
+          redirectReq.on('timeout', () => { redirectReq.destroy(); reject(new Error('timeout on redirect')); });
+          return;
+        }
+
+        const chunks: Buffer[] = [];
+        res.on('data', (chunk: Buffer) => { chunks.push(chunk); });
+        res.on('end', () => {
+          if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
+            resolve({ data: Buffer.concat(chunks) });
+          } else {
+            reject(new Error(`HTTP ${res.statusCode}`));
+          }
+        });
+      });
+
+      req.on('error', reject);
+      req.on('timeout', () => { req.destroy(); reject(new Error('timeout')); });
+    };
+
+    makeRequest(url);
+  });
+}
+
+// --- ADF to Markdown converter ---
+
+interface AdfNode {
+  type: string;
+  text?: string;
+  content?: AdfNode[];
+  marks?: Array<{ type: string; attrs?: Record<string, unknown> }>;
+  attrs?: Record<string, unknown>;
+}
+
+interface AdfConvertContext {
+  mediaMap: Map<string, string>;
+  listDepth?: number;
+  orderedIndex?: number;
+}
+
+function adfToMarkdown(node: AdfNode, context: AdfConvertContext): string {
+  if (!node) return '';
+
+  switch (node.type) {
+    case 'doc':
+      return (node.content ?? []).map(c => adfToMarkdown(c, context)).join('\n\n');
+
+    case 'paragraph':
+      return (node.content ?? []).map(c => adfToMarkdown(c, context)).join('');
+
+    case 'heading': {
+      const level = (node.attrs?.level as number) ?? 1;
+      const prefix = '#'.repeat(Math.min(level, 6));
+      const text = (node.content ?? []).map(c => adfToMarkdown(c, context)).join('');
+      return `${prefix} ${text}`;
+    }
+
+    case 'bulletList':
+      return (node.content ?? []).map(c => adfToMarkdown(c, { ...context, listDepth: (context.listDepth ?? 0), orderedIndex: undefined })).join('\n');
+
+    case 'orderedList':
+      return (node.content ?? []).map((c, i) => adfToMarkdown(c, { ...context, listDepth: (context.listDepth ?? 0), orderedIndex: i + 1 })).join('\n');
+
+    case 'listItem': {
+      const indent = '  '.repeat(context.listDepth ?? 0);
+      const bullet = context.orderedIndex != null ? `${context.orderedIndex}.` : '-';
+      const childContext = { ...context, listDepth: (context.listDepth ?? 0) + 1 };
+      const text = (node.content ?? []).map(c => {
+        if (c.type === 'bulletList' || c.type === 'orderedList') {
+          return '\n' + adfToMarkdown(c, childContext);
+        }
+        return adfToMarkdown(c, childContext);
+      }).join('');
+      return `${indent}${bullet} ${text}`;
+    }
+
+    case 'codeBlock': {
+      const lang = (node.attrs?.language as string) ?? '';
+      const code = (node.content ?? []).map(c => c.text ?? '').join('');
+      return '```' + lang + '\n' + code + '\n```';
+    }
+
+    case 'blockquote': {
+      const inner = (node.content ?? []).map(c => adfToMarkdown(c, context)).join('\n');
+      return inner.split('\n').map(line => `> ${line}`).join('\n');
+    }
+
+    case 'table': {
+      const rows = (node.content ?? []).filter(c => c.type === 'tableRow');
+      if (rows.length === 0) return '';
+      const result: string[] = [];
+      rows.forEach((row, rowIdx) => {
+        const cells = (row.content ?? []).map(cell => {
+          return (cell.content ?? []).map(c => adfToMarkdown(c, context)).join(' ').replace(/\|/g, '\\|');
+        });
+        result.push('| ' + cells.join(' | ') + ' |');
+        if (rowIdx === 0) {
+          result.push('| ' + cells.map(() => '---').join(' | ') + ' |');
+        }
+      });
+      return result.join('\n');
+    }
+
+    case 'rule':
+      return '---';
+
+    case 'text': {
+      let text = node.text ?? '';
+      for (const mark of node.marks ?? []) {
+        switch (mark.type) {
+          case 'strong': text = `**${text}**`; break;
+          case 'em': text = `*${text}*`; break;
+          case 'code': text = `\`${text}\``; break;
+          case 'strike': text = `~~${text}~~`; break;
+          case 'link': {
+            const href = (mark.attrs?.href as string) ?? '';
+            text = `[${text}](${href})`;
+            break;
+          }
+        }
+      }
+      return text;
+    }
+
+    case 'mention': {
+      const mentionText = (node.attrs?.text as string) ?? (node.attrs?.id as string) ?? 'someone';
+      return `@${mentionText}`;
+    }
+
+    case 'emoji':
+      return (node.attrs?.shortName as string) ?? (node.attrs?.text as string) ?? '';
+
+    case 'hardBreak':
+      return '\n';
+
+    case 'mediaSingle':
+    case 'mediaGroup':
+      return (node.content ?? []).map(c => adfToMarkdown(c, context)).join('\n');
+
+    case 'media': {
+      const mediaId = (node.attrs?.id as string) ?? '';
+      const localPath = context.mediaMap.get(mediaId);
+      if (localPath) {
+        return `![image](${localPath})`;
+      }
+      return `![image](attachment:${mediaId})`;
+    }
+
+    case 'inlineCard': {
+      const url = (node.attrs?.url as string) ?? '';
+      return url ? `[${url}](${url})` : '';
+    }
+
+    default:
+      // For unknown types, try to recurse into content
+      if (node.content) {
+        return (node.content).map(c => adfToMarkdown(c, context)).join('');
+      }
+      return '';
+  }
+}
+
+function collectMediaIds(node: AdfNode): Set<string> {
+  const ids = new Set<string>();
+  if (node.type === 'media' && node.attrs?.id) {
+    ids.add(node.attrs.id as string);
+  }
+  for (const child of node.content ?? []) {
+    for (const id of collectMediaIds(child)) {
+      ids.add(id);
+    }
+  }
+  return ids;
+}
+
+interface JiraAttachment {
+  id: string;
+  filename: string;
+  content: string; // download URL
+  mediaType?: string;
+}
+
+async function downloadAttachments(
+  attachments: JiraAttachment[],
+  mediaIds: Set<string>,
+  auth: string
+): Promise<Map<string, string>> {
+  const mediaMap = new Map<string, string>();
+  if (mediaIds.size === 0) return mediaMap;
+
+  for (const att of attachments) {
+    const isImage = att.mediaType?.startsWith('image/') ?? /\.(png|jpg|jpeg|gif|svg|webp|bmp)$/i.test(att.filename);
+    if (!isImage) continue;
+
+    try {
+      const result = await jiraRequestBinary(att.content, auth);
+
+      // Extract media UUID from redirect URL (e.g. /file/{uuid}/binary)
+      let mapKey = att.id;
+      if (result.redirectUrl) {
+        const uuidMatch = result.redirectUrl.match(/\/file\/([a-f0-9-]{36})\//);
+        if (uuidMatch) {
+          mapKey = uuidMatch[1];
+        }
+      }
+
+      const mimeType = att.mediaType ?? 'image/png';
+      const base64 = result.data.toString('base64');
+      mediaMap.set(mapKey, `data:${mimeType};base64,${base64}`);
+    } catch (err) {
+      console.error(`Failed to download attachment ${att.filename}:`, err);
+    }
+  }
+
+  return mediaMap;
+}
+
+export async function fetchJiraTicketMarkdown(key: string): Promise<string> {
+  const config = readJiraConfig();
+  if (!config) throw new Error('Jira not configured');
+
+  const auth = Buffer.from(`${config.email}:${config.apiToken}`).toString('base64');
+  const customFieldIds = (config.customFields ?? []).map(cf => cf.fieldId);
+  const standardFields = 'summary,description,comment,attachment,status,fixVersions,priority,assignee,reporter,labels,created,updated';
+  const allFields = customFieldIds.length > 0 ? `${standardFields},${customFieldIds.join(',')}` : standardFields;
+  const url = `${config.baseUrl}/rest/api/3/issue/${encodeURIComponent(key)}?fields=${allFields}`;
+
+  const body = await jiraRequest(url, auth);
+  const issue = JSON.parse(body);
+
+  const summary = issue.fields?.summary ?? key;
+  const descriptionAdf = issue.fields?.description as AdfNode | null;
+  const comments = issue.fields?.comment?.comments ?? [];
+  const attachments: JiraAttachment[] = (issue.fields?.attachment ?? []).map((a: Record<string, unknown>) => ({
+    id: String(a.id ?? ''),
+    filename: String(a.filename ?? ''),
+    content: String(a.content ?? ''),
+    mediaType: a.mimeType != null ? String(a.mimeType) : undefined,
+  }));
+
+  // Collect all media IDs from description and comments
+  const allMediaIds = new Set<string>();
+  if (descriptionAdf) {
+    for (const id of collectMediaIds(descriptionAdf)) allMediaIds.add(id);
+  }
+  for (const c of comments) {
+    if (c.body) {
+      for (const id of collectMediaIds(c.body as AdfNode)) allMediaIds.add(id);
+    }
+  }
+
+  // Download attachments
+  const mediaMap = await downloadAttachments(attachments, allMediaIds, auth);
+
+  const context: AdfConvertContext = { mediaMap };
+
+  // Build markdown
+  const parts: string[] = [];
+  parts.push(`# ${key}: ${summary}`);
+
+  if (descriptionAdf) {
+    parts.push('## Description');
+    parts.push(adfToMarkdown(descriptionAdf, context));
+  }
+
+  // Build Fields section
+  const fieldLines: string[] = [];
+  const fieldEntries: Array<{ label: string; value: string }> = [
+    { label: 'Status', value: extractFieldDisplayValue(issue.fields?.status) },
+    { label: 'Priority', value: extractFieldDisplayValue(issue.fields?.priority) },
+    { label: 'Fix Versions', value: extractFieldDisplayValue(issue.fields?.fixVersions) },
+    { label: 'Assignee', value: extractFieldDisplayValue(issue.fields?.assignee) },
+    { label: 'Reporter', value: extractFieldDisplayValue(issue.fields?.reporter) },
+    { label: 'Labels', value: (issue.fields?.labels ?? []).join(', ') },
+    { label: 'Created', value: issue.fields?.created ? issue.fields.created.substring(0, 10) : '' },
+    { label: 'Updated', value: issue.fields?.updated ? issue.fields.updated.substring(0, 10) : '' },
+  ];
+  // Add custom fields
+  for (const cf of config.customFields ?? []) {
+    fieldEntries.push({
+      label: cf.label,
+      value: extractFieldDisplayValue(issue.fields?.[cf.fieldId]),
+    });
+  }
+  for (const entry of fieldEntries) {
+    if (entry.value) {
+      fieldLines.push(`- **${entry.label}:** ${entry.value}`);
+    }
+  }
+  if (fieldLines.length > 0) {
+    parts.push('---\n## Fields\n' + fieldLines.join('\n') + '\n---');
+  }
+
+  if (comments.length > 0) {
+    parts.push('## Comments');
+    for (const c of comments) {
+      const author = c.author?.displayName ?? c.author?.emailAddress ?? 'Unknown';
+      const created = c.created ? c.created.substring(0, 10) : '';
+      parts.push(`### ${author} (${created})`);
+      if (c.body) {
+        parts.push(adfToMarkdown(c.body as AdfNode, context));
+      }
+    }
+  }
+
+  return parts.join('\n\n');
+}
+
 export async function searchJiraIssues(query: string): Promise<JiraSearchResult[]> {
   const config = readJiraConfig();
   if (!config) return [];

@@ -145,6 +145,7 @@ export default function KanbanView() {
   const [selectedJiraIndex, setSelectedJiraIndex] = useState(0);
   const [jiraConfig, setJiraConfig] = useState<JiraConfig | null>(null);
   const [scriptConfig, setScriptConfig] = useState<{ scriptPath: string } | null>(null);
+  const [loadingCards, setLoadingCards] = useState<Set<string>>(new Set());
   const [syncing, setSyncing] = useState(false);
   const jiraDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
@@ -387,16 +388,34 @@ export default function KanbanView() {
                 </button>
               )}
               {scriptConfig?.scriptPath && (
-                <button
-                  className="kanban-card-run"
-                  title="Run ticket script"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    window.electronAPI.runTicketScript(data.title, data.content?.description || '');
-                  }}
-                >
-                  ▶
-                </button>
+                loadingCards.has(data.id) ? (
+                  <span className="kanban-card-spinner" title="Loading..." />
+                ) : (
+                  <button
+                    className="kanban-card-run"
+                    title="Run ticket script"
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      const jiraKey = getJiraTicketKey(data.title);
+                      if (jiraKey) {
+                        setLoadingCards(prev => new Set(prev).add(data.id));
+                        try {
+                          await window.electronAPI.runTicketScript(data.title, data.content?.description || '', true);
+                        } finally {
+                          setLoadingCards(prev => {
+                            const next = new Set(prev);
+                            next.delete(data.id);
+                            return next;
+                          });
+                        }
+                      } else {
+                        window.electronAPI.runTicketScript(data.title, data.content?.description || '');
+                      }
+                    }}
+                  >
+                    ▶
+                  </button>
+                )
               )}
               {isToday && (
                 <button
@@ -436,7 +455,7 @@ export default function KanbanView() {
       },
       isDraggable: isToday,
     },
-  }), [isToday, jiraConfig, scriptConfig, getJiraTicketKey]);
+  }), [isToday, jiraConfig, scriptConfig, getJiraTicketKey, loadingCards]);
 
   const unmappedSet = useMemo(() => new Set(unmappedStatuses), [unmappedStatuses]);
 
