@@ -2177,27 +2177,126 @@ input.entry-duration.ongoing {
 .terminal-shortcuts-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
   margin-bottom: 16px;
 }
 
-.terminal-shortcut-card {
+.terminal-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.terminal-group-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #f5f5f5;
+  border-radius: 6px;
+  cursor: pointer;
+  padding: 10px 8px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 2px;
+  user-select: none;
+}
+
+.terminal-group-header:hover {
+  background-color: #eee;
+}
+
+.terminal-group-toggle {
+  font-size: 10px;
+  color: #666;
+  width: 12px;
+  flex-shrink: 0;
+}
+
+.terminal-group-text {
+  font-family: 'SF Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.terminal-group-summary {
+  margin-left: auto;
+  color: #999;
+  font-weight: 400;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.terminal-group-entries {
+  padding: 8px 0 8px 20px;
+}
+
+.terminal-compact-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
   border: 1px solid #eee;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.1s;
+}
+
+.terminal-compact-row:hover {
+  background-color: #f8f8f8;
+}
+
+.terminal-compact-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.terminal-compact-name {
+  font-weight: 600;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.terminal-compact-sep {
+  color: #ccc;
+  flex-shrink: 0;
+}
+
+.terminal-compact-command {
+  font-family: 'SF Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
+  font-size: 12px;
+  color: #888;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.terminal-compact-edit-btn {
+  font-size: 12px;
+  color: #007aff;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 2px 8px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.terminal-compact-edit-btn:hover {
+  background-color: #e8f0fe;
+}
+
+.terminal-shortcut-card {
+  border: 1px solid #ddd;
   border-radius: 8px;
   padding: 12px;
   display: flex;
   flex-direction: column;
   gap: 8px;
-}
-
-.terminal-shortcut-row {
-  display: flex;
-  align-items: flex-end;
-  gap: 8px;
-}
-
-.terminal-shortcut-row .terminal-shortcut-field {
-  flex: 1;
+  background: #fafafa;
 }
 
 .terminal-shortcut-field {
@@ -2205,10 +2304,20 @@ input.entry-duration.ongoing {
   flex-direction: column;
 }
 
+.terminal-edit-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.btn-sm {
+  padding: 4px 12px !important;
+  font-size: 12px !important;
+  min-height: unset !important;
+}
+
 .terminal-shortcut-delete {
-  width: 32px;
-  height: 36px;
-  font-size: 18px;
   color: #dc3545;
   background: transparent;
   border: 1px solid #ddd;
@@ -2216,25 +2325,13 @@ input.entry-duration.ongoing {
   cursor: pointer;
   flex-shrink: 0;
   transition: all 0.15s;
+  margin-left: auto;
 }
 
 .terminal-shortcut-delete:hover {
   background-color: #dc3545;
   color: #fff;
   border-color: #dc3545;
-}
-
-.terminal-shortcut-checkbox {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: #666;
-  cursor: pointer;
-}
-
-.terminal-shortcut-checkbox input[type="checkbox"] {
-  margin: 0;
 }
 
 /* DEV-ENV badge */
