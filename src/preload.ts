@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import { CalculatedTaskEntry, CurrentState, DailyNote, ElectronAPI, GitHubConfig, GitHubPR, HotkeyConfig, JiraConfig, JiraProject, JiraSearchResult, JiraTicketStatus, JiraVersion, KanbanBoard, KanbanColumnConfig, KanbanTask, Note, PreviousTask, QuickLinkRule, TaskEntry, TaskType, TerminalConfig, ConfigFilesConfig, ClaudeConfig, ChatMessage, GoogleCalendarConfig, GoogleCalendarListItem, CalendarEvent, TodayData, ReleaseData, ScriptConfig } from './shared/types';
+import { CalculatedTaskEntry, CurrentState, DailyNote, ElectronAPI, GitHubConfig, GitHubPR, HotkeyConfig, JiraConfig, JiraProject, JiraSearchResult, JiraTicketStatus, JiraVersion, KanbanBoard, KanbanColumnConfig, KanbanTask, Note, PreviousTask, QuickLinkRule, TaskEntry, TaskType, TerminalConfig, ConfigFilesConfig, ClaudeConfig, ChatMessage, GoogleCalendarConfig, GoogleCalendarListItem, CalendarEvent, TodayData, ReleaseData, ScriptConfig, KanbanScript } from './shared/types';
 
 const electronAPI: ElectronAPI = {
   getTasks: (): Promise<CalculatedTaskEntry[]> => ipcRenderer.invoke('get-tasks'),
@@ -276,8 +276,14 @@ const electronAPI: ElectronAPI = {
   saveScriptConfig: (config: ScriptConfig): Promise<void> =>
     ipcRenderer.invoke('save-script-config', config),
 
-  runTicketScript: (ticketId: string, body: string, isJira?: boolean): Promise<void> =>
-    ipcRenderer.invoke('run-ticket-script', ticketId, body, isJira),
+  runTicketScript: (ticketId: string, body: string, isJira?: boolean, scriptPath?: string, scriptDir?: string): Promise<void> =>
+    ipcRenderer.invoke('run-ticket-script', ticketId, body, isJira, scriptPath, scriptDir),
+
+  getKanbanScripts: (): Promise<KanbanScript[]> =>
+    ipcRenderer.invoke('get-kanban-scripts'),
+
+  saveKanbanScripts: (scripts: KanbanScript[]): Promise<void> =>
+    ipcRenderer.invoke('save-kanban-scripts', scripts),
 };
 
 contextBridge.exposeInMainWorld('electronAPI', electronAPI);

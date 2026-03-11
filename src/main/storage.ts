@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { v4 as uuidv4 } from 'uuid';
-import { TaskEntry, TaskType, TasksData, DailyNote, Note, QuickLinkRule, JiraConfig, GitHubConfig, HotkeyConfig, KanbanBoard, KanbanTask, KanbanColumnConfig, DEFAULT_KANBAN_COLUMNS, JiraSearchResult, JiraTicketStatus, TerminalConfig, ConfigFilesConfig, ConfigFileEntry, ClaudeConfig, GoogleCalendarConfig, ScriptConfig } from '../shared/types';
+import { TaskEntry, TaskType, TasksData, DailyNote, Note, QuickLinkRule, JiraConfig, GitHubConfig, HotkeyConfig, KanbanBoard, KanbanTask, KanbanColumnConfig, DEFAULT_KANBAN_COLUMNS, JiraSearchResult, JiraTicketStatus, TerminalConfig, ConfigFilesConfig, ConfigFileEntry, ClaudeConfig, GoogleCalendarConfig, ScriptConfig, KanbanScript } from '../shared/types';
 
 const TASKS_FILE_PATH = path.join(os.homedir(), 'notes', 'general', 'tasks.json');
 
@@ -682,6 +682,17 @@ export function readScriptConfig(): ScriptConfig | null {
 export function saveScriptConfig(config: ScriptConfig): void {
   const data = readTasksData();
   data.scriptConfig = config;
+  writeTasksData(data);
+}
+
+// Kanban Scripts functions
+export function readKanbanScripts(): KanbanScript[] {
+  return readTasksData().kanbanScripts || [];
+}
+
+export function saveKanbanScripts(scripts: KanbanScript[]): void {
+  const data = readTasksData();
+  data.kanbanScripts = scripts;
   writeTasksData(data);
 }
 

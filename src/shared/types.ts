@@ -133,6 +133,12 @@ export interface ScriptConfig {
   scriptDir: string;       // working directory, e.g. "~/repo/my-project"
 }
 
+export interface KanbanScript {
+  name: string;
+  scriptPath: string;
+  scriptDir: string;
+}
+
 export interface ClaudeConfig {
   apiKey: string;
   model?: string;
@@ -246,6 +252,7 @@ export interface TasksData {
   claudeConfig?: ClaudeConfig;
   googleCalendarConfig?: GoogleCalendarConfig;
   scriptConfig?: ScriptConfig;
+  kanbanScripts?: KanbanScript[];
 }
 
 export interface CalculatedTaskEntry extends TaskEntry {
@@ -367,7 +374,9 @@ export interface ElectronAPI {
   getReleaseData: (projectKey: string, versionName: string) => Promise<ReleaseData>;
   getScriptConfig: () => Promise<ScriptConfig | null>;
   saveScriptConfig: (config: ScriptConfig) => Promise<void>;
-  runTicketScript: (ticketId: string, body: string, isJira?: boolean) => Promise<void>;
+  runTicketScript: (ticketId: string, body: string, isJira?: boolean, scriptPath?: string, scriptDir?: string) => Promise<void>;
+  getKanbanScripts: () => Promise<KanbanScript[]>;
+  saveKanbanScripts: (scripts: KanbanScript[]) => Promise<void>;
 }
 
 declare global {

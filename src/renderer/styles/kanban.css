@@ -384,6 +384,48 @@
   color: #fff;
 }
 
+/* Script popout menu */
+.kanban-card-run-wrapper {
+  position: relative;
+}
+
+.kanban-script-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 200;
+  min-width: 140px;
+  overflow: hidden;
+}
+
+.kanban-script-menu-item {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #333;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.kanban-script-menu-item:hover {
+  background-color: #e8f4ff;
+  color: #007aff;
+}
+
+.kanban-script-menu-item + .kanban-script-menu-item {
+  border-top: 1px solid #eee;
+}
+
 .kanban-card-spinner {
   display: inline-block;
   width: 14px;

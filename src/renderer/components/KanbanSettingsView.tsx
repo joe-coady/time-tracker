@@ -1,15 +1,22 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { KanbanColumnConfig, DEFAULT_KANBAN_COLUMNS } from '../../shared/types';
+import { KanbanColumnConfig, KanbanScript, DEFAULT_KANBAN_COLUMNS } from '../../shared/types';
 
 export default function KanbanSettingsView() {
   const [columns, setColumns] = useState<KanbanColumnConfig[]>([]);
+  const [scripts, setScripts] = useState<KanbanScript[]>([]);
   const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(false);
+  const [scriptsSaved, setScriptsSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [scriptsError, setScriptsError] = useState<string | null>(null);
 
   const loadColumns = useCallback(async () => {
-    const cols = await window.electronAPI.getKanbanColumns();
+    const [cols, loadedScripts] = await Promise.all([
+      window.electronAPI.getKanbanColumns(),
+      window.electronAPI.getKanbanScripts(),
+    ]);
     setColumns(cols);
+    setScripts(loadedScripts);
     setLoading(false);
   }, []);
 
@@ -216,6 +223,127 @@ export default function KanbanSettingsView() {
             Save
           </button>
           {saved && <span className="settings-saved">Saved!</span>}
+        </div>
+      </div>
+
+      <div className="settings-section" style={{ marginTop: 24 }}>
+        <h3>Kanban Scripts</h3>
+        <p className="settings-description">
+          Configure scripts that can be run from the kanban card play button.
+        </p>
+
+        <div className="kanban-column-list">
+          {scripts.map((script, i) => (
+            <div key={i} className="kanban-column-row">
+              <div className="kanban-column-main">
+                <input
+                  type="text"
+                  className="task-input"
+                  value={script.name}
+                  onChange={(e) => {
+                    setScripts(prev => {
+                      const next = [...prev];
+                      next[i] = { ...next[i], name: e.target.value };
+                      return next;
+                    });
+                    setScriptsError(null);
+                  }}
+                  placeholder="Script name"
+                />
+                <button
+                  className="btn-danger"
+                  onClick={() => {
+                    setScripts(prev => prev.filter((_, idx) => idx !== i));
+                    setScriptsError(null);
+                  }}
+                  title="Remove script"
+                >
+                  X
+                </button>
+              </div>
+              <div className="kanban-column-fields">
+                <div className="kanban-column-field">
+                  <span className="kanban-column-field-label">Command</span>
+                  <input
+                    type="text"
+                    className="task-input"
+                    value={script.scriptPath}
+                    onChange={(e) => {
+                      setScripts(prev => {
+                        const next = [...prev];
+                        next[i] = { ...next[i], scriptPath: e.target.value };
+                        return next;
+                      });
+                    }}
+                    placeholder="e.g. node ./prep-ticket.js"
+                  />
+                </div>
+                <div className="kanban-column-field">
+                  <span className="kanban-column-field-label">Working directory</span>
+                  <input
+                    type="text"
+                    className="task-input"
+                    value={script.scriptDir}
+                    onChange={(e) => {
+                      setScripts(prev => {
+                        const next = [...prev];
+                        next[i] = { ...next[i], scriptDir: e.target.value };
+                        return next;
+                      });
+                    }}
+                    placeholder="e.g. ~/repo/my-project"
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="settings-actions" style={{ marginTop: 0 }}>
+          <button
+            className="btn-secondary"
+            onClick={() => {
+              setScripts(prev => [...prev, { name: '', scriptPath: '', scriptDir: '' }]);
+              setScriptsError(null);
+            }}
+          >
+            + Add Script
+          </button>
+        </div>
+
+        {scriptsError && <div className="settings-error">{scriptsError}</div>}
+
+        <div className="settings-actions">
+          <button
+            className="btn-primary"
+            onClick={async () => {
+              const names = scripts.map(s => s.name.trim());
+              if (names.some(n => !n)) {
+                setScriptsError('All scripts must have a name.');
+                return;
+              }
+              if (new Set(names).size !== names.length) {
+                setScriptsError('Script names must be unique.');
+                return;
+              }
+              if (scripts.some(s => !s.scriptPath.trim())) {
+                setScriptsError('All scripts must have a command.');
+                return;
+              }
+              const cleaned = scripts.map(s => ({
+                name: s.name.trim(),
+                scriptPath: s.scriptPath.trim(),
+                scriptDir: s.scriptDir.trim(),
+              }));
+              await window.electronAPI.saveKanbanScripts(cleaned);
+              setScriptsError(null);
+              setScriptsSaved(true);
+              setTimeout(() => setScriptsSaved(false), 2000);
+            }}
+          >
+            Save
+          </button>
+          {scriptsSaved && <span className="settings-saved">Saved!</span>}
         </div>
       </div>
     </div>

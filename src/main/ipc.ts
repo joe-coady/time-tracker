@@ -55,6 +55,8 @@ import {
   saveGoogleCalendarConfig,
   readScriptConfig,
   saveScriptConfig,
+  readKanbanScripts,
+  saveKanbanScripts,
 } from './storage';
 import { startTimer, getElapsedMinutes } from './timer';
 import * as fs from 'fs';
@@ -64,7 +66,7 @@ import { testGitHubConnection, fetchGitHubPRs, fetchDevBranchTickets } from './g
 import { reregisterShortcuts } from './globalShortcut';
 import { closeDialogWindow, closeQuickLaunchWindow, showDialogWindow, showEditWindow, showNotesWindow, showNotebookWindow, showGitHubPRsWindow, showExportWindow, showSettingsWindow, showKanbanWindow, showTerminalLauncherWindow, closeTerminalLauncherWindow, showConfigFilesWindow, showChatWindow, getChatWindow, showTodayWindow, showReleaseWindow, createTerminalExecWindow, getTerminalExecWindow, cleanupTerminalExecWindow } from './windows';
 import { updateTrayMenu } from './tray';
-import { TaskEntry, CalculatedTaskEntry, CurrentState, TaskType, DailyNote, Note, QuickLinkRule, JiraConfig, JiraProject, JiraSearchResult, JiraTicketStatus, JiraVersion, GitHubConfig, GitHubPR, HotkeyConfig, KanbanBoard, KanbanTask, KanbanColumnConfig, TerminalConfig, ConfigFilesConfig, ClaudeConfig, ChatMessage, GoogleCalendarConfig, GoogleCalendarListItem, CalendarEvent, TodayData, ReleaseData, ScriptConfig } from '../shared/types';
+import { TaskEntry, CalculatedTaskEntry, CurrentState, TaskType, DailyNote, Note, QuickLinkRule, JiraConfig, JiraProject, JiraSearchResult, JiraTicketStatus, JiraVersion, GitHubConfig, GitHubPR, HotkeyConfig, KanbanBoard, KanbanTask, KanbanColumnConfig, TerminalConfig, ConfigFilesConfig, ClaudeConfig, ChatMessage, GoogleCalendarConfig, GoogleCalendarListItem, CalendarEvent, TodayData, ReleaseData, ScriptConfig, KanbanScript } from '../shared/types';
 import { calculateDurations } from '../shared/durationUtils';
 import { handleChatMessage, clearChatHistory, getChatHistory } from './chatHandler';
 import { fetchTodayCalendarEvents, testCalendarUrl, startOAuthFlow, signOut, listGoogleCalendars, selectCalendars } from './googleCalendar';
@@ -539,12 +541,19 @@ export function setupIpcHandlers(): void {
     saveScriptConfig(config);
   });
 
-  ipcMain.handle('run-ticket-script', async (_event, ticketId: string, body: string, isJira?: boolean): Promise<void> => {
-    const config = readScriptConfig();
-    if (!config?.scriptPath) return;
+  ipcMain.handle('run-ticket-script', async (_event, ticketId: string, body: string, isJira?: boolean, scriptPath?: string, scriptDir?: string): Promise<void> => {
+    let resolvedPath = scriptPath;
+    let resolvedDir = scriptDir;
 
-    const expandedDir = config.scriptDir?.replace(/^~(?=\/|$)/, os.homedir()) || os.homedir();
-    const expandedCommand = config.scriptPath.replace(/^~(?=\/|$)/, os.homedir());
+    if (!resolvedPath) {
+      const config = readScriptConfig();
+      if (!config?.scriptPath) return;
+      resolvedPath = config.scriptPath;
+      resolvedDir = config.scriptDir;
+    }
+
+    const expandedDir = resolvedDir?.replace(/^~(?=\/|$)/, os.homedir()) || os.homedir();
+    const expandedCommand = resolvedPath!.replace(/^~(?=\/|$)/, os.homedir());
 
     let scriptArgs: string;
     let tempFilePath: string | null = null;
@@ -586,6 +595,15 @@ export function setupIpcHandlers(): void {
         }
       });
     });
+  });
+
+  // Kanban scripts handlers
+  ipcMain.handle('get-kanban-scripts', async (): Promise<KanbanScript[]> => {
+    return readKanbanScripts();
+  });
+
+  ipcMain.handle('save-kanban-scripts', async (_event, scripts: KanbanScript[]): Promise<void> => {
+    saveKanbanScripts(scripts);
   });
 
   ipcMain.handle('get-today-data', async (): Promise<TodayData> => {
