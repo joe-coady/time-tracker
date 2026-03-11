@@ -540,14 +540,14 @@ export function setupIpcHandlers(): void {
     const config = readScriptConfig();
     if (!config?.scriptPath) return;
 
-    const expandedPath = config.scriptPath.replace(/^~(?=\/|$)/, os.homedir());
-    const scriptDir = path.dirname(expandedPath);
+    const expandedDir = config.scriptDir?.replace(/^~(?=\/|$)/, os.homedir()) || os.homedir();
+    const expandedCommand = config.scriptPath.replace(/^~(?=\/|$)/, os.homedir());
 
     const execId = uuidv4();
     const win = createTerminalExecWindow(execId, ticketId);
 
-    const ptyProcess = pty.spawn('/bin/zsh', ['-l', '-c', `node ${JSON.stringify(expandedPath)} ${JSON.stringify(ticketId)} ${JSON.stringify(body)}`], {
-      cwd: scriptDir,
+    const ptyProcess = pty.spawn('/bin/zsh', ['-l', '-c', `${expandedCommand} ${JSON.stringify(ticketId)} ${JSON.stringify(body)}`], {
+      cwd: expandedDir,
       cols: 80,
       rows: 24,
     });

@@ -129,7 +129,8 @@ export interface ConfigFilesConfig {
 }
 
 export interface ScriptConfig {
-  scriptPath: string;      // e.g., "~/scripts/setup-ticket.js"
+  scriptPath: string;      // full command, e.g. "node ./prep-ticket.js"
+  scriptDir: string;       // working directory, e.g. "~/repo/my-project"
 }
 
 export interface ClaudeConfig {

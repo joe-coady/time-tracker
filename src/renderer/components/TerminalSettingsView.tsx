@@ -9,6 +9,7 @@ export default function TerminalSettingsView() {
   const [editDraft, setEditDraft] = useState<Partial<TerminalShortcut>>({});
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const [scriptPath, setScriptPath] = useState('');
+  const [scriptDir, setScriptDir] = useState('');
   const [scriptSaved, setScriptSaved] = useState(false);
 
   const toggleGroup = (dir: string) => {
@@ -27,7 +28,10 @@ export default function TerminalSettingsView() {
       setExpandedGroups(new Set(['']));  // Only Uncategorized expanded by default
     }
     const sc = await window.electronAPI.getScriptConfig();
-    if (sc) setScriptPath(sc.scriptPath);
+    if (sc) {
+      setScriptPath(sc.scriptPath);
+      setScriptDir(sc.scriptDir);
+    }
     setLoading(false);
   }, []);
 
@@ -100,7 +104,7 @@ export default function TerminalSettingsView() {
   }
 
   const handleSaveScriptConfig = async () => {
-    await window.electronAPI.saveScriptConfig({ scriptPath: scriptPath.trim() });
+    await window.electronAPI.saveScriptConfig({ scriptPath: scriptPath.trim(), scriptDir: scriptDir.trim() });
     setScriptSaved(true);
     setTimeout(() => setScriptSaved(false), 2000);
   };
@@ -110,19 +114,27 @@ export default function TerminalSettingsView() {
       <div className="settings-section">
         <h3>Ticket Script</h3>
         <p className="settings-description">
-          Configure a Node.js script to run from kanban cards. The script receives the ticket ID and description as arguments.
+          Configure a script to run from kanban cards. The script receives the ticket ID and description as arguments.
         </p>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 16 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
           <input
             className="task-input"
-            style={{ flex: 1 }}
-            value={scriptPath}
-            onChange={e => setScriptPath(e.target.value)}
-            placeholder="~/scripts/setup-ticket.js"
+            value={scriptDir}
+            onChange={e => setScriptDir(e.target.value)}
+            placeholder="~/repo/my-project"
           />
-          <button className="btn-primary btn-sm" onClick={handleSaveScriptConfig}>
-            {scriptSaved ? 'Saved!' : 'Save'}
-          </button>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <input
+              className="task-input"
+              style={{ flex: 1 }}
+              value={scriptPath}
+              onChange={e => setScriptPath(e.target.value)}
+              placeholder="node ./my-script.js"
+            />
+            <button className="btn-primary btn-sm" onClick={handleSaveScriptConfig}>
+              {scriptSaved ? 'Saved!' : 'Save'}
+            </button>
+          </div>
         </div>
       </div>
       <div className="settings-section">
