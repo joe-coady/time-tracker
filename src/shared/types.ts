@@ -338,6 +338,7 @@ export interface ElectronAPI {
   onTerminalExecExit: (execId: string, callback: (code: number | null) => void) => void;
   removeTerminalExecListeners: (execId: string) => void;
   resizeTerminalExec: (execId: string, cols: number, rows: number) => void;
+  terminalReady: (execId: string) => void;
   getConfigFilesConfig: () => Promise<ConfigFilesConfig>;
   saveConfigFilesConfig: (config: ConfigFilesConfig) => Promise<void>;
   resetConfigFilesConfig: () => Promise<ConfigFilesConfig>;

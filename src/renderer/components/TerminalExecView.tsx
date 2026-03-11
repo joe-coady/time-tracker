@@ -52,6 +52,8 @@ export default function TerminalExecView() {
       setExited(true);
     });
 
+    window.electronAPI.terminalReady(execId);
+
     const resizeObserver = new ResizeObserver(() => {
       if (fitAddonRef.current) {
         fitAddonRef.current.fit();

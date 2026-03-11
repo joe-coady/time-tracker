@@ -182,6 +182,10 @@ const electronAPI: ElectronAPI = {
     ipcRenderer.send('resize-terminal', execId, cols, rows);
   },
 
+  terminalReady: (execId: string): void => {
+    ipcRenderer.send(`terminal-ready-${execId}`);
+  },
+
   getConfigFilesConfig: (): Promise<ConfigFilesConfig> =>
     ipcRenderer.invoke('get-config-files-config'),
 

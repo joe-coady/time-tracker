@@ -379,24 +379,26 @@ export function setupIpcHandlers(): void {
 
     closeTerminalLauncherWindow();
 
-    const ptyProcess = pty.spawn('/bin/zsh', ['-l', '-c', command], {
-      cwd: expandedDir,
-      cols: 80,
-      rows: 24,
-    });
-    activePtys.set(execId, ptyProcess);
+    ipcMain.once(`terminal-ready-${execId}`, () => {
+      const ptyProcess = pty.spawn('/bin/zsh', ['-il', '-c', command], {
+        cwd: expandedDir,
+        cols: 80,
+        rows: 24,
+      });
+      activePtys.set(execId, ptyProcess);
 
-    ptyProcess.onData((data: string) => {
-      if (!win.isDestroyed()) {
-        win.webContents.send(`terminal-output-${execId}`, data);
-      }
-    });
+      ptyProcess.onData((data: string) => {
+        if (!win.isDestroyed()) {
+          win.webContents.send(`terminal-output-${execId}`, data);
+        }
+      });
 
-    ptyProcess.onExit(({ exitCode }) => {
-      if (!win.isDestroyed()) {
-        win.webContents.send(`terminal-exit-${execId}`, exitCode);
-      }
-      activePtys.delete(execId);
+      ptyProcess.onExit(({ exitCode }) => {
+        if (!win.isDestroyed()) {
+          win.webContents.send(`terminal-exit-${execId}`, exitCode);
+        }
+        activePtys.delete(execId);
+      });
     });
   });
 
@@ -546,24 +548,26 @@ export function setupIpcHandlers(): void {
     const execId = uuidv4();
     const win = createTerminalExecWindow(execId, ticketId);
 
-    const ptyProcess = pty.spawn('/bin/zsh', ['-l', '-c', `${expandedCommand} ${JSON.stringify(ticketId)} ${JSON.stringify(body)}`], {
-      cwd: expandedDir,
-      cols: 80,
-      rows: 24,
-    });
-    activePtys.set(execId, ptyProcess);
+    ipcMain.once(`terminal-ready-${execId}`, () => {
+      const ptyProcess = pty.spawn('/bin/zsh', ['-il', '-c', `${expandedCommand} ${JSON.stringify(ticketId)} ${JSON.stringify(body)}`], {
+        cwd: expandedDir,
+        cols: 80,
+        rows: 24,
+      });
+      activePtys.set(execId, ptyProcess);
 
-    ptyProcess.onData((data: string) => {
-      if (!win.isDestroyed()) {
-        win.webContents.send(`terminal-output-${execId}`, data);
-      }
-    });
+      ptyProcess.onData((data: string) => {
+        if (!win.isDestroyed()) {
+          win.webContents.send(`terminal-output-${execId}`, data);
+        }
+      });
 
-    ptyProcess.onExit(({ exitCode }) => {
-      if (!win.isDestroyed()) {
-        win.webContents.send(`terminal-exit-${execId}`, exitCode);
-      }
-      activePtys.delete(execId);
+      ptyProcess.onExit(({ exitCode }) => {
+        if (!win.isDestroyed()) {
+          win.webContents.send(`terminal-exit-${execId}`, exitCode);
+        }
+        activePtys.delete(execId);
+      });
     });
   });
 
