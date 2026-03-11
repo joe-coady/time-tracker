@@ -17,6 +17,7 @@ let configFilesWindow: BrowserWindow | null = null;
 let chatWindow: BrowserWindow | null = null;
 let todayWindow: BrowserWindow | null = null;
 let releaseWindow: BrowserWindow | null = null;
+const terminalExecWindows = new Map<string, BrowserWindow>();
 
 // Check if we're in dev mode by seeing if the built renderer exists
 const rendererPath = path.join(__dirname, '../../renderer/index.html');
@@ -588,4 +589,48 @@ export function createReleaseWindow(): BrowserWindow {
 
 export function showReleaseWindow(): void {
   createReleaseWindow();
+}
+
+export function createTerminalExecWindow(execId: string, title: string): BrowserWindow {
+  const { x: displayX, y: displayY, width: screenWidth, height: screenHeight } = getCurrentDisplay().workArea;
+
+  const win = new BrowserWindow({
+    width: 600,
+    height: 400,
+    x: Math.round(displayX + (screenWidth - 600) / 2),
+    y: Math.round(displayY + (screenHeight - 400) / 2),
+    title,
+    show: false,
+    webPreferences: {
+      preload: getPreloadPath(),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+
+  win.loadURL(getRendererUrl(`/terminal-exec?execId=${execId}`));
+
+  win.once('ready-to-show', () => {
+    win.show();
+  });
+
+  win.on('closed', () => {
+    terminalExecWindows.delete(execId);
+  });
+
+  terminalExecWindows.set(execId, win);
+  return win;
+}
+
+export function getTerminalExecWindow(execId: string): BrowserWindow | undefined {
+  const win = terminalExecWindows.get(execId);
+  return win && !win.isDestroyed() ? win : undefined;
+}
+
+export function cleanupTerminalExecWindow(execId: string): void {
+  const win = terminalExecWindows.get(execId);
+  if (win && !win.isDestroyed()) {
+    win.destroy();
+  }
+  terminalExecWindows.delete(execId);
 }

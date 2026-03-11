@@ -351,7 +351,8 @@
 }
 
 .kanban-card-copy,
-.kanban-card-jira-link {
+.kanban-card-jira-link,
+.kanban-card-run {
   width: 20px;
   height: 20px;
   padding: 0;
@@ -371,12 +372,14 @@
 }
 
 .kanban-card:hover .kanban-card-copy,
-.kanban-card:hover .kanban-card-jira-link {
+.kanban-card:hover .kanban-card-jira-link,
+.kanban-card:hover .kanban-card-run {
   opacity: 1;
 }
 
 .kanban-card-copy:hover,
-.kanban-card-jira-link:hover {
+.kanban-card-jira-link:hover,
+.kanban-card-run:hover {
   background-color: rgba(255, 255, 255, 0.2);
   color: #fff;
 }

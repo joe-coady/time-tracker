@@ -14,8 +14,9 @@ import ConfigFilesView from './components/ConfigFilesView';
 import ChatView from './components/ChatView';
 import TodayView from './components/TodayView';
 import ReleaseView from './components/ReleaseView';
+import TerminalExecView from './components/TerminalExecView';
 
-type View = 'dialog' | 'edit' | 'task-types' | 'export' | 'notes' | 'notebook' | 'settings' | 'github-prs' | 'quick-launch' | 'kanban' | 'terminal-launcher' | 'config-files' | 'chat' | 'today' | 'release';
+type View = 'dialog' | 'edit' | 'task-types' | 'export' | 'notes' | 'notebook' | 'settings' | 'github-prs' | 'quick-launch' | 'kanban' | 'terminal-launcher' | 'terminal-exec' | 'config-files' | 'chat' | 'today' | 'release';
 
 function App() {
   const [view, setView] = useState<View>('dialog');
@@ -44,6 +45,8 @@ function App() {
         setView('kanban');
       } else if (hash === '#/terminal-launcher') {
         setView('terminal-launcher');
+      } else if (hash.startsWith('#/terminal-exec')) {
+        setView('terminal-exec');
       } else if (hash === '#/config-files') {
         setView('config-files');
       } else if (hash === '#/chat') {
@@ -72,6 +75,7 @@ function App() {
   if (view === 'quick-launch') return <QuickLaunchView />;
   if (view === 'kanban') return <KanbanView />;
   if (view === 'terminal-launcher') return <TerminalLauncherView />;
+  if (view === 'terminal-exec') return <TerminalExecView />;
   if (view === 'config-files') return <ConfigFilesView />;
   if (view === 'chat') return <ChatView />;
   if (view === 'today') return <TodayView />;

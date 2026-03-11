@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { TerminalShortcut, TerminalConfig } from '../../shared/types';
+import { TerminalShortcut } from '../../shared/types';
 
 export default function TerminalSettingsView() {
   const [shortcuts, setShortcuts] = useState<TerminalShortcut[]>([]);
@@ -8,6 +8,8 @@ export default function TerminalSettingsView() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState<Partial<TerminalShortcut>>({});
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+  const [scriptPath, setScriptPath] = useState('');
+  const [scriptSaved, setScriptSaved] = useState(false);
 
   const toggleGroup = (dir: string) => {
     setExpandedGroups(prev => {
@@ -24,6 +26,8 @@ export default function TerminalSettingsView() {
       setShortcuts(config.shortcuts);
       setExpandedGroups(new Set(['']));  // Only Uncategorized expanded by default
     }
+    const sc = await window.electronAPI.getScriptConfig();
+    if (sc) setScriptPath(sc.scriptPath);
     setLoading(false);
   }, []);
 
@@ -95,8 +99,32 @@ export default function TerminalSettingsView() {
     );
   }
 
+  const handleSaveScriptConfig = async () => {
+    await window.electronAPI.saveScriptConfig({ scriptPath: scriptPath.trim() });
+    setScriptSaved(true);
+    setTimeout(() => setScriptSaved(false), 2000);
+  };
+
   return (
     <div className="settings-tab-content">
+      <div className="settings-section">
+        <h3>Ticket Script</h3>
+        <p className="settings-description">
+          Configure a Node.js script to run from kanban cards. The script receives the ticket ID and description as arguments.
+        </p>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 16 }}>
+          <input
+            className="task-input"
+            style={{ flex: 1 }}
+            value={scriptPath}
+            onChange={e => setScriptPath(e.target.value)}
+            placeholder="~/scripts/setup-ticket.js"
+          />
+          <button className="btn-primary btn-sm" onClick={handleSaveScriptConfig}>
+            {scriptSaved ? 'Saved!' : 'Save'}
+          </button>
+        </div>
+      </div>
       <div className="settings-section">
         <h3>Terminal Shortcuts</h3>
         <p className="settings-description">

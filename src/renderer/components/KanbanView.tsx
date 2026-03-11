@@ -144,6 +144,7 @@ export default function KanbanView() {
   const [showJiraDropdown, setShowJiraDropdown] = useState(false);
   const [selectedJiraIndex, setSelectedJiraIndex] = useState(0);
   const [jiraConfig, setJiraConfig] = useState<JiraConfig | null>(null);
+  const [scriptConfig, setScriptConfig] = useState<{ scriptPath: string } | null>(null);
   const [syncing, setSyncing] = useState(false);
   const jiraDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
@@ -197,6 +198,7 @@ export default function KanbanView() {
 
   useEffect(() => {
     window.electronAPI.getJiraConfig().then(setJiraConfig);
+    window.electronAPI.getScriptConfig().then(setScriptConfig);
   }, []);
 
   useEffect(() => {
@@ -384,6 +386,18 @@ export default function KanbanView() {
                   ↗
                 </button>
               )}
+              {scriptConfig?.scriptPath && (
+                <button
+                  className="kanban-card-run"
+                  title="Run ticket script"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    window.electronAPI.runTicketScript(data.title, data.content?.description || '');
+                  }}
+                >
+                  ▶
+                </button>
+              )}
               {isToday && (
                 <button
                   className="kanban-card-delete"
@@ -422,7 +436,7 @@ export default function KanbanView() {
       },
       isDraggable: isToday,
     },
-  }), [isToday, jiraConfig, getJiraTicketKey]);
+  }), [isToday, jiraConfig, scriptConfig, getJiraTicketKey]);
 
   const unmappedSet = useMemo(() => new Set(unmappedStatuses), [unmappedStatuses]);
 

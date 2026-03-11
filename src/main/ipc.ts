@@ -53,24 +53,35 @@ import {
   saveClaudeConfig,
   readGoogleCalendarConfig,
   saveGoogleCalendarConfig,
+  readScriptConfig,
+  saveScriptConfig,
 } from './storage';
 import { startTimer, getElapsedMinutes } from './timer';
 import { searchJiraIssues, testJiraConnection, fetchJiraTicketStatuses, fetchAssignedJiraTickets, fetchJiraProjects, fetchJiraVersions, fetchReleaseTickets } from './jira';
 import { testGitHubConnection, fetchGitHubPRs, fetchDevBranchTickets } from './github';
 import { reregisterShortcuts } from './globalShortcut';
-import { closeDialogWindow, closeQuickLaunchWindow, showDialogWindow, showEditWindow, showNotesWindow, showNotebookWindow, showGitHubPRsWindow, showExportWindow, showSettingsWindow, showKanbanWindow, showTerminalLauncherWindow, closeTerminalLauncherWindow, getTerminalLauncherWindow, showConfigFilesWindow, showChatWindow, getChatWindow, showTodayWindow, showReleaseWindow } from './windows';
+import { closeDialogWindow, closeQuickLaunchWindow, showDialogWindow, showEditWindow, showNotesWindow, showNotebookWindow, showGitHubPRsWindow, showExportWindow, showSettingsWindow, showKanbanWindow, showTerminalLauncherWindow, closeTerminalLauncherWindow, showConfigFilesWindow, showChatWindow, getChatWindow, showTodayWindow, showReleaseWindow, createTerminalExecWindow, getTerminalExecWindow, cleanupTerminalExecWindow } from './windows';
 import { updateTrayMenu } from './tray';
-import { TaskEntry, CalculatedTaskEntry, CurrentState, TaskType, DailyNote, Note, QuickLinkRule, JiraConfig, JiraProject, JiraSearchResult, JiraTicketStatus, JiraVersion, GitHubConfig, GitHubPR, HotkeyConfig, KanbanBoard, KanbanTask, KanbanColumnConfig, TerminalConfig, ConfigFilesConfig, ClaudeConfig, ChatMessage, GoogleCalendarConfig, GoogleCalendarListItem, CalendarEvent, TodayData, ReleaseData } from '../shared/types';
+import * as path from 'path';
+import { TaskEntry, CalculatedTaskEntry, CurrentState, TaskType, DailyNote, Note, QuickLinkRule, JiraConfig, JiraProject, JiraSearchResult, JiraTicketStatus, JiraVersion, GitHubConfig, GitHubPR, HotkeyConfig, KanbanBoard, KanbanTask, KanbanColumnConfig, TerminalConfig, ConfigFilesConfig, ClaudeConfig, ChatMessage, GoogleCalendarConfig, GoogleCalendarListItem, CalendarEvent, TodayData, ReleaseData, ScriptConfig } from '../shared/types';
 import { calculateDurations } from '../shared/durationUtils';
 import { handleChatMessage, clearChatHistory, getChatHistory } from './chatHandler';
 import { fetchTodayCalendarEvents, testCalendarUrl, startOAuthFlow, signOut, listGoogleCalendars, selectCalendars } from './googleCalendar';
 
-let activePty: pty.IPty | null = null;
+const activePtys = new Map<string, pty.IPty>();
 
-export function killActiveTerminalProcess(): void {
-  if (activePty) {
-    activePty.kill();
-    activePty = null;
+export function killTerminalProcess(execId: string): void {
+  const p = activePtys.get(execId);
+  if (p) {
+    p.kill();
+    activePtys.delete(execId);
+  }
+}
+
+export function killAllTerminalProcesses(): void {
+  for (const [id, p] of activePtys) {
+    p.kill();
+    activePtys.delete(id);
   }
 }
 
@@ -363,40 +374,44 @@ export function setupIpcHandlers(): void {
     const expandedDir = shortcut.directory.replace(/^~(?=\/|$)/, os.homedir());
     const command = shortcut.command || 'ls -la';
 
-    killActiveTerminalProcess();
+    const execId = uuidv4();
+    const win = createTerminalExecWindow(execId, shortcut.name);
+
+    closeTerminalLauncherWindow();
 
     const ptyProcess = pty.spawn('/bin/zsh', ['-l', '-c', command], {
       cwd: expandedDir,
       cols: 80,
       rows: 24,
     });
-    activePty = ptyProcess;
-
-    const win = getTerminalLauncherWindow();
+    activePtys.set(execId, ptyProcess);
 
     ptyProcess.onData((data: string) => {
-      if (win && !win.isDestroyed()) {
-        win.webContents.send('terminal-output', data);
+      if (!win.isDestroyed()) {
+        win.webContents.send(`terminal-output-${execId}`, data);
       }
     });
 
     ptyProcess.onExit(({ exitCode }) => {
-      if (win && !win.isDestroyed()) {
-        win.webContents.send('terminal-exit', exitCode);
+      if (!win.isDestroyed()) {
+        win.webContents.send(`terminal-exit-${execId}`, exitCode);
       }
-      if (activePty === ptyProcess) {
-        activePty = null;
-      }
+      activePtys.delete(execId);
     });
   });
 
-  ipcMain.on('resize-terminal', (_event, cols: number, rows: number) => {
-    if (activePty) activePty.resize(cols, rows);
+  ipcMain.on('resize-terminal', (_event, execId: string, cols: number, rows: number) => {
+    const p = activePtys.get(execId);
+    if (p) p.resize(cols, rows);
   });
 
   ipcMain.handle('close-terminal-launcher', async (): Promise<void> => {
-    killActiveTerminalProcess();
     closeTerminalLauncherWindow();
+  });
+
+  ipcMain.handle('close-terminal-exec', async (_event, execId: string): Promise<void> => {
+    killTerminalProcess(execId);
+    cleanupTerminalExecWindow(execId);
   });
 
   // Config Files handlers
@@ -510,6 +525,46 @@ export function setupIpcHandlers(): void {
     }
 
     return { tickets, prs, devBranchTickets };
+  });
+
+  // Script config handlers
+  ipcMain.handle('get-script-config', async (): Promise<ScriptConfig | null> => {
+    return readScriptConfig();
+  });
+
+  ipcMain.handle('save-script-config', async (_event, config: ScriptConfig): Promise<void> => {
+    saveScriptConfig(config);
+  });
+
+  ipcMain.handle('run-ticket-script', async (_event, ticketId: string, body: string): Promise<void> => {
+    const config = readScriptConfig();
+    if (!config?.scriptPath) return;
+
+    const expandedPath = config.scriptPath.replace(/^~(?=\/|$)/, os.homedir());
+    const scriptDir = path.dirname(expandedPath);
+
+    const execId = uuidv4();
+    const win = createTerminalExecWindow(execId, ticketId);
+
+    const ptyProcess = pty.spawn('/bin/zsh', ['-l', '-c', `node ${JSON.stringify(expandedPath)} ${JSON.stringify(ticketId)} ${JSON.stringify(body)}`], {
+      cwd: scriptDir,
+      cols: 80,
+      rows: 24,
+    });
+    activePtys.set(execId, ptyProcess);
+
+    ptyProcess.onData((data: string) => {
+      if (!win.isDestroyed()) {
+        win.webContents.send(`terminal-output-${execId}`, data);
+      }
+    });
+
+    ptyProcess.onExit(({ exitCode }) => {
+      if (!win.isDestroyed()) {
+        win.webContents.send(`terminal-exit-${execId}`, exitCode);
+      }
+      activePtys.delete(execId);
+    });
   });
 
   ipcMain.handle('get-today-data', async (): Promise<TodayData> => {

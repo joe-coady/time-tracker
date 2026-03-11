@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import { CalculatedTaskEntry, CurrentState, DailyNote, ElectronAPI, GitHubConfig, GitHubPR, HotkeyConfig, JiraConfig, JiraProject, JiraSearchResult, JiraTicketStatus, JiraVersion, KanbanBoard, KanbanColumnConfig, KanbanTask, Note, PreviousTask, QuickLinkRule, TaskEntry, TaskType, TerminalConfig, ConfigFilesConfig, ClaudeConfig, ChatMessage, GoogleCalendarConfig, GoogleCalendarListItem, CalendarEvent, TodayData, ReleaseData } from './shared/types';
+import { CalculatedTaskEntry, CurrentState, DailyNote, ElectronAPI, GitHubConfig, GitHubPR, HotkeyConfig, JiraConfig, JiraProject, JiraSearchResult, JiraTicketStatus, JiraVersion, KanbanBoard, KanbanColumnConfig, KanbanTask, Note, PreviousTask, QuickLinkRule, TaskEntry, TaskType, TerminalConfig, ConfigFilesConfig, ClaudeConfig, ChatMessage, GoogleCalendarConfig, GoogleCalendarListItem, CalendarEvent, TodayData, ReleaseData, ScriptConfig } from './shared/types';
 
 const electronAPI: ElectronAPI = {
   getTasks: (): Promise<CalculatedTaskEntry[]> => ipcRenderer.invoke('get-tasks'),
@@ -162,21 +162,24 @@ const electronAPI: ElectronAPI = {
   closeTerminalLauncher: (): Promise<void> =>
     ipcRenderer.invoke('close-terminal-launcher'),
 
-  onTerminalOutput: (callback: (data: string) => void): void => {
-    ipcRenderer.on('terminal-output', (_e, data: string) => callback(data));
+  closeTerminalExec: (execId: string): Promise<void> =>
+    ipcRenderer.invoke('close-terminal-exec', execId),
+
+  onTerminalExecOutput: (execId: string, callback: (data: string) => void): void => {
+    ipcRenderer.on(`terminal-output-${execId}`, (_e, data: string) => callback(data));
   },
 
-  onTerminalExit: (callback: (code: number | null) => void): void => {
-    ipcRenderer.on('terminal-exit', (_e, code: number | null) => callback(code));
+  onTerminalExecExit: (execId: string, callback: (code: number | null) => void): void => {
+    ipcRenderer.on(`terminal-exit-${execId}`, (_e, code: number | null) => callback(code));
   },
 
-  removeTerminalListeners: (): void => {
-    ipcRenderer.removeAllListeners('terminal-output');
-    ipcRenderer.removeAllListeners('terminal-exit');
+  removeTerminalExecListeners: (execId: string): void => {
+    ipcRenderer.removeAllListeners(`terminal-output-${execId}`);
+    ipcRenderer.removeAllListeners(`terminal-exit-${execId}`);
   },
 
-  resizeTerminal: (cols: number, rows: number): void => {
-    ipcRenderer.send('resize-terminal', cols, rows);
+  resizeTerminalExec: (execId: string, cols: number, rows: number): void => {
+    ipcRenderer.send('resize-terminal', execId, cols, rows);
   },
 
   getConfigFilesConfig: (): Promise<ConfigFilesConfig> =>
@@ -262,6 +265,15 @@ const electronAPI: ElectronAPI = {
 
   getReleaseData: (projectKey: string, versionName: string): Promise<ReleaseData> =>
     ipcRenderer.invoke('get-release-data', projectKey, versionName),
+
+  getScriptConfig: (): Promise<ScriptConfig | null> =>
+    ipcRenderer.invoke('get-script-config'),
+
+  saveScriptConfig: (config: ScriptConfig): Promise<void> =>
+    ipcRenderer.invoke('save-script-config', config),
+
+  runTicketScript: (ticketId: string, body: string): Promise<void> =>
+    ipcRenderer.invoke('run-ticket-script', ticketId, body),
 };
 
 contextBridge.exposeInMainWorld('electronAPI', electronAPI);

@@ -128,6 +128,10 @@ export interface ConfigFilesConfig {
   files: ConfigFileEntry[];
 }
 
+export interface ScriptConfig {
+  scriptPath: string;      // e.g., "~/scripts/setup-ticket.js"
+}
+
 export interface ClaudeConfig {
   apiKey: string;
   model?: string;
@@ -240,6 +244,7 @@ export interface TasksData {
   configFiles?: ConfigFilesConfig;
   claudeConfig?: ClaudeConfig;
   googleCalendarConfig?: GoogleCalendarConfig;
+  scriptConfig?: ScriptConfig;
 }
 
 export interface CalculatedTaskEntry extends TaskEntry {
@@ -327,10 +332,11 @@ export interface ElectronAPI {
   saveTerminalConfig: (config: TerminalConfig) => Promise<void>;
   runTerminalShortcut: (id: string) => Promise<void>;
   closeTerminalLauncher: () => Promise<void>;
-  onTerminalOutput: (callback: (data: string) => void) => void;
-  onTerminalExit: (callback: (code: number | null) => void) => void;
-  removeTerminalListeners: () => void;
-  resizeTerminal: (cols: number, rows: number) => void;
+  closeTerminalExec: (execId: string) => Promise<void>;
+  onTerminalExecOutput: (execId: string, callback: (data: string) => void) => void;
+  onTerminalExecExit: (execId: string, callback: (code: number | null) => void) => void;
+  removeTerminalExecListeners: (execId: string) => void;
+  resizeTerminalExec: (execId: string, cols: number, rows: number) => void;
   getConfigFilesConfig: () => Promise<ConfigFilesConfig>;
   saveConfigFilesConfig: (config: ConfigFilesConfig) => Promise<void>;
   resetConfigFilesConfig: () => Promise<ConfigFilesConfig>;
@@ -357,6 +363,9 @@ export interface ElectronAPI {
   fetchJiraProjects: () => Promise<JiraProject[]>;
   fetchJiraVersions: (projectKey: string) => Promise<JiraVersion[]>;
   getReleaseData: (projectKey: string, versionName: string) => Promise<ReleaseData>;
+  getScriptConfig: () => Promise<ScriptConfig | null>;
+  saveScriptConfig: (config: ScriptConfig) => Promise<void>;
+  runTicketScript: (ticketId: string, body: string) => Promise<void>;
 }
 
 declare global {
