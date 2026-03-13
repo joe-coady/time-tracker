@@ -656,6 +656,7 @@ export function setupIpcHandlers(): void {
 
     // Fetch GitHub PRs for the current user
     let myPRs: GitHubPR[] = [];
+    let assignedPRs: GitHubPR[] = [];
     let jiraTicketStatuses: JiraTicketStatus[] = [];
     let devBranchTickets: string[] = [];
 
@@ -667,14 +668,22 @@ export function setupIpcHandlers(): void {
         myPRs = username
           ? allPRs.filter(pr => pr.author.toLowerCase() === username)
           : allPRs;
+        assignedPRs = username
+          ? allPRs.filter(pr =>
+              pr.author.toLowerCase() !== username &&
+              pr.requestedReviewers.some(r => r.toLowerCase() === username)
+            )
+          : [];
+
+        const allRelevantPRs = [...myPRs, ...assignedPRs];
 
         // Fetch Jira ticket statuses for ticket keys in PR titles
         const jiraConfig = readJiraConfig();
-        if (jiraConfig?.ticketPattern && myPRs.length > 0) {
+        if (jiraConfig?.ticketPattern && allRelevantPRs.length > 0) {
           try {
             const regex = new RegExp(jiraConfig.ticketPattern, 'g');
             const keys = new Set<string>();
-            for (const pr of myPRs) {
+            for (const pr of allRelevantPRs) {
               for (const match of pr.title.matchAll(regex)) {
                 keys.add(match[0]);
               }
@@ -688,9 +697,9 @@ export function setupIpcHandlers(): void {
         }
 
         // Fetch dev branch tickets
-        if (ghConfig.devBranch && myPRs.length > 0) {
+        if (ghConfig.devBranch && allRelevantPRs.length > 0) {
           try {
-            const repos = Array.from(new Set(myPRs.map(pr => pr.repoFullName)));
+            const repos = Array.from(new Set(allRelevantPRs.map(pr => pr.repoFullName)));
             devBranchTickets = await fetchDevBranchTickets(repos);
           } catch {
             // Dev branch fetch failed — leave empty
@@ -701,6 +710,6 @@ export function setupIpcHandlers(): void {
       // GitHub fetch failed — leave empty
     }
 
-    return { workingTasks, todoTasks, meetings, myPRs, jiraTicketStatuses, devBranchTickets };
+    return { workingTasks, todoTasks, meetings, myPRs, assignedPRs, jiraTicketStatuses, devBranchTickets };
   });
 }

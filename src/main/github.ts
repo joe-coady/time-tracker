@@ -79,6 +79,7 @@ export async function fetchGitHubPRs(): Promise<GitHubPR[]> {
           updatedAt: item.updated_at,
           draft: item.draft ?? false,
           repoFullName,
+          requestedReviewers: [],
         });
       }
     } catch {
@@ -86,26 +87,30 @@ export async function fetchGitHubPRs(): Promise<GitHubPR[]> {
     }
   }
 
-  // Fetch review status for each PR in parallel
+  // Fetch review status and requested reviewers for each PR in parallel
   const reviewResults = await Promise.allSettled(
     allPRs.map(async (pr) => {
-      const url = `https://api.github.com/repos/${pr.repoFullName}/pulls/${pr.number}/reviews`;
-      const body = await githubRequest(url, config.token);
-      const reviews = JSON.parse(body) as { state: string }[];
-      // Walk reviews in order; approved only if last decisive review is APPROVED
+      const [reviewsBody, prBody] = await Promise.all([
+        githubRequest(`https://api.github.com/repos/${pr.repoFullName}/pulls/${pr.number}/reviews`, config.token),
+        githubRequest(`https://api.github.com/repos/${pr.repoFullName}/pulls/${pr.number}`, config.token),
+      ]);
+      const reviews = JSON.parse(reviewsBody) as { state: string }[];
       let approved = false;
       for (const review of reviews) {
         if (review.state === 'APPROVED') approved = true;
         else if (review.state === 'CHANGES_REQUESTED') approved = false;
       }
-      return approved;
+      const prData = JSON.parse(prBody);
+      const requestedReviewers = (prData.requested_reviewers ?? []).map((r: { login: string }) => r.login);
+      return { approved, requestedReviewers };
     })
   );
 
   for (let i = 0; i < allPRs.length; i++) {
     const result = reviewResults[i];
     if (result.status === 'fulfilled') {
-      allPRs[i].approved = result.value;
+      allPRs[i].approved = result.value.approved;
+      allPRs[i].requestedReviewers = result.value.requestedReviewers;
     }
   }
 

@@ -114,6 +114,7 @@ export interface TodayData {
   todoTasks: KanbanTask[];
   meetings: CalendarEvent[];
   myPRs: GitHubPR[];
+  assignedPRs: GitHubPR[];
   jiraTicketStatuses: JiraTicketStatus[];
   devBranchTickets: string[];
 }
@@ -205,6 +206,7 @@ export interface GitHubPR {
   draft: boolean;
   repoFullName: string;
   approved?: boolean;
+  requestedReviewers: string[];
 }
 
 export interface DailyNote {

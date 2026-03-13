@@ -207,12 +207,11 @@ export default function TodayView() {
     try { return new RegExp(jiraConfig.ticketPattern, 'g'); } catch { return null; }
   }, [jiraConfig?.ticketPattern]);
 
-  const prGroups = useMemo(() => {
-    if (!data?.myPRs.length) return [];
+  const groupPRsByTicket = (prs: GitHubPR[]) => {
     const groupMap = new Map<string | null, GitHubPR[]>();
-    const assigned = new Set<string>(); // track PR keys already assigned to a group
+    const assigned = new Set<string>();
 
-    for (const pr of data.myPRs) {
+    for (const pr of prs) {
       const prKey = `${pr.repoFullName}#${pr.number}`;
       if (assigned.has(prKey)) continue;
 
@@ -227,12 +226,10 @@ export default function TodayView() {
       assigned.add(prKey);
     }
 
-    // Sort PRs within each group by updatedAt descending
     for (const prs of groupMap.values()) {
       prs.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
     }
 
-    // Build sorted array of groups; null-key group goes last
     const entries = Array.from(groupMap.entries());
     const linked = entries.filter(([key]) => key !== null);
     const unlinked = entries.find(([key]) => key === null);
@@ -246,7 +243,17 @@ export default function TodayView() {
     const result = linked as [string | null, GitHubPR[]][];
     if (unlinked) result.push(unlinked);
     return result;
+  };
+
+  const prGroups = useMemo(() => {
+    if (!data?.myPRs.length) return [];
+    return groupPRsByTicket(data.myPRs);
   }, [data?.myPRs, ticketPattern]);
+
+  const assignedPrGroups = useMemo(() => {
+    if (!data?.assignedPRs?.length) return [];
+    return groupPRsByTicket(data.assignedPRs);
+  }, [data?.assignedPRs, ticketPattern]);
 
   return (
     <div className="today-container">
@@ -293,6 +300,23 @@ export default function TodayView() {
               <div className="today-empty">No upcoming tasks</div>
             )}
           </div>
+
+          {assignedPrGroups.length > 0 && (
+            <div className="today-section">
+              <h2 className="today-section-title">PRs Assigned to Me</h2>
+              {assignedPrGroups.map(([ticketKey, prs]) => (
+                <TicketPRGroup
+                  key={ticketKey ?? '__unlinked'}
+                  ticketKey={ticketKey}
+                  prs={prs}
+                  ticketStatusMap={ticketStatusMap}
+                  devBranchSet={devBranchSet}
+                  jiraBaseUrl={jiraConfig?.baseUrl ?? null}
+                  ticketPattern={ticketPattern}
+                />
+              ))}
+            </div>
+          )}
 
           {prGroups.length > 0 && (
             <div className="today-section">
