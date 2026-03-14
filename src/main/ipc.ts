@@ -659,12 +659,14 @@ export function setupIpcHandlers(): void {
     let assignedPRs: GitHubPR[] = [];
     let jiraTicketStatuses: JiraTicketStatus[] = [];
     let devBranchTickets: string[] = [];
+    let githubUsername: string | null = null;
 
     try {
       const ghConfig = readGitHubConfig();
       if (ghConfig?.token) {
         const allPRs = await fetchGitHubPRs();
         const username = ghConfig.username?.toLowerCase();
+        githubUsername = username ?? null;
         myPRs = username
           ? allPRs.filter(pr => pr.author.toLowerCase() === username)
           : allPRs;
@@ -710,6 +712,6 @@ export function setupIpcHandlers(): void {
       // GitHub fetch failed — leave empty
     }
 
-    return { workingTasks, todoTasks, meetings, myPRs, assignedPRs, jiraTicketStatuses, devBranchTickets };
+    return { workingTasks, todoTasks, meetings, myPRs, assignedPRs, jiraTicketStatuses, devBranchTickets, githubUsername };
   });
 }

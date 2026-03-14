@@ -80,6 +80,7 @@ export async function fetchGitHubPRs(): Promise<GitHubPR[]> {
           draft: item.draft ?? false,
           repoFullName,
           requestedReviewers: [],
+          reviewHistory: [],
         });
       }
     } catch {
@@ -94,15 +95,19 @@ export async function fetchGitHubPRs(): Promise<GitHubPR[]> {
         githubRequest(`https://api.github.com/repos/${pr.repoFullName}/pulls/${pr.number}/reviews`, config.token),
         githubRequest(`https://api.github.com/repos/${pr.repoFullName}/pulls/${pr.number}`, config.token),
       ]);
-      const reviews = JSON.parse(reviewsBody) as { state: string }[];
+      const reviews = JSON.parse(reviewsBody) as { user?: { login: string }; state: string }[];
       let approved = false;
+      const reviewHistory: { user: string; state: 'APPROVED' | 'CHANGES_REQUESTED' }[] = [];
       for (const review of reviews) {
         if (review.state === 'APPROVED') approved = true;
         else if (review.state === 'CHANGES_REQUESTED') approved = false;
+        if ((review.state === 'APPROVED' || review.state === 'CHANGES_REQUESTED') && review.user?.login) {
+          reviewHistory.push({ user: review.user.login, state: review.state });
+        }
       }
       const prData = JSON.parse(prBody);
       const requestedReviewers = (prData.requested_reviewers ?? []).map((r: { login: string }) => r.login);
-      return { approved, requestedReviewers };
+      return { approved, requestedReviewers, reviewHistory };
     })
   );
 
@@ -111,6 +116,7 @@ export async function fetchGitHubPRs(): Promise<GitHubPR[]> {
     if (result.status === 'fulfilled') {
       allPRs[i].approved = result.value.approved;
       allPRs[i].requestedReviewers = result.value.requestedReviewers;
+      allPRs[i].reviewHistory = result.value.reviewHistory;
     }
   }
 

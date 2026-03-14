@@ -2359,6 +2359,22 @@ input.entry-duration.ongoing {
   flex-shrink: 0;
 }
 
+.pr-review-history {
+  display: inline-flex;
+  gap: 2px;
+  font-size: 11px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.pr-review-approved {
+  color: #28a745;
+}
+
+.pr-review-changes {
+  color: #d73a49;
+}
+
 /* Config Files View */
 .config-files-editor {
   font-family: 'SF Mono', 'Menlo', 'Monaco', 'Consolas', monospace;

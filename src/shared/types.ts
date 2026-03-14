@@ -117,6 +117,7 @@ export interface TodayData {
   assignedPRs: GitHubPR[];
   jiraTicketStatuses: JiraTicketStatus[];
   devBranchTickets: string[];
+  githubUsername: string | null;
 }
 
 export interface ConfigFileEntry {
@@ -207,6 +208,7 @@ export interface GitHubPR {
   repoFullName: string;
   approved?: boolean;
   requestedReviewers: string[];
+  reviewHistory: { user: string; state: 'APPROVED' | 'CHANGES_REQUESTED' }[];
 }
 
 export interface DailyNote {

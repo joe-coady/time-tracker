@@ -60,13 +60,18 @@ function contrastColor(hex: string): string {
   return luminance > 0.5 ? '#000' : '#fff';
 }
 
-function PRRow({ pr, devBranchSet, ticketKeys }: {
+function PRRow({ pr, devBranchSet, ticketKeys, githubUsername }: {
   pr: GitHubPR;
   devBranchSet: Set<string>;
   ticketKeys: string[];
+  githubUsername?: string | null;
 }) {
   const repoShort = pr.repoFullName.split('/').pop() || pr.repoFullName;
   const isOnDevBranch = ticketKeys.some(k => devBranchSet.has(k));
+
+  const myReviewHistory = githubUsername
+    ? pr.reviewHistory.filter(r => r.user.toLowerCase() === githubUsername.toLowerCase())
+    : [];
 
   return (
     <div className="today-pr-row">
@@ -82,6 +87,15 @@ function PRRow({ pr, devBranchSet, ticketKeys }: {
         {pr.title}
       </a>
       <div className="today-pr-badges">
+        {myReviewHistory.length > 0 && (
+          <span className="pr-review-history">
+            {myReviewHistory.map((r, i) => (
+              <span key={i} className={r.state === 'APPROVED' ? 'pr-review-approved' : 'pr-review-changes'}>
+                {r.state === 'APPROVED' ? '✓' : '✗'}
+              </span>
+            ))}
+          </span>
+        )}
         {pr.approved && <span className="pr-card-approved">✓</span>}
         {isOnDevBranch && <span className="pr-card-dev-env">DEV-ENV</span>}
         {pr.draft && <span className="pr-card-draft">Draft</span>}
@@ -102,13 +116,14 @@ function PRRow({ pr, devBranchSet, ticketKeys }: {
   );
 }
 
-function TicketPRGroup({ ticketKey, prs, ticketStatusMap, devBranchSet, jiraBaseUrl, ticketPattern }: {
+function TicketPRGroup({ ticketKey, prs, ticketStatusMap, devBranchSet, jiraBaseUrl, ticketPattern, githubUsername }: {
   ticketKey: string | null;
   prs: GitHubPR[];
   ticketStatusMap: Map<string, JiraTicketStatus>;
   devBranchSet: Set<string>;
   jiraBaseUrl: string | null;
   ticketPattern: RegExp | null;
+  githubUsername?: string | null;
 }) {
   const ticketStatus = ticketKey ? ticketStatusMap.get(ticketKey) ?? null : null;
 
@@ -153,6 +168,7 @@ function TicketPRGroup({ ticketKey, prs, ticketStatusMap, devBranchSet, jiraBase
             pr={pr}
             devBranchSet={devBranchSet}
             ticketKeys={getTicketKeys(pr)}
+            githubUsername={githubUsername}
           />
         ))}
       </div>
@@ -313,6 +329,7 @@ export default function TodayView() {
                   devBranchSet={devBranchSet}
                   jiraBaseUrl={jiraConfig?.baseUrl ?? null}
                   ticketPattern={ticketPattern}
+                  githubUsername={data.githubUsername}
                 />
               ))}
             </div>
