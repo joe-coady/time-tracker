@@ -17,6 +17,7 @@ let configFilesWindow: BrowserWindow | null = null;
 let chatWindow: BrowserWindow | null = null;
 let todayWindow: BrowserWindow | null = null;
 let releaseWindow: BrowserWindow | null = null;
+let screenshotAnnotateWindow: BrowserWindow | null = null;
 const terminalExecWindows = new Map<string, BrowserWindow>();
 
 // Check if we're in dev mode by seeing if the built renderer exists
@@ -589,6 +590,31 @@ export function createReleaseWindow(): BrowserWindow {
 
 export function showReleaseWindow(): void {
   createReleaseWindow();
+}
+
+export function createScreenshotAnnotateWindow(): BrowserWindow {
+  if (screenshotAnnotateWindow && !screenshotAnnotateWindow.isDestroyed()) {
+    repositionToCurrentDisplay(screenshotAnnotateWindow);
+    screenshotAnnotateWindow.show();
+    screenshotAnnotateWindow.focus();
+    return screenshotAnnotateWindow;
+  }
+
+  screenshotAnnotateWindow = createStandardWindow({ title: 'Screenshot', route: '/screenshot-annotate', widthRatio: 0.85, heightRatio: 0.85, maxWidth: 1600 });
+
+  screenshotAnnotateWindow.once('ready-to-show', () => {
+    screenshotAnnotateWindow?.show();
+  });
+
+  screenshotAnnotateWindow.on('closed', () => {
+    screenshotAnnotateWindow = null;
+  });
+
+  return screenshotAnnotateWindow;
+}
+
+export function showScreenshotAnnotateWindow(): void {
+  createScreenshotAnnotateWindow();
 }
 
 export function createTerminalExecWindow(execId: string, title: string): BrowserWindow {

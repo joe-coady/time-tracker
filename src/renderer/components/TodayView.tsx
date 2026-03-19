@@ -26,18 +26,44 @@ function TaskCard({ task }: { task: KanbanTask }) {
   );
 }
 
+function getMeetingStatus(startTime: string, endTime: string): { label: string; status: 'previous' | 'active' | 'upcoming' } {
+  const now = Date.now();
+  const start = new Date(startTime).getTime();
+  const end = new Date(endTime).getTime();
+
+  if (now >= start && now < end) {
+    return { label: 'Active', status: 'active' };
+  }
+  if (now >= end) {
+    return { label: 'Previous', status: 'previous' };
+  }
+  const diffMs = start - now;
+  const totalMins = Math.round(diffMs / 60000);
+  const hours = Math.floor(totalMins / 60);
+  const mins = totalMins % 60;
+  const label = hours > 0 ? `In ${hours}h ${mins}m` : `In ${mins}m`;
+  return { label, status: 'upcoming' };
+}
+
 function MeetingCard({ event }: { event: CalendarEvent }) {
   const allDay = isAllDay(event.startTime, event.endTime);
+  const { label: statusLabel, status } = getMeetingStatus(event.startTime, event.endTime);
   return (
-    <div className="today-card today-meeting-card">
-      <div className="today-meeting-time">
-        {allDay ? 'All day' : `${formatTime(event.startTime)} \u2013 ${formatTime(event.endTime)}`}
+    <div className={`today-card today-meeting-card today-meeting-card--${status}`}>
+      <div className="today-meeting-left">
+        <div className="today-meeting-time">
+          {allDay ? 'All day' : `${formatTime(event.startTime)} \u2013 ${formatTime(event.endTime)}`}
+        </div>
+        <div className="today-card-title">{event.summary}</div>
+        {event.location && (
+          <div className="today-card-desc">{event.location}</div>
+        )}
+        <div className="today-meeting-status">{statusLabel}</div>
+        <div className="today-card-calendar">{event.calendarName}</div>
       </div>
-      <div className="today-card-title">{event.summary}</div>
-      {event.location && (
-        <div className="today-card-desc">{event.location}</div>
-      )}
-      <div className="today-card-calendar">{event.calendarName}</div>
+      <div className="today-meeting-right">
+        <div className="today-meeting-clock">{statusLabel}</div>
+      </div>
     </div>
   );
 }

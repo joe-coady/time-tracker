@@ -1,4 +1,4 @@
-import { ipcMain, shell } from 'electron';
+import { ipcMain, shell, BrowserWindow } from 'electron';
 import * as pty from 'node-pty';
 import * as os from 'os';
 import { v4 as uuidv4 } from 'uuid';
@@ -64,7 +64,8 @@ import * as path from 'path';
 import { searchJiraIssues, testJiraConnection, fetchJiraTicketStatuses, fetchAssignedJiraTickets, fetchJiraProjects, fetchJiraVersions, fetchReleaseTickets, fetchJiraTicketMarkdown } from './jira';
 import { testGitHubConnection, fetchGitHubPRs, fetchDevBranchTickets } from './github';
 import { reregisterShortcuts } from './globalShortcut';
-import { closeDialogWindow, closeQuickLaunchWindow, showDialogWindow, showEditWindow, showNotesWindow, showNotebookWindow, showGitHubPRsWindow, showExportWindow, showSettingsWindow, showKanbanWindow, showTerminalLauncherWindow, closeTerminalLauncherWindow, showConfigFilesWindow, showChatWindow, getChatWindow, showTodayWindow, showReleaseWindow, createTerminalExecWindow, getTerminalExecWindow, cleanupTerminalExecWindow } from './windows';
+import { closeDialogWindow, closeQuickLaunchWindow, showDialogWindow, showEditWindow, showNotesWindow, showNotebookWindow, showGitHubPRsWindow, showExportWindow, showSettingsWindow, showKanbanWindow, showTerminalLauncherWindow, closeTerminalLauncherWindow, showConfigFilesWindow, showChatWindow, getChatWindow, showTodayWindow, showReleaseWindow, showScreenshotAnnotateWindow, createTerminalExecWindow, getTerminalExecWindow, cleanupTerminalExecWindow } from './windows';
+import { execFile } from 'child_process';
 import { updateTrayMenu } from './tray';
 import { TaskEntry, CalculatedTaskEntry, CurrentState, TaskType, DailyNote, Note, QuickLinkRule, JiraConfig, JiraProject, JiraSearchResult, JiraTicketStatus, JiraVersion, GitHubConfig, GitHubPR, HotkeyConfig, KanbanBoard, KanbanTask, KanbanColumnConfig, TerminalConfig, ConfigFilesConfig, ClaudeConfig, ChatMessage, GoogleCalendarConfig, GoogleCalendarListItem, CalendarEvent, TodayData, ReleaseData, ScriptConfig, KanbanScript } from '../shared/types';
 import { calculateDurations } from '../shared/durationUtils';
@@ -352,6 +353,7 @@ export function setupIpcHandlers(): void {
       'chat': showChatWindow,
       'today': showTodayWindow,
       'release': showReleaseWindow,
+      'screenshot-annotate': showScreenshotAnnotateWindow,
     };
     const showFn = viewMap[view];
     if (showFn) showFn();
@@ -604,6 +606,46 @@ export function setupIpcHandlers(): void {
 
   ipcMain.handle('save-kanban-scripts', async (_event, scripts: KanbanScript[]): Promise<void> => {
     saveKanbanScripts(scripts);
+  });
+
+  // Screenshot handlers
+  ipcMain.handle('capture-screenshot', async (event): Promise<string | null> => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    if (win) win.hide();
+
+    // Small delay so the window is fully hidden before capture starts
+    await new Promise(r => setTimeout(r, 200));
+
+    const tmpPath = `/tmp/screenshot-${uuidv4()}.png`;
+    return new Promise((resolve) => {
+      execFile('screencapture', ['-i', '-s', tmpPath], (error) => {
+        if (win) {
+          win.show();
+          win.focus();
+        }
+        if (error || !fs.existsSync(tmpPath)) {
+          return resolve(null);
+        }
+        try {
+          const data = fs.readFileSync(tmpPath);
+          const base64 = data.toString('base64');
+          fs.unlinkSync(tmpPath);
+          resolve(`data:image/png;base64,${base64}`);
+        } catch {
+          resolve(null);
+        }
+      });
+    });
+  });
+
+  ipcMain.handle('save-screenshot', async (_event, dataUrl: string, filename?: string): Promise<string> => {
+    const screenshotDir = path.join(os.homedir(), 'notes', 'general', 'screenshots');
+    fs.mkdirSync(screenshotDir, { recursive: true });
+    const name = filename || `screenshot-${Date.now()}.png`;
+    const filePath = path.join(screenshotDir, name);
+    const base64Data = dataUrl.replace(/^data:image\/png;base64,/, '');
+    fs.writeFileSync(filePath, Buffer.from(base64Data, 'base64'));
+    return filePath;
   });
 
   ipcMain.handle('get-today-data', async (): Promise<TodayData> => {

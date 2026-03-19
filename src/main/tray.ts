@@ -1,6 +1,6 @@
 import { Tray, Menu, nativeImage, app } from 'electron';
 import * as path from 'path';
-import { showDialogWindow, showEditWindow, showExportWindow, showNotesWindow, showNotebookWindow, showSettingsWindow, showGitHubPRsWindow, showQuickLaunchWindow, showKanbanWindow, showConfigFilesWindow, showChatWindow, showTodayWindow, showReleaseWindow } from './windows';
+import { showDialogWindow, showEditWindow, showExportWindow, showNotesWindow, showNotebookWindow, showSettingsWindow, showGitHubPRsWindow, showQuickLaunchWindow, showKanbanWindow, showConfigFilesWindow, showChatWindow, showTodayWindow, showReleaseWindow, showScreenshotAnnotateWindow } from './windows';
 import { getLastEntry } from './storage';
 
 let tray: Tray | null = null;
@@ -71,6 +71,10 @@ function getContextMenu(): Menu {
     {
       label: 'AI Chat',
       click: () => showChatWindow(),
+    },
+    {
+      label: 'Screenshot',
+      click: () => showScreenshotAnnotateWindow(),
     },
     { type: 'separator' },
     {

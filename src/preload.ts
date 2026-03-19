@@ -284,6 +284,12 @@ const electronAPI: ElectronAPI = {
 
   saveKanbanScripts: (scripts: KanbanScript[]): Promise<void> =>
     ipcRenderer.invoke('save-kanban-scripts', scripts),
+
+  captureScreenshot: (): Promise<string | null> =>
+    ipcRenderer.invoke('capture-screenshot'),
+
+  saveScreenshot: (dataUrl: string, filename?: string): Promise<string> =>
+    ipcRenderer.invoke('save-screenshot', dataUrl, filename),
 };
 
 contextBridge.exposeInMainWorld('electronAPI', electronAPI);

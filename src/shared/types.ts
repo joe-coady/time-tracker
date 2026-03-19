@@ -381,6 +381,8 @@ export interface ElectronAPI {
   runTicketScript: (ticketId: string, body: string, isJira?: boolean, scriptPath?: string, scriptDir?: string) => Promise<void>;
   getKanbanScripts: () => Promise<KanbanScript[]>;
   saveKanbanScripts: (scripts: KanbanScript[]) => Promise<void>;
+  captureScreenshot: () => Promise<string | null>;
+  saveScreenshot: (dataUrl: string, filename?: string) => Promise<string>;
 }
 
 declare global {

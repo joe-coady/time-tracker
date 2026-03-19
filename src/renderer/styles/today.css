@@ -76,6 +76,36 @@
 
 .today-meeting-card {
   border-left: 3px solid #007aff;
+  display: flex;
+  align-items: stretch;
+}
+
+.today-meeting-left {
+  flex: 1;
+  min-width: 0;
+}
+
+.today-meeting-right {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-left: 14px;
+}
+
+.today-meeting-clock {
+  font-size: 24px;
+  font-weight: 600;
+  color: #007aff;
+  white-space: nowrap;
+}
+
+.today-meeting-card--active .today-meeting-clock {
+  color: #34c759;
+}
+
+.today-meeting-card--previous .today-meeting-clock {
+  color: #999;
 }
 
 .today-meeting-time {
@@ -89,6 +119,37 @@
   font-size: 11px;
   color: #999;
   margin-top: 6px;
+}
+
+/* Meeting status row */
+.today-meeting-status {
+  font-size: 11px;
+  font-weight: 600;
+  margin-top: 6px;
+  color: #007aff;
+}
+
+/* Active meeting — green accent */
+.today-meeting-card--active {
+  border-left-color: #34c759;
+}
+.today-meeting-card--active .today-meeting-time {
+  color: #34c759;
+}
+.today-meeting-card--active .today-meeting-status {
+  color: #34c759;
+}
+
+/* Previous meeting — grey accent */
+.today-meeting-card--previous {
+  border-left-color: #aaa;
+  opacity: 0.7;
+}
+.today-meeting-card--previous .today-meeting-time {
+  color: #999;
+}
+.today-meeting-card--previous .today-meeting-status {
+  color: #999;
 }
 
 .today-empty {
