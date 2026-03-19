@@ -7,10 +7,10 @@ interface QuickLaunchButton {
 
 const BUTTONS: QuickLaunchButton[] = [
   { label: 'Terminal', view: 'terminal-launcher' },
+  { label: 'Today', view: 'today' },
   { label: 'Daily Notes', view: 'notes' },
   { label: 'Kanban', view: 'kanban' },
   { label: 'Notebook', view: 'notebook' },
-  { label: 'Config Files', view: 'config-files' },
   { label: 'GitHub PRs', view: 'github-prs' },
   { label: 'AI Chat', view: 'chat' },
   { label: 'Edit Entries', view: 'edit' },
