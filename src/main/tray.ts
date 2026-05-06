@@ -10,7 +10,9 @@ function createTrayIcon(): Electron.NativeImage {
   // In production, you'd use an actual icon file
   const iconPath = path.join(__dirname, '../../../assets/trayIcon.png');
   try {
-    return nativeImage.createFromPath(iconPath).resize({ width: 16, height: 16 });
+    const icon = nativeImage.createFromPath(iconPath).resize({ width: 16, height: 16 });
+    icon.setTemplateImage(true);
+    return icon;
   } catch {
     // Fallback: create an empty template image
     return nativeImage.createEmpty();
