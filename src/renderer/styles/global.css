@@ -1605,6 +1605,18 @@ input.entry-duration.ongoing {
   flex-shrink: 0;
 }
 
+.pr-card-milestone {
+  display: inline-block;
+  padding: 1px 6px;
+  font-size: 10px;
+  font-weight: 500;
+  color: #4a3b8f;
+  background-color: #ede7f6;
+  border: 1px solid #b39ddb;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
 .pr-card-label {
   display: inline-block;
   padding: 1px 6px;

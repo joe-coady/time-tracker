@@ -231,6 +231,7 @@ export interface GitHubPR {
   approved?: boolean;
   requestedReviewers: string[];
   reviewHistory: { user: string; state: 'APPROVED' | 'CHANGES_REQUESTED' }[];
+  milestone?: string;
 }
 
 export interface DailyNote {

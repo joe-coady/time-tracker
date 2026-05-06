@@ -290,7 +290,7 @@ function GitHubPRsView() {
 
                     const prTicketKeys = getTicketKeys(pr.title);
                     const isOnDevBranch = prTicketKeys.some(k => devBranchTickets.has(k));
-                    const hasSecondary = jiraItems.length > 0 || pr.draft || pr.labels.length > 0 || isOnDevBranch || pr.approved;
+                    const hasSecondary = jiraItems.length > 0 || pr.draft || pr.labels.length > 0 || isOnDevBranch || pr.approved || pr.milestone;
 
                     return (
                       <div className="pr-card" key={`${pr.repoFullName}#${pr.number}`}>
@@ -332,6 +332,7 @@ function GitHubPRsView() {
                                 {label.name}
                               </span>
                             ))}
+                            {pr.milestone && <span className="pr-card-milestone">{pr.milestone}</span>}
                             {jiraItems.map(ts => (
                               <span
                                 key={ts.key}

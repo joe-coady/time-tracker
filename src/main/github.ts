@@ -81,6 +81,7 @@ export async function fetchGitHubPRs(): Promise<GitHubPR[]> {
           repoFullName,
           requestedReviewers: [],
           reviewHistory: [],
+          milestone: item.milestone?.title ?? undefined,
         });
       }
     } catch {
