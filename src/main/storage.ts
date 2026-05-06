@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { v4 as uuidv4 } from 'uuid';
-import { TaskEntry, TaskType, TasksData, DailyNote, Note, QuickLinkRule, JiraConfig, GitHubConfig, HotkeyConfig, KanbanBoard, KanbanTask, KanbanColumnConfig, DEFAULT_KANBAN_COLUMNS, JiraSearchResult, JiraTicketStatus, TerminalConfig, ConfigFilesConfig, ConfigFileEntry, ClaudeConfig, GoogleCalendarConfig, ScriptConfig, KanbanScript } from '../shared/types';
+import { TaskEntry, TaskType, TasksData, DailyNote, Note, QuickLinkRule, JiraConfig, GitHubConfig, HotkeyConfig, KanbanBoard, KanbanTask, KanbanColumnConfig, DEFAULT_KANBAN_COLUMNS, JiraSearchResult, JiraTicketStatus, TerminalConfig, ConfigFilesConfig, ConfigFileEntry, ClaudeConfig, GoogleCalendarConfig, ScriptConfig, KanbanScript, GitConfig } from '../shared/types';
 
 const TASKS_FILE_PATH = path.join(os.homedir(), 'notes', 'general', 'tasks.json');
 
@@ -605,6 +605,7 @@ const DEFAULT_CONFIG_FILE_PATHS = [
   { name: 'npmrc', path: path.join(os.homedir(), '.npmrc') },
   { name: 'ghostty config', path: path.join(os.homedir(), '.config', 'ghostty', 'config') },
   { name: 'VS Code settings', path: path.join(os.homedir(), 'Library', 'Application Support', 'Code', 'User', 'settings.json') },
+  { name: 'cmux config', path: path.join(os.homedir(), '.config', 'cmux', 'cmux.json') },
 ];
 
 export function readConfigFilesConfig(): ConfigFilesConfig {
@@ -612,9 +613,7 @@ export function readConfigFilesConfig(): ConfigFilesConfig {
   if (data.configFiles) {
     return data.configFiles;
   }
-  // Auto-detect defaults that exist on disk
   const files: ConfigFileEntry[] = DEFAULT_CONFIG_FILE_PATHS
-    .filter(f => fs.existsSync(f.path))
     .map(f => ({ id: uuidv4(), name: f.name, path: f.path }));
   return { files };
 }
@@ -635,7 +634,7 @@ export function resetConfigFilesConfig(): ConfigFilesConfig {
 export function readConfigFileContent(filePath: string): string {
   const resolvedPath = filePath.replace(/^~(?=\/|$)/, os.homedir());
   if (!fs.existsSync(resolvedPath)) {
-    throw new Error(`File not found: ${resolvedPath}`);
+    return '';
   }
   return fs.readFileSync(resolvedPath, 'utf-8');
 }
@@ -693,6 +692,17 @@ export function readKanbanScripts(): KanbanScript[] {
 export function saveKanbanScripts(scripts: KanbanScript[]): void {
   const data = readTasksData();
   data.kanbanScripts = scripts;
+  writeTasksData(data);
+}
+
+// Git Config functions
+export function readGitConfig(): GitConfig | null {
+  return readTasksData().gitConfig || null;
+}
+
+export function saveGitConfig(config: GitConfig): void {
+  const data = readTasksData();
+  data.gitConfig = config;
   writeTasksData(data);
 }
 

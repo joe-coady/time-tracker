@@ -16,8 +16,9 @@ import TodayView from './components/TodayView';
 import ReleaseView from './components/ReleaseView';
 import ScreenshotAnnotateView from './components/ScreenshotAnnotateView';
 import TerminalExecView from './components/TerminalExecView';
+import GitChangesView from './components/GitChangesView';
 
-type View = 'dialog' | 'edit' | 'task-types' | 'export' | 'notes' | 'notebook' | 'settings' | 'github-prs' | 'quick-launch' | 'kanban' | 'terminal-launcher' | 'terminal-exec' | 'config-files' | 'chat' | 'today' | 'release' | 'screenshot-annotate';
+type View = 'dialog' | 'edit' | 'task-types' | 'export' | 'notes' | 'notebook' | 'settings' | 'github-prs' | 'quick-launch' | 'kanban' | 'terminal-launcher' | 'terminal-exec' | 'config-files' | 'chat' | 'today' | 'release' | 'screenshot-annotate' | 'git-changes';
 
 function App() {
   const [view, setView] = useState<View>('dialog');
@@ -58,6 +59,8 @@ function App() {
         setView('release');
       } else if (hash === '#/screenshot-annotate') {
         setView('screenshot-annotate');
+      } else if (hash === '#/git-changes') {
+        setView('git-changes');
       } else {
         setView('dialog');
       }
@@ -84,6 +87,7 @@ function App() {
   if (view === 'today') return <TodayView />;
   if (view === 'release') return <ReleaseView />;
   if (view === 'screenshot-annotate') return <ScreenshotAnnotateView />;
+  if (view === 'git-changes') return <GitChangesView />;
   return <TaskDialog />;
 }
 

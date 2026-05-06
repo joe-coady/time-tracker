@@ -9,8 +9,9 @@ import TerminalSettingsView from './TerminalSettingsView';
 import ConfigFilesSettingsView from './ConfigFilesSettingsView';
 import ClaudeSettingsView from './ClaudeSettingsView';
 import GoogleCalendarSettingsView from './GoogleCalendarSettingsView';
+import GitSettingsView from './GitSettingsView';
 
-type SettingsTab = 'task-types' | 'quick-links' | 'jira' | 'github' | 'hotkeys' | 'kanban' | 'terminal' | 'config-files' | 'claude' | 'google-calendar';
+type SettingsTab = 'task-types' | 'quick-links' | 'jira' | 'github' | 'hotkeys' | 'kanban' | 'terminal' | 'config-files' | 'claude' | 'google-calendar' | 'git';
 
 export default function SettingsView() {
   const [activeTab, setActiveTab] = useState<SettingsTab>('task-types');
@@ -81,6 +82,12 @@ export default function SettingsView() {
         >
           Calendar
         </button>
+        <button
+          className={`settings-tab ${activeTab === 'git' ? 'active' : ''}`}
+          onClick={() => setActiveTab('git')}
+        >
+          Git
+        </button>
       </div>
       <div className="settings-content">
         {activeTab === 'task-types' && <TaskTypesView />}
@@ -93,6 +100,7 @@ export default function SettingsView() {
         {activeTab === 'config-files' && <ConfigFilesSettingsView />}
         {activeTab === 'claude' && <ClaudeSettingsView />}
         {activeTab === 'google-calendar' && <GoogleCalendarSettingsView />}
+        {activeTab === 'git' && <GitSettingsView />}
       </div>
     </div>
   );

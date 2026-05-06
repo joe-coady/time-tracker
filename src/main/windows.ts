@@ -18,6 +18,7 @@ let chatWindow: BrowserWindow | null = null;
 let todayWindow: BrowserWindow | null = null;
 let releaseWindow: BrowserWindow | null = null;
 let screenshotAnnotateWindow: BrowserWindow | null = null;
+let gitChangesWindow: BrowserWindow | null = null;
 const terminalExecWindows = new Map<string, BrowserWindow>();
 
 // Check if we're in dev mode by seeing if the built renderer exists
@@ -615,6 +616,31 @@ export function createScreenshotAnnotateWindow(): BrowserWindow {
 
 export function showScreenshotAnnotateWindow(): void {
   createScreenshotAnnotateWindow();
+}
+
+export function createGitChangesWindow(): BrowserWindow {
+  if (gitChangesWindow && !gitChangesWindow.isDestroyed()) {
+    repositionToCurrentDisplay(gitChangesWindow);
+    gitChangesWindow.show();
+    gitChangesWindow.focus();
+    return gitChangesWindow;
+  }
+
+  gitChangesWindow = createStandardWindow({ title: 'Git Changes', route: '/git-changes' });
+
+  gitChangesWindow.once('ready-to-show', () => {
+    gitChangesWindow?.show();
+  });
+
+  gitChangesWindow.on('closed', () => {
+    gitChangesWindow = null;
+  });
+
+  return gitChangesWindow;
+}
+
+export function showGitChangesWindow(): void {
+  createGitChangesWindow();
 }
 
 export function createTerminalExecWindow(execId: string, title: string): BrowserWindow {

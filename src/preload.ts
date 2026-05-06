@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import { CalculatedTaskEntry, CurrentState, DailyNote, ElectronAPI, GitHubConfig, GitHubPR, HotkeyConfig, JiraConfig, JiraProject, JiraSearchResult, JiraTicketStatus, JiraVersion, KanbanBoard, KanbanColumnConfig, KanbanTask, Note, PreviousTask, QuickLinkRule, TaskEntry, TaskType, TerminalConfig, ConfigFilesConfig, ClaudeConfig, ChatMessage, GoogleCalendarConfig, GoogleCalendarListItem, CalendarEvent, TodayData, ReleaseData, ScriptConfig, KanbanScript } from './shared/types';
+import { CalculatedTaskEntry, CurrentState, DailyNote, ElectronAPI, GitHubConfig, GitHubPR, HotkeyConfig, JiraConfig, JiraProject, JiraSearchResult, JiraTicketStatus, JiraVersion, KanbanBoard, KanbanColumnConfig, KanbanTask, Note, PreviousTask, QuickLinkRule, TaskEntry, TaskType, TerminalConfig, ConfigFilesConfig, ClaudeConfig, ChatMessage, GoogleCalendarConfig, GoogleCalendarListItem, CalendarEvent, TodayData, ReleaseData, ScriptConfig, KanbanScript, GitConfig, GitStatusResult } from './shared/types';
 
 const electronAPI: ElectronAPI = {
   getTasks: (): Promise<CalculatedTaskEntry[]> => ipcRenderer.invoke('get-tasks'),
@@ -290,6 +290,18 @@ const electronAPI: ElectronAPI = {
 
   saveScreenshot: (dataUrl: string, filename?: string): Promise<string> =>
     ipcRenderer.invoke('save-screenshot', dataUrl, filename),
+
+  getGitConfig: (): Promise<GitConfig | null> =>
+    ipcRenderer.invoke('get-git-config'),
+
+  saveGitConfig: (config: GitConfig): Promise<void> =>
+    ipcRenderer.invoke('save-git-config', config),
+
+  getGitStatus: (repoPath: string): Promise<GitStatusResult> =>
+    ipcRenderer.invoke('get-git-status', repoPath),
+
+  openGitDiff: (repoPath: string, filePath: string, staged: boolean): Promise<void> =>
+    ipcRenderer.invoke('open-git-diff', repoPath, filePath, staged),
 };
 
 contextBridge.exposeInMainWorld('electronAPI', electronAPI);

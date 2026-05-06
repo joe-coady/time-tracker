@@ -57,6 +57,8 @@ import {
   saveScriptConfig,
   readKanbanScripts,
   saveKanbanScripts,
+  readGitConfig,
+  saveGitConfig,
 } from './storage';
 import { startTimer, getElapsedMinutes } from './timer';
 import * as fs from 'fs';
@@ -64,10 +66,10 @@ import * as path from 'path';
 import { searchJiraIssues, testJiraConnection, fetchJiraTicketStatuses, fetchAssignedJiraTickets, fetchJiraProjects, fetchJiraVersions, fetchReleaseTickets, fetchJiraTicketMarkdown } from './jira';
 import { testGitHubConnection, fetchGitHubPRs, fetchDevBranchTickets } from './github';
 import { reregisterShortcuts } from './globalShortcut';
-import { closeDialogWindow, closeQuickLaunchWindow, showDialogWindow, showEditWindow, showNotesWindow, showNotebookWindow, showGitHubPRsWindow, showExportWindow, showSettingsWindow, showKanbanWindow, showTerminalLauncherWindow, closeTerminalLauncherWindow, showConfigFilesWindow, showChatWindow, getChatWindow, showTodayWindow, showReleaseWindow, showScreenshotAnnotateWindow, createTerminalExecWindow, getTerminalExecWindow, cleanupTerminalExecWindow } from './windows';
+import { closeDialogWindow, closeQuickLaunchWindow, showDialogWindow, showEditWindow, showNotesWindow, showNotebookWindow, showGitHubPRsWindow, showExportWindow, showSettingsWindow, showKanbanWindow, showTerminalLauncherWindow, closeTerminalLauncherWindow, showConfigFilesWindow, showChatWindow, getChatWindow, showTodayWindow, showReleaseWindow, showScreenshotAnnotateWindow, showGitChangesWindow, createTerminalExecWindow, getTerminalExecWindow, cleanupTerminalExecWindow } from './windows';
 import { execFile } from 'child_process';
 import { updateTrayMenu } from './tray';
-import { TaskEntry, CalculatedTaskEntry, CurrentState, TaskType, DailyNote, Note, QuickLinkRule, JiraConfig, JiraProject, JiraSearchResult, JiraTicketStatus, JiraVersion, GitHubConfig, GitHubPR, HotkeyConfig, KanbanBoard, KanbanTask, KanbanColumnConfig, TerminalConfig, ConfigFilesConfig, ClaudeConfig, ChatMessage, GoogleCalendarConfig, GoogleCalendarListItem, CalendarEvent, TodayData, ReleaseData, ScriptConfig, KanbanScript } from '../shared/types';
+import { TaskEntry, CalculatedTaskEntry, CurrentState, TaskType, DailyNote, Note, QuickLinkRule, JiraConfig, JiraProject, JiraSearchResult, JiraTicketStatus, JiraVersion, GitHubConfig, GitHubPR, HotkeyConfig, KanbanBoard, KanbanTask, KanbanColumnConfig, TerminalConfig, ConfigFilesConfig, ClaudeConfig, ChatMessage, GoogleCalendarConfig, GoogleCalendarListItem, CalendarEvent, TodayData, ReleaseData, ScriptConfig, KanbanScript, GitConfig, GitStatusResult, GitFileStatus } from '../shared/types';
 import { calculateDurations } from '../shared/durationUtils';
 import { handleChatMessage, clearChatHistory, getChatHistory } from './chatHandler';
 import { fetchTodayCalendarEvents, testCalendarUrl, startOAuthFlow, signOut, listGoogleCalendars, selectCalendars } from './googleCalendar';
@@ -354,6 +356,7 @@ export function setupIpcHandlers(): void {
       'today': showTodayWindow,
       'release': showReleaseWindow,
       'screenshot-annotate': showScreenshotAnnotateWindow,
+      'git-changes': showGitChangesWindow,
     };
     const showFn = viewMap[view];
     if (showFn) showFn();
@@ -755,5 +758,87 @@ export function setupIpcHandlers(): void {
     }
 
     return { workingTasks, todoTasks, meetings, myPRs, assignedPRs, jiraTicketStatuses, devBranchTickets, githubUsername };
+  });
+
+  // Git Config handlers
+  ipcMain.handle('get-git-config', async (): Promise<GitConfig | null> => {
+    return readGitConfig();
+  });
+
+  ipcMain.handle('save-git-config', async (_event, config: GitConfig): Promise<void> => {
+    saveGitConfig(config);
+  });
+
+  ipcMain.handle('get-git-status', async (_event, repoPath: string): Promise<GitStatusResult> => {
+    const expandedPath = repoPath.replace(/^~(?=\/|$)/, os.homedir());
+
+    return new Promise((resolve) => {
+      execFile('git', ['status', '--porcelain', '-b'], { cwd: expandedPath, timeout: 10000 }, (error, stdout, stderr) => {
+        if (error) {
+          resolve({ files: [], error: stderr || error.message });
+          return;
+        }
+
+        const lines = stdout.split('\n').filter(l => l.length > 0);
+        let branch: string | undefined;
+        const files: GitFileStatus[] = [];
+
+        for (const line of lines) {
+          // Branch header line
+          if (line.startsWith('## ')) {
+            const branchPart = line.substring(3).split('...')[0];
+            branch = branchPart;
+            continue;
+          }
+
+          const indexStatus = line[0];
+          const workTreeStatus = line[1];
+          let filePath = line.substring(3);
+
+          // Handle renames: "R  old -> new"
+          if (filePath.includes(' -> ')) {
+            filePath = filePath.split(' -> ')[1];
+          }
+
+          // Staged change
+          if (indexStatus !== ' ' && indexStatus !== '?') {
+            files.push({ path: filePath, status: indexStatus, staged: true });
+          }
+
+          // Unstaged / untracked change
+          if (workTreeStatus !== ' ') {
+            const status = indexStatus === '?' ? '?' : workTreeStatus;
+            files.push({ path: filePath, status, staged: false });
+          }
+        }
+
+        resolve({ files, branch });
+      });
+    });
+  });
+
+  ipcMain.handle('open-git-diff', async (_event, repoPath: string, filePath: string, staged: boolean): Promise<void> => {
+    const expandedPath = repoPath.replace(/^~(?=\/|$)/, os.homedir());
+    const fullFilePath = path.join(expandedPath, filePath);
+    const tmpDir = os.tmpdir();
+    const safeName = filePath.replace(/\//g, '_');
+    const tmpFile = path.join(tmpDir, `git-diff-${safeName}`);
+
+    // Always diff against the last committed version
+    const ref = 'HEAD:' + filePath;
+
+    return new Promise((resolve) => {
+      execFile('git', ['show', ref], { cwd: expandedPath, maxBuffer: 10 * 1024 * 1024 }, (error, stdout) => {
+        if (error) {
+          // File is new/untracked — just open it in VS Code
+          execFile('code', [fullFilePath], { cwd: expandedPath }, () => resolve());
+          return;
+        }
+
+        // Write base version to temp file, then open diff
+        fs.writeFileSync(tmpFile, stdout, 'utf-8');
+        execFile('code', ['--diff', tmpFile, fullFilePath], { cwd: expandedPath }, () => resolve());
+      });
+    });
   });
 }

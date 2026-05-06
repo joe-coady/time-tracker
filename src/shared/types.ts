@@ -141,6 +141,28 @@ export interface KanbanScript {
   scriptDir: string;
 }
 
+export interface GitRepoEntry {
+  id: string;
+  name: string;
+  path: string;
+}
+
+export interface GitConfig {
+  repos: GitRepoEntry[];
+}
+
+export interface GitFileStatus {
+  path: string;
+  status: string;
+  staged: boolean;
+}
+
+export interface GitStatusResult {
+  files: GitFileStatus[];
+  branch?: string;
+  error?: string;
+}
+
 export interface ClaudeConfig {
   apiKey: string;
   model?: string;
@@ -257,6 +279,7 @@ export interface TasksData {
   googleCalendarConfig?: GoogleCalendarConfig;
   scriptConfig?: ScriptConfig;
   kanbanScripts?: KanbanScript[];
+  gitConfig?: GitConfig;
 }
 
 export interface CalculatedTaskEntry extends TaskEntry {
@@ -383,6 +406,10 @@ export interface ElectronAPI {
   saveKanbanScripts: (scripts: KanbanScript[]) => Promise<void>;
   captureScreenshot: () => Promise<string | null>;
   saveScreenshot: (dataUrl: string, filename?: string) => Promise<string>;
+  getGitConfig: () => Promise<GitConfig | null>;
+  saveGitConfig: (config: GitConfig) => Promise<void>;
+  getGitStatus: (repoPath: string) => Promise<GitStatusResult>;
+  openGitDiff: (repoPath: string, filePath: string, staged: boolean) => Promise<void>;
 }
 
 declare global {
